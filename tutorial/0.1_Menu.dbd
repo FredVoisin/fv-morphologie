@@ -1,0 +1,96 @@
+:title "fv-morphologie"
+:subtitle "Menu"
+
+:bodytext
+";;;;;;;;;;;;;;;;
+;;; 1. TRANSCRIPTION"
+:figure "./pictures/menu-1.png"
+:bodytext
+"
+;;  1.1 TRANSCODER : convert, encode, filter, trace
+ transcode 
+ num>base 
+ num>alpha 
+ alpha>num 
+ list>sym 
+ graph>matrix 
+ randomize 
+;;  1.2 FILTRER : filter
+ filt-median 
+ filt-exponential 
+ filt-extrema 
+ filt-local-rep 
+;;  1.3 DELINEER : trace, draw, rely, interpolate
+ graph-span 
+ graph-path 
+ graph>dot
+;;  1.4 INTERPOLER : interpolate
+ morph-lists
+"
+:bodytext " "
+:bodytext
+";;;;;;;;;;;;;;;;
+;;; 2. CLASSIFICATION"
+:figure "./pictures/menu-2.png"
+:bodytext
+"
+;;  2.1 SEGMENTER : cut, split
+ signature
+ exsample
+ mark-cut 
+ graph-part 
+;;  2.2 CONCATENER : group, asemble
+ group
+ motif-group
+;;  2.3 DIFFERENCIER : identify, classify
+ class-num
+ class-sym
+ mark-structure
+ motif-structure 
+"
+:bodytext " "
+:bodytext
+";;;;;;;;;;;;;;;;
+;;; 3. EVALUATION"
+:figure "./pictures/menu-3.png"
+:bodytext
+"
+;;  3.1 ENUMERER : sample, find, count
+ exsample
+ mark-list
+ mark-position
+ motif-list 
+ motif-position 
+ graph-nodes
+ graph-extrem
+;;  3.2 COMPARER : distances and dissimilarities
+ dist-euclidian
+ dist-citybloc
+ dist-hamming 
+ dist-edit 
+ dist-multi-edit 
+ dist-structure 
+ dist-graph
+;;  3.3 QUANTIFIER : self information
+ histogram
+ entropy
+ elt-info
+ inner-dynamic
+ graph-length
+ graph-degree
+"
+:bodytext " "
+:bodytext
+";;;;;;;;;;;;;;;;
+;;; 4. READ/WRITE files"
+:figure "./pictures/menu-4.png"
+:bodytext
+"
+ read-text (file)
+ display-list (list)
+ write-list (list file &optional mode)
+;;;;;;;;;;;;;;;;
+"
+
+
+

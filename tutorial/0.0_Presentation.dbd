@@ -1,0 +1,77 @@
+:title "fv-morphologie"
+:bodytext "Frédéric Voisin, 1994-2013"
+:bodytext  "version 20131111"
+:bodytext " "
+:subtitle "Outils pour la description et l'étude morphologique de transcriptions musicales."
+:bodytext "Pour Common-Lisp, OpenMusic (Ircam) et PWGL (Sibelius Academy)."
+:bodytext " "
+:bodytext
+"	fv-morphologie est une collection d'outils pour l'analyse d'énoncés musicaux représentés par des suites de symboles (notations, transcriptions, représentations symboliques ou numériques, etc.) : segmentation, recherche de motifs, de saillances, reconnaissance de 'formes' musicales, comparaisons de structures, classification automatique...
+	De même qu'en LISP, la représentation ou la description d'un objet ou d'une séquence musicale s'effectue au moyen de LISTES qui sont, ou non, structurées d'une manière explicitée par leur contexte. Par convention, une séquence musicale ou une suite de symboles est représentée par une liste ordonnée débutant à gauche par l'item le plus ancien. Ainsi par exemple, la liste (60 65 70 72) peut représenter, selon le contexte de l'analyse, ou bien la suite des notes Do Fa Sib Do (dans le standard MIDI), ou bien un accord de quatres notes simultanées représentées (arbitrairement) du grave à l'aigu, ou encore une variation d'intensité, etc.
+	Cette nouvelle version, initiée en 2007 en vue de l'enseignement de l'informatique musicale (Conservatoire de Montbéliard, 2007-2012), est une refonte de 'Morphologie' qui en reprend le code spécifiquement consacré à l'analyse et à la classification de données (cf. Baboni-Schilingi & Voisin: 'Librairie Morphologie pour OpenMusic', Ircam Forum, 1997), selon un cadre théorique que nous avons cherché à expliciter 'pragmatiquement'.
+	Ainsi, les opérations d'analyse sont ici regroupées et présentées selon trois groupes qui constituent la structure du menu : transcription, classification, évaluation.
+	Ce regroupement est lui-même produit par l'analyse, dans fv-morphologie, du champ sémantique que recouvrent ces opérations (cf. fv-exemples/delineations/Processes.pwgl)."
+
+:figure "./pictures/morpho-processes.png"
+
+:bodytext
+" "
+
+:bodytext
+"
+;; Boxes & menu
+;;;;;;;;;;;;;;;;
+;;; 1. TRANSCRIPTION
+;;  1.1 TRANSCODER : convert, encode, trace
+;;  1.2 FILTRER : filter
+;;  1.3 DELINEER : trace graphs
+;;  1.4 INTERPOLER : interpolate
+;;;;;;;;;;;;;;;;
+;;; 2. CLASSIFICATION
+;;  2.1 SEGMENTER : cut, split
+;;  2.2 CONCATENER : group, asemble
+;;  2.3 DIFFERENCIER : classify, identify
+;;;;;;;;;;;;;;;;
+;;; 3. EVALUATION
+;;  3.1 ENUMERER : filter, sample, find, count 
+;;  3.2 COMPARER : distances and dissimilarities
+;;  3.3 QUANTIFIER : self information
+;;;;;;;;;;;;;;;;
+;;; 4. READ/WRITE files
+;;   read
+;;   write
+;;;;;;;;;;;;;;;;
+;;; 5. FV-exemples
+;;  ...
+"
+
+:bodytext
+" "
+
+:bodytext "----------------"
+
+:bodytext
+"Dans PWGL et OpenMusic, fv-morphologie recquiert ompw :"
+:link "http://kiliansprotte.de/lisp/#ompw"
+:protocole :http
+:link-text "ompw library (Kilian Sprotte)"
+
+:bodytext
+"Pour une mise en oeuvre avec Common Lisp, cf. fichier fv-morphologie-cl.lisp"
+:bodytext
+" "
+
+:bodytext " "
+:subtitle "A propos"
+
+:link "http://www.fredvoisin.com/fv-morphologie/"
+:protocol :http
+:link-text "fv-morphologie home page"
+
+:link "http://www.fredvoisin.com/web/spip.php?article185"
+:protocole :http
+:link-text "Dissemblance et espaces compositionnels (Frédéric Voisin, JIM 2011)"
+
+:bodytext
+" "
+

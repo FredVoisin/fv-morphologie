@@ -1,0 +1,24 @@
+#!/bin/bash
+# pwgldocextract
+# Extraction de la documentation du fichier (patch) PWGL
+# tested with PWGL 1.0 beta r16 - OSX 10.6 
+# FV 2012
+
+pwgl=$1
+cat $pwgl |sed 's/\:/\
+:/g' > $pwgl.tmp
+
+l=`wc -l $pwgl.tmp | awk '{ print $1 }'`
+i=`sed -n '/WINDOW-DOCUMENTATION/ =' $pwgl.tmp`
+if [ -e $i ]
+ then
+  exit
+ else
+  n=`expr $l - $i + 1`
+  end=`sed -n '/\:X / =' $pwgl.tmp`
+  pos=`echo $end |wc -w |awk '{print $1}'`
+  pt=`echo $end | awk '{print $'$pos'}'`
+  p=`expr $pt - $i`
+  cat $pwgl.tmp |tail -n $n |head -n $p
+  rm $pwgl.tmp
+fi
