@@ -2088,11 +2088,17 @@ Algorithm from: E. Diday & all, 1982 : Elements d'analyse de donnees, Dunod, Par
 ; any edge can be defined by some properties in the rest of the list of its vertices ;
 ; for instance: (a b .1 2 z) is an edge between vertices a and b with (.12 z) as properties of the edge.
 
+(defun vertex< (a b)
+  "Order for vertices of any type: numbers first (by value), then all others by name."
+  (flet ((name (x) (if (or (stringp x) (symbolp x) (characterp x)) (string x) (princ-to-string x))))
+    (cond ((and (realp a) (realp b)) (< a b))
+          ((realp a) t)
+          ((realp b) nil)
+          (t (string-lessp (name a) (name b))))))
+
 (defun all-vertices (tree)
   (let ((v (remove-duplicates (apply #'append (mapcar #'(lambda (x) (subseq x 0 2)) tree)) :test #'equalp)))
-    (cond ((not (member 'nil (mapcar #'numberp v)))
-           (sort v '<))
-          (t (sort v #'string-lessp)))))
+    (sort v #'vertex<)))
 
 (defun min-total-length (tree)
   (apply #'+ (mapcar #'caddr tree)))
