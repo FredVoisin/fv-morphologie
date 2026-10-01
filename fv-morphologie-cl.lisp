@@ -215,7 +215,7 @@ Keyword argument :iter to set the maximum iterations to run for partitioning ;
 :dist to set the distance or metric to be used (by default: euclidian distance)."))
 
 (defmethod class-num ((data t) (classes integer) (mode symbol) &key (iter nil) (dist nil))
-  (setf classes (min 2 classes))
+  (setf classes (max 2 classes))
   (case mode
     (nil (fv-morphologie::n-class data classes iter dist))
     (:centroids (fv-morphologie::n-class data classes iter dist))
@@ -233,7 +233,7 @@ in the order defined with the argument :excluded."))
 
 (defmethod class-sym ((data t) (classes integer) (mode symbol)
 		      &key (uncom .5) (ins 1) (del 1) (change 1) (excluded nil) (mst nil))
-  (setf classes (min 2 classes))
+  (setf classes (max 2 classes))
   (if (not excluded)
       (cond ((or (eq mode :edit-nn) (not mode))
              (fv-morphologie::s-class data classes nil change ins del uncom mst))

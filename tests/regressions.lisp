@@ -45,3 +45,14 @@
     (is (= 4 (length tree)))
     (is (equal "" (with-output-to-string (*standard-output*)
                     (graph-span (dist-edit segs nil :norm t)))))))
+
+(test more-than-two-classes
+  ;; the number of classes used to be capped with (min 2 classes)
+  (let ((*random-state* #+sbcl (sb-ext:seed-random-state 42) #-sbcl (make-random-state nil)))
+    (is (= 3 (length (remove-duplicates
+                      (class-num '((0 0) (0 1) (5 5) (5 6) (10 10) (10 11)) 3
+                                 :centroids :iter 20))))))
+  (is (= 3 (length (remove-duplicates
+                    (class-sym '((a b c) (a b d) (x y z) (x y w) (a b c d)
+                                 (k l m n o p) (k l m n o q))
+                               3 :edit-norm))))))

@@ -16,7 +16,7 @@
                 #:histogram #:entropy #:elt-info
                 ;; classification
                 #:mark-position #:mark-list #:mark-structure
-                #:motif-find #:motif-list #:motif-group #:class-num
+                #:motif-find #:motif-list #:motif-group #:class-num #:class-sym
                 ;; graphs
                 #:graph-span #:graph-path #:graph-length #:graph-degree #:graph-nodes
                 #:graph-extrem #:graph>dot
