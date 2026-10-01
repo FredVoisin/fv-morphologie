@@ -18,7 +18,7 @@
                 #:mark-position #:mark-list #:mark-structure
                 #:motif-find #:motif-list #:motif-group #:class-num
                 ;; graphs
-                #:graph-span #:graph-path #:graph-length #:graph-degree
+                #:graph-span #:graph-path #:graph-length #:graph-degree #:graph-nodes
                 #:graph-extrem #:graph>dot
                 ;; io
                 #:read-text #:write-list #:date-string #:date+time-string))

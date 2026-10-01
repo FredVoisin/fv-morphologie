@@ -22,6 +22,12 @@
 (test graph-degree
   (is (= 2 (graph-degree 'b *chain*))))
 
+(test graph-nodes
+  (is (equal '(a b c d) (graph-nodes *chain*)))
+  ;; nodes joined by a zero-length edge are nodes too
+  (is (equal '(a b c) (graph-nodes '((a b 1) (b c 0)))))
+  (is (equal '(0 1 2 3) (graph-nodes '((2 3 1) (0 1 1) (1 2 2))))))
+
 (test graph-extrem
   (is (null (set-exclusive-or '(a d) (graph-extrem *chain*)))))
 

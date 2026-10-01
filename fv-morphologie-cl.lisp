@@ -401,10 +401,10 @@ thes: thesaurus or list of symbols to be considered."))
   (fv-morphologie::tree-deg node graph))
 
 (defgeneric graph-nodes (graph)
-  (:documentation "GRAPH-NODES: list of all nodes of a graph."))
+  (:documentation "GRAPH-NODES: list of all nodes of a graph, each node once, sorted."))
 
 (defmethod graph-nodes ((graph list))
-  (fv-morphologie::tree-nodes graph))
+  (fv-morphologie::all-vertices graph))
 
 (defgeneric graph-extrem (graph)
   (:documentation "GRAPH-EXTREM: returns all extremities (leaves) of a graph."))
