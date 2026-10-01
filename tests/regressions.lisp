@@ -36,3 +36,12 @@
 (test date-string-months
   ;; MONTHS used to be undefined
   (is (search "Jan" (date+time-string (encode-universal-time 0 0 12 15 1 2000)))))
+
+(test graph-span-max-distance-edges
+  ;; used to loop forever when the tree needed an edge of maximum length,
+  ;; and printed its input
+  (let* ((segs '((a b c) (a b d) (x y z) (x y w) (a b c d)))
+         (tree (graph-span (dist-edit segs nil :norm t))))
+    (is (= 4 (length tree)))
+    (is (equal "" (with-output-to-string (*standard-output*)
+                    (graph-span (dist-edit segs nil :norm t)))))))

@@ -1902,11 +1902,10 @@ Optional argument: distance function in lambda form, for instance : (lambda (a b
 (defun lookformin-if-set (i dist set)
   "Returns a list with i and its nearest point and the distance separating them,
 given the semi-matrix of distances dist."
-  (let ((d-min (car (sort (mapcar #'caddr dist) '>)))
-        arete)
+  (let (d-min arete)
     (dolist (n dist)
         (when (member i (butlast n))
-          (when (and (< (caddr n) d-min)
+          (when (and (or (null d-min) (< (caddr n) d-min))
                      (not (member (car (remove i (butlast n))) set)))
             (setf d-min (caddr n)
                   arete n))))
@@ -1927,9 +1926,8 @@ given the semi-matrix of distances dist."
 	 (aretes nil)
          (aretes-temp nil)
          (arete-min nil))
-    (print distances)
     (loop for n from 0
-       until (or (= (length te) (length omega)) (eql te te-1))
+       until (or (= (length te) (length omega)) (equal te te-1))
        do (setf aretes-temp 'nil)
 	 (when verbose (message aretes))
 	 (dolist (p te)

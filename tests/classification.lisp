@@ -28,7 +28,8 @@
 
 (test class-num
   ;; two obvious clusters: the partition must separate them
-  (let* ((*random-state* (make-random-state t))
+  ;; (centroids start at random: use a fixed seed to keep the test deterministic)
+  (let* ((*random-state* #+sbcl (sb-ext:seed-random-state 42) #-sbcl (make-random-state nil))
          (classes (first (class-num '((0 0) (0 1) (10 10) (10 11)) 2 :centroids))))
     (is (= (first classes) (second classes)))
     (is (= (third classes) (fourth classes)))
