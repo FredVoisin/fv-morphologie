@@ -17,7 +17,7 @@
 ;(mapcar #'(lambda (x) (read-from-string (symbol-name (car x)))) *very-minimalist-midi-notes*)
 
 (defgeneric transcode (seq table &optional test)
-  (:documentation "trqnscoding seq according to the list table with lists (a b) wher each symbol a of seq is changed to b.
+  (:documentation "TRANSCODE: replaces each element of <seq> using a list of changes <table> with the following structure: '((old new) ...).
 By default test is #'eq."))
 
 (defmethod transcode ((seq list) (symlist list) &optional (test #'eq))
@@ -56,7 +56,7 @@ Different modes can be selected into optional menu"))
   (case mode
     ('nil (alphatonum (loop for i from 0 to (1- (length char))
 			 collect (char char i))))
-    (:midi (cadr (assoc (symbol-name char) *very-minimalist-midi-notes*)))))
+    (:midi (cadr (assoc char *very-minimalist-midi-notes* :test #'equal)))))
 
 (defmethod alpha>num ((char symbol) &optional (mode nil))
   (case mode

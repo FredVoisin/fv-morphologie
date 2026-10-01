@@ -1,6 +1,5 @@
 
 (defpackage :fv-morphologie
-  #+SBCL (:use :cl)
-  #+Lispworks  (:use :cl :ompw)
+  #-Lispworks (:use :cl)
+  #+Lispworks (:use :cl :ompw)
   )
-

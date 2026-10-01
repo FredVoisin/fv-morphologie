@@ -5,6 +5,9 @@
 
 ;;; Date & Time
 
+(defparameter *short-months*
+  #("Jan" "Feb" "Mar" "Apr" "May" "June" "Jul" "Aug" "Sept" "Oct" "Nov" "Dec"))
+
 (defun time-string ()
   (multiple-value-bind (s m h) (get-decoded-time)
     (format nil "~A:~2,,,'0@A:~2,,,'0@A" h m s)))
@@ -12,12 +15,12 @@
 (defun date-string ()
   (multiple-value-bind (ig no re d mo y) (get-decoded-time)
     (declare (ignore ig no re))
-    (format nil "~A ~A ~A" d (svref months (1- mo)) y)))
+    (format nil "~A ~A ~A" d (svref *short-months* (1- mo)) y)))
 
 (defun date+time-string (&optional (u (get-universal-time)))
   (multiple-value-bind (s m h d mo y) (decode-universal-time u)
     (format nil "~A ~A ~A ~A:~2,,,'0@A:~2,,,'0@A"
-                d (svref months (1- mo)) y h m s)))
+                d (svref *short-months* (1- mo)) y h m s)))
 
 ;;; FILE SYSTEM
 

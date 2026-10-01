@@ -5,14 +5,7 @@
 ;;;; Common-Lisp
 ;;;; UTF-8
 
-;; if no ASDF:
-
-(load "~/projets/fv-morphologie/package.lisp")
-(load "~/projets/fv-morphologie/fv-morphologie-encodage.lisp")
-(load "~/projets/fv-morphologie/fv-morphologie.lisp")
-(load "~/projets/fv-morphologie/fv-morphologie-graphs.lisp")
-(load "~/projets/fv-morphologie/fv-morphologie-io.lisp")
-;(load "~/projets/fv-morphologie/fv-morphologie-cl.lisp")
+;; load with ASDF: (asdf:load-system :fv-morphologie)
 
 (in-package :fv-morphologie)
 
@@ -40,35 +33,17 @@ Modes may be :values (default), :positions :all or :resampled"))
 (defgeneric split (seq &optional marks)
   (:documentation "SPLIT: splits <seq> according to marks. Seq may be a list or a string, marks must be a string defining a set of marks."))
 
-(defmethod split ((seq list) &optional (marks " "))
-  (split-list-using-marks seq nil))
+(defmethod split ((seq list) &optional (marks nil))
+  (split-list-using-marks seq marks))
 
 (defmethod split ((seq string) &optional (marks " "))
   (split-string seq marks))
-
-(defgeneric concaten (seq)
-  (:documentation "CONCATEN: concatenates a sequence of symbols as a single symbol."))
-
-(defmethod concaten ((seq t))
-  (fv-morphologie::concat seq))
-
-(defgeneric transcode (seq table &optional test)
-  (:documentation "TRANSCODE: replaces each element of <seq> using a list of changes <table> with the following structure: '((old new) ...)."))
-
-(defmethod transcode ((seq t) (table t) &optional (test #'eq))
-  (fv-morphologie::transcode seq table test))
 
 (defgeneric num>base (num base)
   (:documentation "NUM>BASE: converts an number to its representation in base <base>."))
 
 (defmethod num>base ((num number) (base t))
   (fv-morphologie::num-base num base))
-
-(defmethod num>alpha ((num number))
-  (fv-morphologie::num>alpha num))
-
-(defmethod alpha>num ((alpha t) &optional (mode nil))
-  (fv-morphologie::alpha>num alpha))
 
 (defmethod list>sym ((list t))
   (fv-morphologie::concaten list))
@@ -186,7 +161,7 @@ Option :diss defines the dissemblance threshold to consider different segment as
 Option :test defines the test function to consider the marks."))
 
 (defmethod mark-structure  ((seq t) (out t) &key (diss 0) (rem-loc-dup t) (test #'equalp))
-  (when not out (setf out :struct))
+  (when (not out) (setf out :struct))
   (mark-strct seq out diss rem-loc-dup test))
 
 ;;; 2.3 USING MOTIFS
@@ -197,8 +172,9 @@ Argument :diss is the threshold (from 0 to 1.0) of dissimilarity according to th
 argument :l-var is the threshold for variation in length of the motifs to be compared ;
 arguments :change :ins/sup :uncom and :test for tuning the editing distance (see dist-edit)."))
 
-(defmethod motif-find ((motif t) (seq t) &key (diss 0) (l-var 0) (change 1) (ins 1) (del 1) (uncom 0) (test #'(lambda (a b) (dist-edit a b :norm T))))
-  (find-pos motif seq diss l-var change ins del uncom test))
+(defmethod motif-find ((motif t) (seq t) &key (diss 0) (l-var 0) (change 1) (ins 1) (del 1) (uncom 0) (test #'equalp))
+  (find-pos motif seq diss l-var
+            #'(lambda (a b) (edit-dist a b change ins del uncom t test))))
 
 (defgeneric motif-list (seq out &key diss l-var n change insert delete uncom test)
   (:documentation "MOTIF-LIST: returns the list of all motifs found into <seq> where a motif is any segment repeted at least one time according to editing distance.
@@ -211,8 +187,9 @@ arguments :change :ins/sup :uncom and :test for tuning the editing distance (see
 (defmethod motif-list ((seq t) (out t)
 		       &key (diss 0) (l-var 0) (n nil)
 		       (change 1) (insert 1) (delete 1) (uncom 0) (test #'equalp))
-  (when (not out) (set out :length))
-  (find-self seq out diss l-var n change insert delete uncom test))
+  (when (not out) (setf out :length))
+  (find-self seq out diss l-var n
+             #'(lambda (a b) (edit-dist a b change insert delete uncom t test))))
 
 (defgeneric motif-structure (seq)
   (:documentation "MOTIF-STRUCTURE: to be set"))
@@ -329,7 +306,7 @@ Keywords arguments are:
   (:documentation "DIST-MULTI-EDIT: "))
 
 (defmethod dist-multi-edit ((seq1 t) (seq2 t) (wgth number) &key (sub 1) (ins 1) (del 1) (uncom 0) (test #'equalp))
-  (fv-morphologie::multi-edit-dist seq1 seq2 wgth sub ins del uncom test))
+  (fv-morphologie::multi-edit-dist seq1 seq2 wgth :change sub :insert ins :delete del :inex uncom :test test))
 
 (defgeneric dist-structure  (a b &key w-occ w-rep test)
   (:documentation "DIST-STRUCTURE: "))
@@ -449,7 +426,7 @@ Keywords:
 "))
 
 (defmethod graph>dot  ((graph t) (out t) &key (dis 1) (scale t) (shape "ellipse") (legend t))
-  (fv-morphologie::graph2dot graph distorsion scale shape out legend))
+  (fv-morphologie::graph2dot graph dis scale shape out legend))
 
 ;;;;;;;;;;;;
 ;;; 5. IMPORT/EXPORT

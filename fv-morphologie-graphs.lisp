@@ -36,7 +36,7 @@
         (format out " \"~S\" -- \"~S\" [len=~,6F];~&" (car n) (cadr n) min)))
     (format out "}~&")))
 
-#+sbcl
+#-Lispworks
 (defun graph2dot (graph dis mode shape out &optional (legend t))
   (let* ((k (if (numberp mode) mode (if mode 1 0.2)))
          (min (* (car (sort (remove-if #'zerop (mapcar #'third graph)) '<)) k))
@@ -57,22 +57,16 @@
                                      :if-does-not-exist :create)
                (2dot graph min dis shape1 shape2 stream legend :name out))
              (when (not (equalp type "dot"))
-               (shell-command (format nil "neato -T~(~S~) > ~S"
-                                      (if (or (equalp type "gif")
-                                              (equalp type "png"))
-                                          (read-from-string type)
-                                        (read-from-string "gif"))
-                                      (make-pathname :directory dir
-                                                     :name file
-                                                     :type (if (or (equalp type "gif")
-                                                                   (equal type "png"))
-                                                               type "png")))
-                              :input (make-pathname :directory dir
-                                                    :name file
-                                                    :type "dot")
-                              :wait nil
-                              :output :stream
-                              :if-output-exists :supersede))))
+               (let ((fmt (if (or (equalp type "gif") (equalp type "png")) type "png")))
+                 (shell-command (list "neato"
+                                      (format nil "-T~(~A~)" fmt)
+                                      "-o" (namestring (make-pathname :directory dir
+                                                                      :name file
+                                                                      :type fmt))
+                                      (namestring (make-pathname :directory dir
+                                                                 :name file
+                                                                 :type "dot")))
+                                :error-output t)))))
           (t (2dot graph min dis shape1 shape2 out legend :name out))))
   (format nil "~G" out))
 

@@ -11,7 +11,7 @@
 ;;;; use freely and at your own risk :)
 
 ;;;; LOAD IN ASDF :
-;;;; (asdf:oos 'asdf:load-op :fv-morphologie)
+;;;; (asdf:load-system :fv-morphologie)
 
 
 ;;;; TODO
@@ -888,8 +888,8 @@ If a and b are lists with not same size (i.e points with not same dimensions),
   (mapcar #'(lambda (x) (dist-euclid x b key)) a))
 
 (defmethod dist-euclid ((a number) (b list) &optional (key #'identity))
-  ;(assert (not (member 'nil (mapcar #'numberp a))))
-  (mapcar #'(lambda (x) (dist-euclid x b key)) a))
+  ;(assert (not (member 'nil (mapcar #'numberp b))))
+  (mapcar #'(lambda (x) (dist-euclid a x key)) b))
 
 (defmethod dist-euclid ((a list) (b list) &optional (key #'identity))
   ;(assert (equalp (mapcar #'numberp a) (mapcar #'numberp b)))
@@ -2872,9 +2872,10 @@ sorted in decreasing order of amount of information in data."))
 
 ;;; shell utils
 
-#+SBCL
-(defun shell-comand (string &rest args)
-  (eval `(asdf:run-shell-command ,string ,args)))
+#-Lispworks
+(defun shell-command (command &rest args)
+  "Runs COMMAND (a string or a list of program and arguments), see uiop:run-program for ARGS."
+  (apply #'uiop:run-program command args))
 
 #+Lispworks
 (defun shell-command (string &rest args)
