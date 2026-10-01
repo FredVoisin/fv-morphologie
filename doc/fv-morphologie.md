@@ -52,10 +52,11 @@ that begins, on the left, with the oldest item. For example, the list
 variation of intensity, etc.
 
 This version, started in 2007 for teaching computer music (Conservatoire de
-Montbéliard, 2007–2012), is a rewrite of *Morphologie*. It takes up the code
-devoted to the analysis and classification of data (cf. Baboni-Schilingi &
-Voisin, *Librairie Morphologie pour OpenMusic*, Ircam Forum, 1997), within a
-theoretical framework that we tried to make explicit "pragmatically".
+Montbéliard, 2007–2012), is a rewrite of *Morphologie* for OpenMusic (Ircam) with
+a port to PWGL (Mikael Laurson, Sibelius Academy). It takes up the code devoted to 
+the analysis and classification of data (cf.  Baboni-Schilingi & Voisin, 
+*Librairie Morphologie pour OpenMusic*, Ircam Forum, 1997), within a theoretical 
+framework that we tried to make explicit "pragmatically".
 
 The analysis operations are grouped in three families, which make up the
 structure of the menu: **transcription**, **classification**, **evaluation**.
@@ -75,10 +76,10 @@ Vincenot and Carlo Ciceri.
 
 About:
 
-- fv-morphologie home page: <http://www.fredvoisin.com/fv-morphologie/>
+- Legacy PWGL fv-morphologie doc page : <https://www.fredvoisin.com/articles/114-fv-morphologie-documentation.html>
 - *Dissemblance et espaces compositionnels* (Frédéric Voisin, JIM 2011):
-  <http://www.fredvoisin.com/web/spip.php?article185>
-- Original code: <https://github.com/FredVoisin/Morphologie>
+  <https://www.fredvoisin.com/articles/185-dissemblance-et-espaces-compositionnels.html>
+- Original code (~1995) : <https://github.com/openmusic-project/Morphologie>
 
 ## Installation and loading
 
