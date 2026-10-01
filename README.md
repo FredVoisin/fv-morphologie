@@ -1,11 +1,12 @@
 # fv-morphologie
 
 Lisp tools to analyse musical and syntagmatic sequences as symbolic expressions.
-For Common Lisp, OpenMusic (Ircam) and PWGL (Sibelius Academy).
+
+Kind of analysis-oriented branch, for Common Lisp, of the legacy library [Morphologi](https://github.com/openmusic-project/Morphologie) for OpenMusic (Ircam)
+and PWGL (Mikael Laurson, Siblius Academy).
 
 
-
-Documentation of the Common Lisp version: [doc/fv-morphologie.md](doc/fv-morphologie.md).
+Documentation: [doc/fv-morphologie.md](doc/fv-morphologie.md).
 The PWGL tutorial and bindings are kept in [pwgl-legacy/](pwgl-legacy/).
 
 ## Loading (Common Lisp)
