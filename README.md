@@ -1,8 +1,8 @@
 # fv-morphologie
 
-Lisp tools to analyse musical and syntagmatic sequences as symbolic expressions.
+Experimental tools to analyse musical and syntagmatic sequences as symbolic expressions, in Common Lisp
 
-Kind of analysis-oriented branch, for Common Lisp, of the legacy library [Morphologi](https://github.com/openmusic-project/Morphologie) for OpenMusic (Ircam)
+Analysis-oriented branch of the legacy library [Morphologie](https://github.com/openmusic-project/Morphologie) for OpenMusic (Ircam)
 and PWGL (Mikael Laurson, Siblius Academy).
 
 
