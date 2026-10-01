@@ -28,3 +28,12 @@ depend on it, only the `fv-morphologie/tests` system does.
 (ql:quickload :fiveam)                ; once
 (asdf:test-system :fv-morphologie)
 ```
+
+## TODO
+
+- `class-sym` does not always return the requested number of classes
+  (e.g. 3 classes when 2 are asked for 7 segments, see
+  `(class-sym '((a b c) (a b d) (x y z) (x y w) (a b c d) (k l m n o p) (k l m n o q)) 2 :edit-norm)`).
+- `class-num` in `:1d-centroids` mode returns 2 classes only, whatever the
+  number of classes requested (it uses a separate one-dimensional algorithm,
+  `1d-class`).
