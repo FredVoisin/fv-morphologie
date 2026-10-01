@@ -5,6 +5,9 @@ For Common Lisp, OpenMusic (Ircam) and PWGL (Sibelius Academy).
 
 
 
+Documentation of the Common Lisp version: [doc/fv-morphologie.md](doc/fv-morphologie.md).
+The PWGL tutorial and bindings are kept in [pwgl-legacy/](pwgl-legacy/).
+
 ## Loading (Common Lisp)
 
 With ASDF, make the project directory visible (e.g. symlink it into
