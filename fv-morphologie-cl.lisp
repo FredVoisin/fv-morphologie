@@ -104,14 +104,15 @@ A value returned by <func> is repeated for the block; a list replaces the block 
     (fv-morphologie::double-exponential-smoothing seq alpha gamma)))
 
 (defmethod filt-local-rep ((seq t) &optional (mode nil) (test #'equalp))
-  "FILT-LOCAL-REP: remove identical values or symbols."
-  (cond ((eq mode :delete)
-         (fv-morphologie::rem-local-rep seq test))
-        ((eq mode :linear)
-         (if (not (member 'nil (mapcar #'numberp seq)))
-             (fv-morphologie::nocons= seq test)
-           (fv-morphologie::filt-local-rep seq :delete test)))
-        (t (fv-morphologie::filt-local-rep seq :delete test))))
+  "FILT-LOCAL-REP: remove consecutive identical values or symbols (mode nil or :delete),
+or, for numbers, replace them by a linear interpolation (mode :linear, or :interp as in PWGL)."
+  (case mode
+    ((nil :delete) (fv-morphologie::rem-local-rep seq test))
+    ((:linear :interp)
+     (if (every #'numberp seq)
+         (fv-morphologie::nocons= seq test)
+         (fv-morphologie::rem-local-rep seq test)))
+    (t (error "filt-local-rep: unknown mode ~S, use nil, :delete or :linear." mode))))
 
 (defgeneric filt-noise (seq &optional mode val)
   (:documentation  "FILT-NOISE: jitters or adds some noise into sequence <seq> using different methods, according to the first optional argument <mode>:

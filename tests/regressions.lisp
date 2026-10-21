@@ -268,3 +268,23 @@
     (finishes (dist-multi-edit a b '(1 1) :uncom 0.5))
     ;; pairwise distances
     (is (approx= 1/3 (third (first (fv-morphologie::multi-edit-dist (list a b) nil 1)))))))
+
+(test filt-local-rep-fixes
+  ;; :linear used to modify the list given (and quoted constants)
+  (let ((x (list 0 0 1 2 2 2 3 3 0 0)))
+    (is (every #'approx= '(0 0.5 1 2 7/3 8/3 3 1.5 0 0) (filt-local-rep x :linear)))
+    (is (equal '(0 0 1 2 2 2 3 3 0 0) x)))
+  ;; with a tolerance, the ramp used to start from each value instead of the first of the run
+  (let ((close (lambda (a b) (< (abs (- a b)) 0.2))))
+    (is (every #'approx= '(1 5/3 7/3 3 4 5) (filt-local-rep '(1.0 1.1 1.05 3 3.1 5) :linear close)))
+    (is (equal '(1.0 3 5) (filt-local-rep '(1.0 1.1 1.05 3 3.1 5) :delete close))))
+  ;; repeated nils were not removed
+  (is (equal '(a b nil c) (filt-local-rep '(a a b b nil nil c))))
+  (is (equal '(nil a) (filt-local-rep '(nil nil a))))
+  ;; :interp (PWGL) is :linear; an unknown mode was silently :delete
+  (is (equal (filt-local-rep '(0 0 1 2 2 3) :linear) (filt-local-rep '(0 0 1 2 2 3) :interp)))
+  (signals error (filt-local-rep '(1 1 2) :foo))
+  ;; non-numeric data with :linear: repetitions removed
+  (is (equal '(a b) (filt-local-rep '(a a b) :linear)))
+  (is (equal '(5 5 5) (filt-local-rep '(5 5 5) :linear)))
+  (is (null (filt-local-rep '() :linear))))

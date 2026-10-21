@@ -376,14 +376,14 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
 	       (apply #'deep-mapcar fun fun1 (cdr liste) args)))))
 
 (defun remove-local-dup-rec (liste test r) ; ex ptrn-smooth
-  "Returns the list LIST without local repetitions."
-  (if liste
-      (if (car r)
-	  (if (funcall test (car liste) (car r))
-	      (remove-local-dup-rec (cdr liste) test r)
-	      (remove-local-dup-rec (cdr liste) test (cons (car liste) r)))
-	  (remove-local-dup-rec (cdr liste) test (cons (car liste) r)))
-      (nreverse r)))
+  "Returns the list LIST without local repetitions (r: elements already kept, most recent first).
+nil is an element like any other."
+  (let ((started (and r t))
+        (last (car r)))
+    (dolist (x liste (nreverse r))
+      (unless (and started (funcall test x last))
+        (push x r)
+        (setf last x started t)))))
 
 (defgeneric rem-local-rep (seq &optional test)
   (:documentation "Removes local repetitions.
@@ -2868,20 +2868,23 @@ sorted in decreasing order of amount of information in data."))
         (push x d)))))
 
 (defun nocons= (seq &optional (test #'=))
-  "Reechantillonne seq en y interpolant lineairement les valeurs consecutives egales"
-  (let ((l (length seq)))
-    (loop for k from 0 to (- l 2)
-       do (when (funcall test (nth k seq) (nth (+ k 1) seq))
-	    (let* ((z (loop for n from 0 while (and (funcall test (nth (+ k n) seq) (nth k seq))
-						    (< (+ k n 1) l))
-                         finally (return n)))
-		   (d (float (/ (- (nth (+ k z) seq) (nth k seq)) z))))
-	      (loop for n from 0 to (1- z) do
-		   (setf (nth (+ k n) seq) (+ (nth (+ k n) seq) (* n d) )))
-	      (when (funcall test (nth k seq) (nth (+ k 1) seq)) ;
-		(setf (nth (+ k 1) seq) (nth k seq))) ;
-	      (setf k (+ k z -1)))))
-    (values seq)))
+  "Reechantillonne seq en y interpolant lineairement les valeurs consecutives egales :
+each run of values equal (by test) to its first value x is replaced by a ramp from x to the
+next different value; the last run is kept. seq is not modified."
+  (let* ((v (coerce seq 'vector))
+         (l (length v))
+         (r (copy-seq v))
+         (k 0))
+    (loop while (< k l)
+          do (let ((z (loop for n from 1
+                            while (and (< (+ k n) l) (funcall test (aref v (+ k n)) (aref v k)))
+                            finally (return n))))
+               (when (and (> z 1) (< (+ k z) l))
+                 (let ((d (float (/ (- (aref v (+ k z)) (aref v k)) z))))
+                   (dotimes (n z)
+                     (setf (aref r (+ k n)) (+ (aref v k) (* n d))))))
+               (incf k z)))
+    (coerce r 'list)))
 
 ;;; shell utils
 

@@ -280,9 +280,11 @@ The result has the same length as `seq`.
 Removes consecutive identical elements (default behaviour, or mode
 `:delete`).
 
-With numerical sequences, mode `:linear` keeps the length of the sequence
-and replaces consecutive identical values by a linear interpolation between
-the non-identical values around them.
+With numerical sequences, mode `:linear` (or `:interp`, its PWGL name) keeps
+the length of the sequence: each run of identical values is replaced by a
+ramp from its value to the next different value; the last run is kept as
+is. With non-numerical sequences, `:linear` removes the repetitions as
+`:delete` does. `seq` itself is never modified; another mode is an error.
 
 `test` defines the identity of elements (`#'equalp` by default), for example
 to treat close values as identical.
@@ -291,7 +293,7 @@ to treat close values as identical.
 (filt-local-rep '(a a b b b c a b b a a))      ;=> (A B C A B A)
 (filt-local-rep '(0 0 1 2 2 2 3 3 0 0))        ;=> (0 1 2 3 0)
 (filt-local-rep '(0 0 1 2 2 2 3 3 0 0) :linear)
-;=> (0.0 0.5 1 2.0 2.3333333 2.6666667 3.0 1.5 0.0 0.0)
+;=> (0.0 0.5 1 2.0 2.3333333 2.6666667 3.0 1.5 0 0)
 ```
 
 #### `filt-fct (seq func wind &optional step)`
