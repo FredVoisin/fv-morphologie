@@ -1692,10 +1692,8 @@ mark/contrast-analysis : cut when an old elt is back according to keyword test f
 ;(subpos-p '(0 4) '(3 8))
 
 (defun l-subpos-p (a b)
-  (if (= (length a) (length b))
-      (let ((s (mapcar #'(lambda (x y) (subpos-p x y)) a b)))
-	(eval `(and .,s)))
-      nil))
+  (and (= (length a) (length b))
+       (every #'subpos-p a b)))
 
 ;(l-subpos-p '(1 4) '(0 4))
 
@@ -1708,28 +1706,37 @@ Returns the positions of sequence <ptrn> into sequence <seq> with some tolerance
 <seq> : sequence of symbols.
 Optional argument: distance function in lambda form, for instance : (lambda (a b) (edit-dist a b))."))
 
-(defmethod find-pos ((motif list) (seq list) &optional (diss 0) (l-var 0) (distance-fct nil))
-  (let* (pos
-	 (y nil) (z t) ; switches to stop loop
-	 (l (length motif))
-	 (lseq (length seq))
-	 (l+ (floor (* l l-var)))) ; for length tolerance
-    (when (not distance-fct) (setf distance-fct #'(lambda (a b) (edit-dist a b 1 1 1 0 T #'equalp))))
-    (loop for i from 0 to (- lseq l+ 1)
-       do (loop for j from (if (< (- l l+) 1) 1 (- l l+)) to (+ l l+)
-	     while (and (<= (+ i j) lseq) z)
-	     do (if (>= diss (funcall distance-fct motif (subseq seq i (+ i j))))
-		    (progn
-		      (setf y t)
-		      (push (list i (+ i j -1)) pos))) ;)
-             (setf z (if y nil t)))
-       (setf y nil z t))
+(defun find-pos-in (motif v start diss l-var distance-fct)
+  "Positions (first last) of motif in the vector v, from position start (see find-pos).
+Without distance-fct, the normalized edit distance is used; with diss 0 too, the windows are
+compared element by element (equalp), which gives the same result without computing distances."
+  (let* ((m (coerce motif 'vector))
+         (l (length m))
+         (lseq (length v))
+         (l+ (floor (* l l-var)))   ; for length tolerance
+         (exact (and (null distance-fct) (zerop diss)))
+         pos)
+    (flet ((match-p (i j)
+             (if exact
+                 (and (= j l)
+                      (loop for k below l always (equalp (aref m k) (aref v (+ i k)))))
+                 (let ((window (make-array j :displaced-to v :displaced-index-offset i)))
+                   (>= diss (if distance-fct
+                                (funcall distance-fct motif (coerce window 'list))
+                                (edit-dist1 m window :normalized t)))))))
+      (loop for i from start to (- lseq l+ 1)
+            do (loop for j from (max 1 (- l l+)) to (+ l l+)
+                     while (<= (+ i j) lseq)
+                     when (match-p i j)
+                       do (push (list i (+ i j -1)) pos)
+                          (return))))
     (reverse (remove-if #'(lambda (x)
-			    (let ((s (mapcar #'(lambda (a)
-						 (subpos-p x a))
-					     (remove x pos :test #'equalp))))
-			      (eval `(or .,s))))
-			pos))))
+                            (some #'(lambda (a) (subpos-p x a))
+                                  (remove x pos :test #'equalp)))
+                        pos))))
+
+(defmethod find-pos ((motif list) (seq list) &optional (diss 0) (l-var 0) (distance-fct nil))
+  (find-pos-in motif (coerce seq 'vector) 0 diss l-var distance-fct))
 
 ; (time (find-pos '(a b c) '(t x a  b c y  t a e  b c k  r a b  c)))
 ; (time (find-pos  '(a b c) '(t x a b c y t a e b c k r a b c) .25 .34))
@@ -1767,8 +1774,9 @@ Optional argument: distance function in lambda form, for instance : (lambda (a b
   (let ((r (list))
 	(n- 2)
 	(n+ nil)
-	(l (length seq)))
-    (when (not distance-fct) (setf distance-fct #'(lambda (a b) (edit-dist a b 1 1 1 0 T #'equalp))))
+	(l (length seq))
+	(v (coerce seq 'vector)))
+    ;; distance-fct nil: the normalized edit distance (see find-pos-in)
     (when (not n) (setf n (list 3 (floor (/ l 2)))))
     (if (numberp n)
         (setf n+ n)
@@ -1778,15 +1786,12 @@ Optional argument: distance function in lambda form, for instance : (lambda (a b
        do (loop for j from n- to (if n+ (min n+ (- l i)) (- l i))
 	     do (let (f (candidat (subseq seq i (+ i j))))
 		  (when (not (assoc candidat r :test #'equalp))
-		    (setf f (mapcar (lambda (p) (if (listp p) (mapcar (lambda (q) (+ q i j)) p) (+ p i j)))
-				    (find-pos candidat (subseq seq (+ i j))
-                                              diss l-var distance-fct ))))
+		    (setf f (find-pos-in candidat v (+ i j) diss l-var distance-fct)))
 		  (when f (push (append (list candidat) (cons (list i (+ i j -1)) f)) r)))))
     (remove-if #'(lambda (x)
-		   (let ((s (mapcar #'(lambda (a)
-					(l-subpos-p (cdr x) (cdr a)))
-				    (remove x r :test #'equalp))))
-		     (eval `(or .,s)))) r)))
+		   (some #'(lambda (a) (l-subpos-p (cdr x) (cdr a)))
+			 (remove x r :test #'equalp)))
+	       r)))
 
 #|
 (print (whenlooploopwhenwhen '(t x a  b c y  t a e  b c k  r t x  a t x  a b c  i y t  a e c  e i b  c k r)
@@ -1884,7 +1889,9 @@ Optional argument: distance function in lambda form, for instance : (lambda (a b
   (:documentation "Possibles structures of seq based of automatically found patterns (plist)."))
 
 (defmethod rep-strct ((seq t) &key (diss 0) (l-var 0) (n nil) (criteria :length) distance-fct)
-  (let* ((x (whenlooploopwhenwhen seq diss l-var n (if distance-fct distance-fct #'(lambda (a b) (edit-dist a b)))))
+  (let* ((x (whenlooploopwhenwhen seq diss l-var n
+                                  ;; with diss 0, the default distance is only a test of identity
+                                  (or distance-fct (if (zerop diss) nil #'(lambda (a b) (edit-dist a b))))))
          (ptrns
           (case criteria
             (:length

@@ -35,7 +35,7 @@
                 ;; information
                 #:histogram #:entropy #:elt-info
                 ;; classification
-                #:mark-position #:mark-list #:mark-structure
+                #:mark-position #:mark-list #:mark-structure #:motif-structure
                 #:motif-find #:motif-list #:motif-group #:class-num #:class-sym
                 ;; graphs
                 #:graph-span #:graph-path #:graph-length #:graph-degree #:graph-nodes

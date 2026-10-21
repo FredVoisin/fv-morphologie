@@ -503,3 +503,14 @@
   ;; two empty sequences, normalized, divided by zero
   (is (approx= 0 (fv-morphologie::edit-dist1 '() '() :normalized t)))
   (is (approx= 0 (fv-morphologie::edit-dist2 '() '() :inex 1 :normalized t))))
+
+(test motif-structure-long
+  ;; 240 elements took about 6 minutes (edit distance in cubic time, a distance per window)
+  (let* ((*random-state* (seeded-random-state))
+         (s (loop repeat 240 collect (nth (random 4) '(a b c d))))
+         (r (motif-structure s)))
+    (is (plusp (length (second r))))
+    ;; each motif occurs at least twice
+    (is (every #'(lambda (k) (>= (count k (mapcan #'(lambda (p) (copy-list (cdr p))) (first r))) 2))
+               (loop for k below (length (second r)) collect k))))
+  (is (equal '(((0 0) (3 0)) ((a b c))) (motif-structure '(a b c a b c d)))))
