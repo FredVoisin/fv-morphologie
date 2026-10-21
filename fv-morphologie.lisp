@@ -445,11 +445,32 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
 	 (setf w (subseq seq n (min (+ n wind) l))
 	       v (funcall func w))
 	 (if (listp v)
-	     (setf r (append v r))
+	     (setf r (append (reverse v) r))
 	     (dotimes (i (min step (- l n)))
 	       (push v r)))
 	 (incf n step))
     (reverse r)))
+
+(defun window-mean (seq wind &optional (step 1))
+  "Mean over a window of wind values. With step 1, the window is centred on each value
+(an even wind is enlarged to the next odd size) and shrinks symmetrically at the edges,
+so the first and last values are kept. With a larger step, the mean of a window of wind
+values centred on each block of step values is repeated for the block."
+  (let* ((v (coerce seq 'vector))
+         (l (length v))
+         (wind (max 1 wind))
+         (step (max 1 step)))
+    (flet ((mean-of (start end) (mean (coerce (subseq v start end) 'list))))
+      (if (= step 1)
+          (let ((h (floor (if (evenp wind) (1+ wind) wind) 2)))
+            (loop for i below l
+                  collect (let ((k (min h i (- l 1 i))))
+                            (mean-of (- i k) (+ i k 1)))))
+          (loop for n from 0 below l by step
+                append (let* ((start (max 0 (- n (floor (- wind step) 2))))
+                              (end (min l (+ start wind)))
+                              (m (mean-of start end)))
+                         (make-list (min step (- l n)) :initial-element m)))))))
 
 ;(window-apply '(1 2 3 4 5 6 7 8 9 10 11 12) #'mean 3 3)
 ;(window-apply '(1 2 3 4 5 6 7 8 9 10 11 12) #'mean 4 1)

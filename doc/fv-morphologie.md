@@ -235,10 +235,24 @@ the same length as `seq`.
 
 #### `filt-mean (seq wind &optional step)`
 
-Sliding mean over `wind` values.
+Sliding mean over `wind` values (an integer, or a float as a fraction of the
+length of `seq`).
+
+- With `step` 1 (default), the window is centred on each value: an even
+  `wind` is enlarged to the next odd size, and at the edges the window
+  shrinks symmetrically, so the first and last values are kept and ramps are
+  left unchanged.
+- With a larger `step`, the mean of a window of `wind` values centred on
+  each block of `step` values is repeated for the whole block; with
+  `step` = `wind`, each block is replaced by its mean. A float `step` is a
+  fraction of `wind`.
+
+The result has the same length as `seq`.
 
 ```lisp
-(filt-mean '(1 2 3 4 5 6) 2)         ;=> (1.5 2.5 3.5 4.5 5.5 6.0)
+(filt-mean '(0 0 0 9 0 0 0) 3)           ;=> (0.0 0.0 3.0 3.0 3.0 0.0 0.0)
+(filt-mean '(1 2 3 4 5 6) 3)             ;=> (1.0 2.0 3.0 4.0 5.0 6.0)
+(filt-mean '(1 2 3 4 5 6 7 8 9) 3 3)     ;=> (2.0 2.0 2.0 5.0 5.0 5.0 8.0 8.0 8.0)
 ```
 
 #### `filt-lowpass (seq alpha &optional gamma)`

@@ -205,3 +205,23 @@
   (is (equal '(1 1 1 1 1 1 1) (filt-median '(1 9 1 1 1 9 1) 3.0)))
   (is (equal '(4 2 7) (filt-median '(4 2 7) 1)))
   (is (null (filt-median '() 3))))
+
+(test filt-mean-centred
+  ;; the window looked ahead: steps and peaks were moved earlier
+  (is (every #'approx= '(0 0 0 10/3 20/3 10 10 10) (filt-mean '(0 0 0 0 10 10 10 10) 3)))
+  (is (every #'approx= '(0 0 3 3 3 0 0) (filt-mean '(0 0 0 9 0 0 0) 3)))
+  ;; ramps are kept, ends included: the window shrinks symmetrically at the edges
+  (is (every #'approx= '(1 2 3 4 5 6 7 8) (filt-mean '(1 2 3 4 5 6 7 8) 3)))
+  (is (every #'approx= '(9 3 0 0 0) (filt-mean '(9 0 0 0 0) 3)))
+  ;; an even window is enlarged to the next odd size
+  (is (equal (filt-mean '(1 5 2 8 3 7) 5) (filt-mean '(1 5 2 8 3 7) 4)))
+  ;; block mode: step = wind averages each block
+  (is (every #'approx= '(2 2 2 5 5 5 8 8 8) (filt-mean '(1 2 3 4 5 6 7 8 9) 3 3)))
+  (is (every #'approx= '(3 3 3 3 3 8 8 8 8 8) (filt-mean '(1 2 3 4 5 6 7 8 9 10) 3 5)))
+  ;; a float window too small for the list used to divide by zero
+  (is (every #'approx= '(1 2 3 4 5 6) (filt-mean '(1 2 3 4 5 6) 0.01)))
+  (is (null (filt-mean '() 3))))
+
+(test window-apply-list-order
+  ;; list results were reversed within each window
+  (is (equal '(1 2 3 4 5 6) (fv-morphologie::filt-fct '(1 2 3 4 5 6) #'identity 2 2))))

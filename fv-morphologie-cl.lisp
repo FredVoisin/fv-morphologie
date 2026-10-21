@@ -90,10 +90,10 @@ Modes may be :values (default), :positions :all or :resampled"))
   (:documentation "Values replaced by their respective  windowed mean values."))
 
 (defmethod filt-mean ((seq list) (wind integer) &optional (step 1))
-    (window-apply seq #'mean wind step))
+  (fv-morphologie::window-mean seq wind (if (floatp step) (round (* step wind)) step)))
 
 (defmethod filt-mean ((seq list) (wind float) &optional (step 1))
-    (window-apply seq #'mean (round (* wind (length seq))) step))
+  (filt-mean seq (max 1 (round (* wind (length seq)))) step))
 
 ;(filt-mean '(1 2 1 1 3 4 5 6 0 0 1) 3)
 
