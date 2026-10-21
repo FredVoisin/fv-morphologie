@@ -68,7 +68,7 @@
 
 (test more-than-two-classes
   ;; the number of classes used to be capped with (min 2 classes)
-  (let ((*random-state* #+sbcl (sb-ext:seed-random-state 42) #-sbcl (make-random-state nil)))
+  (let ((*random-state* (seeded-random-state)))
     (is (= 3 (length (remove-duplicates
                       (class-num '((0 0) (0 1) (5 5) (5 6) (10 10) (10 11)) 3
                                  :centroids :iter 20))))))
@@ -79,7 +79,7 @@
 
 (test class-num-nil-mode
   ;; (case mode (nil ...)) never matched: mode nil returned nil
-  (let ((*random-state* #+sbcl (sb-ext:seed-random-state 42) #-sbcl (make-random-state nil)))
+  (let ((*random-state* (seeded-random-state)))
     (is (equal '(0 0 1 1)
                (first (class-num '((0 0) (0 1) (10 10) (10 11)) 2 nil))))))
 
@@ -124,3 +124,27 @@
     (is (= 5 (length (fv-morphologie::graph-part g :distance 9))))
     ;; nodes may be any symbols
     (is (equal '((a b) (c d)) (nth-value 1 (fv-morphologie::graph-part '((a b 1) (b c 5) (c d 1)) :distance 2))))))
+
+(test normalize-class
+  ;; repeated values that are equal by test but not eql used to give nil
+  (is (equal '(0 1 0) (fv-morphologie::normalize-class '((a) (b) (a)))))
+  (is (equal '(0 1 0) (fv-morphologie::normalize-class '("x" "y" "x"))))
+  (is (equal '(0 1 0) (fv-morphologie::normalize-class '(1 2 1.0) #'=)))
+  ;; a test given as a symbol used to be evaluated as a variable
+  (is (equal '(0 1 0) (fv-morphologie::normalize-class '(a b a) 'eq)))
+  (is (equal '(0 1 2 0) (fv-morphologie::normalize-class "abca")))
+  (is (equal '(0 1 1 2 0) (fv-morphologie::normalize-class '(3 1 1 2 3) #'=)))
+  (is (null (fv-morphologie::normalize-class '()))))
+
+(test nuees-finds-all-classes
+  ;; a random start partition with equal barycentres used to give a single
+  ;; class (17% of the runs for these 4 points)
+  (loop for seed from 0 below 200
+        do (let ((*random-state* (seeded-random-state seed)))
+             (is (equal '(0 0 1 1)
+                        (first (class-num '((0 0) (0 1) (10 10) (10 11)) 2 :centroids))))
+             (is (= 3 (length (remove-duplicates
+                               (first (class-num '((0 0) (0 1) (5 5) (5 6) (10 10) (10 11))
+                                                 3 :centroids))))))))
+  ;; no more classes than distinct points
+  (is (equal '(0 0 1) (first (class-num '((0 0) (0 0) (1 1)) 3 :centroids)))))

@@ -2263,12 +2263,13 @@ returns
   "Reordonne les classes de nueesdynamiques, l'ordre de la classe etant le numero de sa premiere occurence dans la liste des classes."
   (let ((set nil) (r nil) (marker -1))
     (when (stringp classes) (setf classes (str->symb classes)))
-    (dotimes (c (length classes) (nreverse r))
-      (if (not (member (nth c classes) set :test (eval test)))
-	  (progn (setf set (append set (list (nth c classes))))
- 		 (setf marker (1+ marker))
-		 (push marker r))
-	  (push (position (nth c classes) set) r)))))
+    ;; set: the classes already seen, as (class . number), most recent first
+    (dolist (c classes (nreverse r))
+      (let ((seen (assoc c set :test test)))
+        (if seen
+            (push (cdr seen) r)
+            (progn (push (cons c (incf marker)) set)
+                   (push marker r)))))))
 
 (defun norm-class (classes)
   "Reordonne les classes de class-1.
@@ -2319,67 +2320,72 @@ IN : string or list (of symbols or lists or strings)."
 	     do (incf (nth i c) p)))
     (mapcar #'(lambda (x) (float (/ x l))) c)))
 
-;;; The 'Dynamic Clouds' algorithm (nuees dynamiques)
+;;; The 'Dynamic Clouds' algorithm (nuees dynamiques) starts from n distinct
+;;; points of data chosen at random as centres. A class which becomes empty
+;;; receives the point farthest from its centre, so that n classes are found
+;;; as long as data has at least n distinct points.
 
 (defgeneric nuees (data n &optional dist)
   (:documentation   "'Nuees dynamiques' algorithm :
-Classify data into n classes.
+Classify data into n classes (n integer), or around the initial centres n (n list of points).
 Returns: classes of data, respective centers coordinates and iterations.
-Abort if number of found classes lower than n."))
+There are fewer than n classes only if data has fewer than n distinct points."))
+
+(defun random-centres (data n)
+  "n distinct points of data chosen at random (all of them if there are fewer)."
+  (let ((points (remove-duplicates data :test #'equalp)))
+    (loop repeat (min n (length points))
+          collect (let ((p (nth (random (length points)) points)))
+                    (setf points (remove p points :test #'eq))
+                    (copy-list p)))))
 
 (defmethod nuees ((data list) (n integer) &optional (dist #'dist-euclid))
-  (let ((l (length data))
-        (centres (make-list n))
-        (r (rand-classes (length data) n)) ;; data)) ; classement aleatoire
-        (iter 0)
-        (nc (make-list n))
-        (z 0)
-	tmp nr)
-    (when (not dist) (setf dist #'dist-euclid))
-    (loop until (if tmp (equalp (car tmp) (cadr tmp)) nil) do
-          (incf iter)
-          (setf tmp (list (copy-tree r) (car tmp)))
-          (dolist (i (remove-duplicates r))  ; mise a jour des centres de gravite de chaque classe
-            (let ((elts (loop for j from 0 to (1- l)
-                              when (= i (nth j r))
-			   collect (nth j data))))
-              (when elts (setf (nth i centres) (isobarycentre elts)))))
-          (loop for i from 0 to (1- l) do ; attribution des classes selon centre
-                (let ((d (mapcar #'(lambda (c) (when c (funcall dist c (nth i data)))) centres)))
-                  (setf (nth i r) (position-if #'(lambda (x) (= x (apply #'min d))) d)))))
-    (setf nr (normalize-class r #'=)) ; output
-    (loop until (or (not (member nil nc)) (= z l)) do
-          (setf (nth (nth z nr) nc) (nth (nth z r) centres))
-	 (incf z))
-    (values nr nc iter)))
+  (nuees data (random-centres data n) dist))
 
 ;(nuees '((0 0) (.1 -.1) (.1 0)  (1 1) (1.1 1.1)  (.9 1) (1.9 .5)  (-2 -2) (-2.1 -1.5)) 3)
 ;(nuees '((0) (.1) (.11)  (1) (1.1)  (.9) (1.9)  (-2) (-2.1)) 3)
 
+(defun fill-empty-classes (r data centres dist)
+  "Gives each empty class of r the point farthest from its centre, taken from a class with several points."
+  (dotimes (k (length centres) r)
+    (unless (member k r)
+      (let ((far nil) (dmax -1))
+        (loop for i from 0 for c in r for p in data
+              do (when (> (count c r) 1)
+                   (let ((d (funcall dist (nth c centres) p)))
+                     (when (> d dmax) (setf dmax d far i)))))
+        (when far
+          (setf (nth far r) k
+                (nth k centres) (copy-list (nth far data))))))))
+
 (defmethod nuees ((data list) (n list) &optional (dist #'dist-euclid))
-  (let ((l (length data))
-        (centres n)
-        (r (make-list (length data))) ; n)) ;; data)) ; classement aleatoire
-        (iter 0)
-        (nc (make-list (length n)))
-        (z 0)
-	tmp nr)
+  (let* ((l (length data))
+         (centres (copy-tree n))
+         (r (make-list l))
+         (fill (<= (length centres) (length (remove-duplicates data :test #'equalp))))
+         (iter 0)
+         (nc (make-list (length centres)))
+         (z 0)
+         tmp nr)
     (when (not dist) (setf dist #'dist-euclid))
-    (loop until (if tmp (equalp (car tmp) (cadr tmp)) nil) do
-          (incf iter)
-          (setf tmp (list (copy-tree r) (car tmp)))
-          (loop for i from 0 to (1- l) do ; attribution des classes selon centre
-                (let ((d (mapcar #'(lambda (c) (when c (funcall dist c (nth i data)))) centres)))
-                  (setf (nth i r) (position-if #'(lambda (x) (= x (apply #'min d))) d))))
-          (dolist (i (remove-duplicates r))  ; mise a jour des centres de gravite de chaque classe
-            (let ((elts (loop for j from 0 to (1- l)
-                              when (= i (nth j r))
-                              collect (nth j data))))
-              (when elts (setf (nth i centres) (isobarycentre elts))))))
+    (loop until (or (if tmp (equalp (car tmp) (cadr tmp)) nil)
+                    (>= iter 1000))
+          do (incf iter)
+             (setf tmp (list (copy-tree r) (car tmp)))
+             (loop for i from 0 to (1- l) do ; attribution des classes selon centre
+               (let ((d (mapcar #'(lambda (c) (when c (funcall dist c (nth i data)))) centres)))
+                 (let ((m (apply #'min (remove nil d))))
+                   (setf (nth i r) (position-if #'(lambda (x) (and x (= x m))) d)))))
+             (when fill (fill-empty-classes r data centres dist))
+             (dolist (i (remove-duplicates r))  ; mise a jour des centres de gravite de chaque classe
+               (let ((elts (loop for j from 0 to (1- l)
+                                 when (= i (nth j r))
+                                   collect (nth j data))))
+                 (when elts (setf (nth i centres) (isobarycentre elts))))))
     (setf nr (normalize-class r #'=)) ; output
     (loop until (or (not (member nil nc)) (= z l)) do
-          (setf (nth (nth z nr) nc) (nth (nth z r) centres))
-	 (incf z))
+      (setf (nth (nth z nr) nc) (nth (nth z r) centres))
+      (incf z))
     (values nr nc iter)))
 
 (defgeneric dynclouds (data n &optional iter dist)

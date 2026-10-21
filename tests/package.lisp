@@ -48,5 +48,12 @@
 (def-suite fv-morphologie
   :description "All fv-morphologie tests.")
 
+(defun seeded-random-state (&optional (seed 42))
+  "A random state seeded with SEED, where the implementation allows it,
+so that the tests of the random algorithms are reproducible."
+  #+sbcl (sb-ext:seed-random-state seed)
+  #+ecl (make-random-state seed)
+  #-(or sbcl ecl) (make-random-state t))
+
 (defun approx= (a b &optional (epsilon 1e-6))
   (< (abs (- a b)) epsilon))
