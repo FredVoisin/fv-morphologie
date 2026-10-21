@@ -510,8 +510,10 @@ Modes:
   Removing pairs may remove a peak and keep a neighbouring, slightly lower
   one.
 
-As with the other methods, the signature does not include the first and last
-values (`exsample` adds them).
+With all the methods, a flat extremum (a plateau which is a minimum or a
+maximum) is given once, at its first position; with `:minflexmax`, a plateau
+which is not an extremum gives one inflexion, at its first position. The
+signature does not include the first and last values (`exsample` adds them).
 (Until this version, `:major-extrema` and `:landmarks` silently gave the
 `:minflexmax` result.)
 

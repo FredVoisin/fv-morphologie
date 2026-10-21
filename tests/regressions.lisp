@@ -395,3 +395,18 @@
     (is (null (int-signature '(1 2 3 4) :landmarks 0)))
     (is (null (int-signature '() :landmarks 0)))
     (is (= 15 (length (exsample r :landmarks :resampled 0.6))))))
+
+(test signature-flat-extrema
+  ;; a flat extremum is given once, at its first position, by all the methods
+  ;; (:minmax ignored plateaus, :minflexmax marked each of their points as an inflexion)
+  (dolist (m '(:minmax :minflexmax :major-extrema :landmarks))
+    (is (equal '((1 -1 0)) (int-signature '(9 0 0 0 9) m 0)))
+    (is (equal '((1 1 5)) (int-signature '(0 5 5 5 5 0) m 0)))
+    ;; extrema alternate (:minmax gave two minima in a row)
+    (is (equal '((1 1 4) (2 -1 0) (3 1 4) (5 -1 0)) (int-signature '(0 4 0 4 4 0 4) m 0))))
+  ;; :minflexmax: a plateau which is not an extremum is one inflexion, at its first position
+  (is (equal '((3 0 5)) (int-signature '(0 0 0 5 5 5) :minflexmax 0)))
+  (is (equal '((1 0 3) (3 1 6)) (int-signature '(0 3 3 6 6 0) :minflexmax 0)))
+  (is (null (int-signature '(0 0 0 5 5 5) :minmax 0)))
+  ;; sequences without plateaus are unchanged
+  (is (equal '((2 1 4) (4 -1 1) (6 1 6)) (int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0))))

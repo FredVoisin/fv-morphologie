@@ -772,6 +772,28 @@ from s(0) = x(0) and b(0) = x(1) - x(0)."
     (if mode lm (remove-if #'(lambda (x) (zerop (cadr x))) lm))))
 
 
+(defun flat-primitives (seq thres &optional (mode t) (inflex-thres 2))
+  "primitives of seq where each run of equal values (plateau) counts as a single point, at its first position:
+a flat extremum is given once, as a minimum or a maximum. With mode t (inflexions), a plateau which is
+not an extremum gives one inflexion, at its first position."
+  (let* ((v (coerce seq 'vector))
+         (last (1- (length v)))
+         (runs (loop with i = 0
+                     while (<= i last)
+                     collect (let ((j (loop for k from i
+                                            while (and (< k last) (= (aref v (1+ k)) (aref v i)))
+                                            finally (return k))))
+                               (prog1 (list i (aref v i) (1+ (- j i)))
+                                 (setf i (1+ j))))))
+         (lm (mapcar #'(lambda (p) (list (first (nth (first p) runs)) (second p) (third p)))
+                     (primitives (mapcar #'second runs) thres mode inflex-thres))))
+    (when mode
+      (dolist (run runs)
+        (destructuring-bind (i value n) run
+          (when (and (> n 1) (< 0 i last) (not (assoc i lm)))
+            (push (list i 0 value) lm)))))
+    (sort lm #'< :key #'first)))
+
 (defun major-extrema (seq r &optional (dist #'(lambda (a b) (abs (- a b)))))
   "Important extrema of seq (Fink & Gandhi, 2007): a_m is an important minimum if there are i < m < j
 such that a_m is the minimum of a_i..a_j, dist(a_m, a_i) >= r and dist(a_m, a_j) >= r (and so for maxima).
@@ -893,8 +915,8 @@ difference between two values (|a - b| by default), or a list (D criterion), cri
          (thres1 (if thres thres 0.0))
          (thres2 (if (integerp option) option (floor (* (- max min) (if (numberp option) option 0) (length seq)))))) ;) (* y x th)
     (case mode
-      (:minmax (primitives seq thres1 nil thres2))
-      (:minflexmax (primitives seq thres1 t thres2))
+      (:minmax (flat-primitives seq thres1 nil thres2))
+      (:minflexmax (flat-primitives seq thres1 t thres2))
       (:major-extrema (major-extrema seq thres1
                                      (if (functionp option) option #'(lambda (a b) (abs (- a b))))))
       (:landmarks (landmarks seq thres1 option))
