@@ -1077,7 +1077,9 @@ that node; all nodes if `node` is `nil`).
 
 Imports data from a text file into a list. Modes:
 
-- `t` (*lines*, default): each line becomes a list of symbols or numbers;
+- `t` (*lines*, default): each line becomes a list of symbols or numbers,
+  even a line of one word (`((1) (2) (3))` for one number per line); empty
+  lines are ignored;
 - `nil` (*flat*): one flat list of strings;
 - `:ascii-7b`, `:ascii-8b`: reads the characters as 7-bit or 8-bit ASCII
   codes, useful when some characters cannot be read by Lisp.

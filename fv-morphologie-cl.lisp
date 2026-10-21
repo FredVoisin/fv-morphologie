@@ -58,10 +58,7 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
   (split-list-using-marks seq marks))
 
 (defmethod split ((seq string) &optional (marks " "))
-  (let ((r (split-string seq (or marks " "))))
-    (cond ((listp r) r)
-          ((zerop (length (string-trim '(#\Space #\Tab #\Newline #\Return) r))) nil)
-          (t (list r)))))
+  (split-string seq marks))
 
 (defgeneric num>base (num base)
   (:documentation "NUM>BASE: converts an number to its representation in base <base>."))

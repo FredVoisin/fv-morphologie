@@ -437,3 +437,21 @@
   (is (equal "c" (fv-morphologie::make-name-from-path "a.b/c.dot")))
   (is (equal "y" (fv-morphologie::make-name-from-path #p"/x/y.png")))
   (is (equal "span-graph" (fv-morphologie::make-name-from-path t))))
+
+(test split-string-always-a-list
+  ;; a string without marks used to be returned as is, not as a list
+  (is (equal '("hello") (split-string "hello" ",")))
+  (is (null (split-string "" ",")))
+  (is (null (split-string "  " ",")))
+  (is (equal '("a,b" "c") (split-string "a,b c" nil)))
+  (is (equal '("12" "345" "6789") (split-string "12   345-6789" "- ")))
+  ;; read-text: each line is a list, even of one word (as documented)
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (with-open-file (out file :direction :output :if-exists :supersede)
+      (format out "1~%2 3~%~%4~%"))
+    (is (equal '((1) (2 3) (4)) (read-text (namestring file))))
+    (is (equal '("1" "2" "3" "4") (read-text (namestring file) :mode nil))))
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (with-open-file (out file :direction :output :if-exists :supersede)
+      (format out "single"))
+    (is (equal '("single") (read-text (namestring file) :mode nil)))))

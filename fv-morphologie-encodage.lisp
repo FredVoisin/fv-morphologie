@@ -222,22 +222,19 @@ Different modes can be selected into optional menu"))
 ;;; SOME CONVERSIONS (lists, strings, char...)
 
 (defun split-string (string marks)
-  ;; marks + space + tabulation : (code2string 9)...
-  (if marks
-      (let ((pos (findpos (append (string2code marks) (loop for i from 0 to 32 collect i))
-			   (string2code string)))
-	    words)
-	(if pos
-	    (progn (setf words (list (subseq string 0 (car pos))))
-		   (dotimes (i (length pos))
-		     (push (subseq string
-				   (1+ (nth i pos))
-				   (nth (1+ i) pos))
-			   words))
-		   (nreverse (remove-if #'(lambda (x) (zerop (length x))) words)))
-	    string))
-      string))
- 
+  "The list of the words of string, split at the characters of the string marks (nil: none)
+and at blanks (spaces, tabulations, newlines and other characters of code up to 32).
+Empty words are removed: an empty or blank string gives nil."
+  (let ((words nil)
+        (start nil))
+    (flet ((sep-p (c) (or (<= (char-code c) 32) (and marks (find c marks)))))
+      (dotimes (i (length string))
+        (if (sep-p (char string i))
+            (when start (push (subseq string start i) words) (setf start nil))
+            (unless start (setf start i))))
+      (when start (push (subseq string start) words))
+      (nreverse words))))
+
 ;(split-string "12   345-6789" "- ")
 
 (defgeneric string2sym (s)
