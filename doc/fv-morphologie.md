@@ -426,16 +426,21 @@ neato is part of [Graphviz](https://graphviz.org/)
 Arguments:
 
 - `out`: `t` or `nil` prints the dot text to the listener; a stream writes to
-  it; a pathname writes a `.dot` file and, if the type is `png` or `gif`,
-  also runs `neato` to make the image.
-- `:dis`: how much the drawing may distort the lengths (0.0–1.0).
-- `:scale`: scale of the shortest edge.
+  it; a pathname writes a `.dot` file and, unless its type is `dot`, also
+  runs `neato` to make the image in the format of its type (`svg`, `pdf`,
+  `png`, `gif`..., `png` without type). If `neato` cannot be run, the `.dot`
+  file is still written, and an error says so.
+- `:dis`: how much the drawing may distort the lengths (0.0–1.0), passed to
+  `neato` as the `w` attribute of the edges.
+- `:scale`: scale of the shortest edge, for drawing the edges of length 0
+  (a number; `t` is 1, `nil` 0.2).
 - `:shape`: node shape (a Graphviz shape name such as `"ellipse"`,
   `"plaintext"`, `"point"`), or a list of two shapes: ordinary nodes, and
   nodes joined by zero-length edges.
 - `:legend`: label the edges with their lengths (`t` by default).
 
-Edges of length 0 are drawn in blue.
+Edges of length 0 are drawn in blue, with the length of the shortest other
+edge times `:scale` (or `:scale` if all the edges have length 0).
 
 ```lisp
 (graph>dot '((a b 1) (a c 2) (b d 0)) "/tmp/graph.png")

@@ -31,34 +31,53 @@
            (pathname-name (pathname path)))
       "span-graph"))
 
+(defun dot-id (x)
+  "x as a quoted DOT identifier: strings as they are, other objects printed without package prefix."
+  (let ((s (if (stringp x) x (let ((*package* (if (symbolp x) (or (symbol-package x) *package*) *package*)))
+                                (princ-to-string x)))))
+    (with-output-to-string (o)
+      (write-char #\" o)
+      (loop for c across s
+            do (when (member c '(#\" #\\)) (write-char #\\ o))
+               (write-char c o))
+      (write-char #\" o))))
+
+(defun dot-shape (shape)
+  "A Graphviz shape name, case kept (Mrecord, box3d...)."
+  (if (stringp shape) shape (string-downcase (string shape))))
+
 (defun 2dot (graph min dis shape1 shape2 out legend &key (name "span-graph"))
   (let ((date (date))
         (nid (remove-if #'(lambda (x) (zerop (third x))) graph))
         (ide (remove-if-not #'(lambda (x) (zerop (third x))) graph)))
-    (format out "graph ~S {~&" (make-name-from-path name))
+    (format out "graph ~A {~&" (dot-id (make-name-from-path name)))
     (format out "/* generated with fv-morphologie:graph>dot ~S ~D ~:R at ~Sh~S */~&"
             (first date) (nth (1- (cadr date)) *months*) (third date) (fourth date) (fifth date))
-    (format out " node [shape=~(~S~), font=Helvetica, fontsize=12, color=black, fontcolor=black];~&"
-	    (read-from-string shape1))
+    (format out " node [shape=~A, font=Helvetica, fontsize=12, color=black, fontcolor=black];~&"
+	    (dot-id (dot-shape shape1)))
     (format out " edge [font=Helvetica,fontsize=10, color=black, labelfloat=true];~&")
     (dolist (n nid)
-      (if (stringp (car n))
-        (format out "~S -- ~S [w=~S, len=~,6F, label=~S];~&"
-                (car n) (cadr n) dis (format nil "~3F" (third n)) (if legend (third n) " "))  
-      (format out " \"~S\" -- \"~S\" [w=~S, len=~,6F, label=~S];~&"
-              (car n) (cadr n) dis (format nil "~3F" (third n)) (if legend (third n) " "))))
+      ;; len: the length itself (it was formatted on 3 characters first: 12.5 gave 13.)
+      (format out " ~A -- ~A [w=~A, len=~,6F, label=~A];~&"
+              (dot-id (car n)) (dot-id (cadr n)) dis (float (third n))
+              (dot-id (if legend (third n) " "))))
     (when ide
-      (format out " node [shape=~(~S~), font=Helvetica, fontsize=12, color=blue, fontcolor=blue];~&"
-	      (read-from-string shape2))
+      (format out " node [shape=~A, font=Helvetica, fontsize=12, color=blue, fontcolor=blue];~&"
+	      (dot-id (dot-shape shape2)))
       (format out " edge [font=Helvetica,fontsize=10, color=blue];~&")
       (dolist (n ide)
-        (format out " \"~S\" -- \"~S\" [len=~,6F];~&" (car n) (cadr n) min)))
+        (format out " ~A -- ~A [len=~,6F];~&" (dot-id (car n)) (dot-id (cadr n)) (float min))))
     (format out "}~&")))
+
+(defun graph-min-length (graph k)
+  "The length drawn for edges of length 0: the shortest other length times k (k if there is none)."
+  (let ((lengths (remove-if #'zerop (mapcar #'third graph))))
+    (* (if lengths (reduce #'min lengths) 1) k)))
 
 #-Lispworks
 (defun graph2dot (graph dis mode shape out &optional (legend t))
   (let* ((k (if (numberp mode) mode (if mode 1 0.2)))
-         (min (* (car (sort (remove-if #'zerop (mapcar #'third graph)) '<)) k))
+         (min (graph-min-length graph k))
          shape1 shape2)
     (when (not out) (setf out t))
     (if (not shape) (setf shape1 "ellipse" shape2 "ellipse")
@@ -76,23 +95,29 @@
                                      :if-does-not-exist :create)
                (2dot graph min dis shape1 shape2 stream legend :name out))
              (when (not (equalp type "dot"))
-               (let ((fmt (if (or (equalp type "gif") (equalp type "png")) type "png")))
-                 (shell-command (list "neato"
-                                      (format nil "-T~(~A~)" fmt)
-                                      "-o" (namestring (make-pathname :directory dir
-                                                                      :name file
-                                                                      :type fmt))
-                                      (namestring (make-pathname :directory dir
-                                                                 :name file
-                                                                 :type "dot")))
-                                :error-output t)))))
+               ;; the type of the file is the output format of neato (svg, pdf, png, gif...)
+               (let ((fmt (string-downcase (or type "png")))
+                     (dot (namestring (make-pathname :directory dir :name file :type "dot"))))
+                 (handler-case
+                     (shell-command (list "neato"
+                                          (format nil "-T~A" fmt)
+                                          "-o" (namestring (make-pathname :directory dir
+                                                                          :name file
+                                                                          :type fmt))
+                                          dot)
+                                    ;; neato's messages to the terminal of the Lisp
+                                    ;; (:error-output t is not supported by ECL)
+                                    :error-output :interactive)
+                   (error (c)
+                     (error "graph>dot: the dot file ~A is written, but neato (Graphviz) could not make the ~A file: ~A"
+                            dot fmt c)))))))
           (t (2dot graph min dis shape1 shape2 out legend :name out))))
   (format nil "~G" out))
 
 #+Lispworks
 (defun graph2dot (graph dis mode shape out &optional (legend t))
   (let* ((k (if (numberp mode) mode (if mode 1 0.2)))
-         (min (* (car (sort (remove-if #'zerop (mapcar #'third graph)) '<)) k))
+         (min (graph-min-length graph k))
          shape1 shape2
          (neato "/usr/local/bin/neato"))
     (when (not out) (setf out t))
@@ -122,7 +147,7 @@
                 :if-input-does-not-exist :error
                 :if-output-exists :supersede
                 ))))
-          (t (2dot graph min dis shape1 shape2 out legend :name name)))
+          (t (2dot graph min dis shape1 shape2 out legend :name out)))
     (format nil "~G" out)))
 
 ;(graph2dot '((a b 1) (a c 2) (a d 3) (b k 8) (b j 0)) 0 .1 nil t)
