@@ -97,11 +97,15 @@ Different modes can be selected into optional menu"))
 
 ;(string2code " ")
 
+;(defun concnum (list res)
+;  (when (not res) (setf res 0))
+;  (if (not list) res
+;    (let ((x (car list)))
+;      (concnum (cdr list) (+ (* (expt 10 (1+ (mod x 10))) res) x)))))
+
 (defun concnum (list res)
-  (when (not res) (setf res 0))
-  (if (not list) res
-    (let ((x (car list)))
-    (concnum (cdr list) (+ (* (expt 10 (1+ (% x 10))) res) x)))))
+  (declare (ignore res))
+  (parse-integer (format nil "~{~D~}" list)))
 
 ;(concnum '(0 1 2 3 4 5 6 7 8 9 0 10 11) 0)
 
@@ -117,12 +121,21 @@ Different modes can be selected into optional menu"))
 (defmethod concaten ((list t))
   (values list))
 
+;(defmethod concaten ((list list))
+;  (cond ((eval `(and .,(mapcar #'numberp list)))
+;	 (concnum list 0))
+;	((eval `(and ., (mapcar #'stringp list)))
+;	 (eval `(concatenate 'string .,list)))
+;	(t (concalpha list nil))))
+
 (defmethod concaten ((list list))
-  (cond ((eval `(and .,(mapcar #'numberp list)))
+  (cond ((every #'numberp list)
 	 (concnum list 0))
-	((eval `(and ., (mapcar #'stringp list)))
-	 (eval `(concatenate 'string .,list)))
+	((every #'stringp list)
+	 (apply #'concatenate 'string list))
 	(t (concalpha list nil))))
+
+
 
 (defgeneric ascii2string (ascii)
   (:documentation "Converts ascii code to caracters into a string."))
@@ -227,6 +240,9 @@ Different modes can be selected into optional menu"))
 (defmethod all2char-code ((datum integer))
   datum)
 
+(defmethod all2char-code ((datum character))
+  (char-code datum))
+
 (defmethod all2char-code ((datum list))
   (mapcar #'all2char-code datum))
 
@@ -249,12 +265,13 @@ Different modes can be selected into optional menu"))
 (defmethod  alphanump ((datum character) &optional (exceptions nil) (8bits nil))
   (alphanump (char-code datum) exceptions 8bits))
 
-;(defmethod alphanump ((datum list))
-;  (mapcar #'alphanump datum))
-
 (defmethod alphanump ((datum string) &optional (exceptions nil) (8bits nil))
-  (eval `(and .,(alphanump (string2code datum) exceptions 8bits))))
- 
+  (every (lambda (c) (alphanump c exceptions 8bits)) (string2code datum)))
+
+(defmethod alphanump ((datum list) &optional (exceptions nil) (8bits nil))
+  (every (lambda (d) (alphanump d exceptions 8bits)) datum))
+
+
 ;;;;;;;;;;;;;;;;
 ;;; numeric
 

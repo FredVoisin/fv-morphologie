@@ -1191,12 +1191,12 @@ By symbolic dimensions, I consider a structured list of 'arbitrary' symbols desc
 
 (defmethod commun-elt ((set1 list) (set2 list) &key test key)
   (when (not test) (setf test #'equalp))
-  (when (not key) (setf test #'identity))
+  (when (not key) (setf key #'identity))
   (intersection set1 set2 :test test :key key))
 
 (defmethod commun-elt ((set1 list) (set2 null) &key test key)
  (when (not test) (setf test #'equalp))
- (when (not key) (setf test #'identity))
+ (when (not key) (setf key #'identity))
  (let ((r nil) (l (length set1)))
   (dotimes (i l (nreverse r))
    (dotimes (j (- l i 1))
@@ -2414,23 +2414,38 @@ The second argument <dist> is the distance function (#'dist-euclid by default).
 (defgeneric 1d-class (data n &optional fct)
   (:documentation "quantifies data by partitioning dx."))
 
+(defun 1d-cut-centres (sx cuts)
+  "Means of the segments of the sorted list sx, cut after each position of cuts."
+  (let ((start 0))
+    (loop for end in (append (sort (copy-list cuts) '<) (list (1- (length sx))))
+          collect (isobarycentre (mapcar #'list (subseq sx start (1+ end))))
+          do (setf start (1+ end)))))
+
+(defun 1d-nuees (data centres)
+  "Runs the dynamic clouds algorithm on 1D data from the initial centres."
+  (multiple-value-bind (r c i)
+      (nuees (mat-transpose (list data (make-list (length data) :initial-element 0)))
+             (mapcar #'(lambda (x) (list (car x) 0)) centres))
+    (list r (mapcar #'car c) i)))
+
 (defmethod 1d-class ((data list) (n null) &optional (fct #'identity))
   (declare (ignore n))
-  (let* ((sx (sort (copy-tree data) '<))
-         (dx (dx sx))
-         px c2)
-    (setf c2 (nuees (mat-transpose (list (mapcar fct dx) (make-list (length dx) :initial-element 0))) 2)
-          px (allpos 1 c2))
-    (multiple-value-bind (r c i)
-        (nuees (mat-transpose (list data (make-list (length data) :initial-element 0)))
-               (mat-transpose (list (mapcar #'(lambda (x) (nth x sx)) px) (make-list (length px) :initial-element 0))))
-      (values (list r (mapcar #'car c) i)))))
+  (let* ((sx (sort (copy-list data) '<))
+         (fx (mapcar fct (dx sx)))
+         (c2 (nuees (mat-transpose (list fx (make-list (length fx) :initial-element 0))) 2))
+         ;; the class of the largest gaps
+         (big (nth (position (apply #'max fx) fx) c2)))
+    (1d-nuees data (1d-cut-centres sx (allpos big c2)))))
 
 (defmethod 1d-class ((data list) (n integer) &optional (fct #'identity))
-  (let ((x (1d-class data nil fct)))
-    (loop while (> (length (cadr x)) n)
-       do (setf x (1d-class (mapcar #'(lambda (a) (nth a (cadr x))) (car x)) nil fct)))
-    (values x)))
+  (let* ((sx (sort (copy-list data) '<))
+         (fx (mapcar fct (dx sx)))
+         (k (min (1- n) (count-if #'plusp fx)))
+         ;; positions of the n-1 largest gaps
+         (cuts (mapcar #'cdr (subseq (stable-sort (loop for g in fx for i from 0 collect (cons g i))
+                                                  '> :key #'car)
+                                     0 k))))
+    (1d-nuees data (1d-cut-centres sx cuts))))
 
 (defun -reverse (list r)
   "A special working reverse for dotted lists."
@@ -2530,7 +2545,7 @@ If no key (by default), the test apply to the element itself."))
   "Split a tree into partitions by cuting edges wich have max dist."
   (if (< (length tree) 2)
       (if (= 1 (length (car tree))) tree (mapcar #'list (mapcar  #'list (2first (car tree)))))
-      (let* ((s (sort tree '> :key #'third))
+      (let* ((s (sort (copy-list tree) '> :key #'third))
 	     (u (let ((n (remove-if #'(lambda (x) (< (third x) (third (car s)))) s)))
 		  (if mode n (nth (random (length n)) n))))
 	     ;(e (mapcar #'2first tree))
@@ -2562,59 +2577,68 @@ If no key (by default), the test apply to the element itself."))
 				       :test #'equalp))
 	 r))))
 
-(defgeneric part-graph (graph  mode)
-  (:documentation "Does a partition of a graph <graph>."))
+(defgeneric part-graph (graph mode &optional n)
+  (:documentation "Does a partition of a graph <graph>, into <n> parts if <n> is given."))
 
-(defmethod part-graph ((graph list) (mode symbol))
+(defmethod part-graph ((graph list) (mode symbol) &optional (n nil))
   (case mode
-    (:distance (part-tree-dist graph t))
+    ((nil :distance) (if n (part-tree-n graph n) (part-tree-dist graph t)))
     (t (message "Actually one mode is avalaible, please use :distance"))))
 
-(defun mmax (&rest x)
-  (if x (apply #'max (remove nil x)) x))
+(defun tree-components (n-nodes edges)
+  "Connected components of the graph of nodes 0..n-nodes-1 and edges (i j d):
+for each node, the class of its component, numbered from 0 by order of first node."
+  (let ((root (make-array n-nodes)))
+    (dotimes (i n-nodes) (setf (aref root i) i))
+    (labels ((find-root (i)
+               (if (= i (aref root i)) i
+                   (setf (aref root i) (find-root (aref root i))))))
+      (dolist (e edges)
+        (let ((a (find-root (first e))) (b (find-root (second e))))
+          (unless (= a b) (setf (aref root (max a b)) (min a b)))))
+      (let ((roots (loop for i below n-nodes collect (find-root i))))
+        (normalize-class roots #'=)))))
 
-(defun feuille-p (self)
-  (if (not (cdr self))
-      (null (cdar self))
-      (null (cadr self))))
-
-;(feuille-p '((1)))
-;(feuille-p '((1) (0)))
-;(feuille-p '((1 0)))
+(defun part-tree-n (tree n)
+  "Split a tree into n partitions by cutting its n-1 longest edges (the first one in the tree if equal).
+Returns the edges of each partition (((node)) for a single node) and the nodes of each partition."
+  (let* ((nodes (remove-duplicates (append (mapcar #'first tree) (mapcar #'second tree))
+                                   :test #'equalp :from-end t))
+         (cut (subseq (stable-sort (copy-list tree) '> :key #'third)
+                      0 (min (max 0 (1- n)) (length tree))))
+         (kept (remove-if #'(lambda (e) (member e cut :test #'eq)) tree))
+         (comp (tree-components (length nodes)
+                                (mapcar #'(lambda (e) (list (position (first e) nodes :test #'equalp)
+                                                            (position (second e) nodes :test #'equalp)))
+                                        kept)))
+         (parts (loop for c from 0 to (if comp (apply #'max comp) -1)
+                      collect (loop for x in nodes for k in comp when (= k c) collect x))))
+    (values (mapcar #'(lambda (p)
+                        (or (remove-if-not #'(lambda (e) (member (first e) p :test #'equalp)) kept)
+                            (list p)))
+                    parts)
+            parts)))
 
 (defun s-class (data n &optional (norm nil) (change 1) (insert 1) (delete 1) (inex 1) (mst nil)) ; (dist #'e-dist 1 1 .5)
-  "Classification of symbolic data according to their ressemblance, by clustering the minimum spanning tree of the list of data."
+  "Classification of symbolic data into n classes according to their ressemblance:
+the n-1 longest edges of the minimum spanning tree of the data are cut (single linkage).
+Returns the class of each datum, numbered by order of first appearance, and the list of classes."
   (let* ((symlist (remove-duplicates data :test #'equalp))
-         (symdist (edit-dist symlist nil change insert delete inex norm))
-         ;; une distance (metrique) quelconque (if (atom dist) (funcall dist &rest args
-         (symtab (loop for i from 0 for s in symlist collect (list i s)))
-         (grm (if mst mst (minimum-spanning-tree symdist)))
-         (r (part-tree-dist grm t)) ;; if (numberp mode >>>dist) 
-         (classes (list))
-         tmp) ; nr)
-    (loop until (or (>= (length r) n)
-                    (null (remove-if #'(lambda (x) (feuille-p x)) r))) ; ou si tous singletons
-          do (let* ((d (mapcar #'(lambda (p) (mapcar #'third p)) r))
-                 (max  (apply #'mmax (mapcar #'(lambda (x) (apply #'mmax (remove nil x))) d)))
-                 (k (remove 'nil (loop for e in d for j from 0 when (member max e)  collect j)))
-                 (kr (mapcar #'(lambda (x) (nth x r)) k)))
-            (loop for kri in kr for ki in k do
-                  (if (feuille-p kri)
-                      (setf r (append  (subseq r 0 ki) (list kri) (subseq r (1+ ki))))
-                    (let ((pkr  (part-tree-dist kri t)))
-                      (setf r (remove kri (append pkr r))))))))
-    (setf classes
-          (loop for p in r for i from 0
-	     collect (list i (remove-duplicates (mapcar #'(lambda (x) (assoc x symtab)) 
-							(apply #'append p)) :test #'equalp))))
-    (loop for c in classes do
-          (let ((elts (mapcar #'cadr (cadr c))))
-            (loop for e in elts do
-                  (when e
-                    (push (list e (car c)) tmp)))))
-    (values (loop until (null data)
-	       collect (cadr (assoc (pop data) tmp :test #'equalp)))
-	    classes)))
+         (grm (cond (mst mst)
+                    ((cdr symlist)
+                     (minimum-spanning-tree (edit-dist symlist nil change insert delete inex norm)))
+                    (t nil)))
+         ;; the edges kept: all but the n-1 longest (the first one in the tree if equal)
+         (kept (nthcdr (min (max 0 (1- n)) (length grm))
+                       (stable-sort (copy-list grm) '> :key #'third)))
+         (symclass (tree-components (length symlist) kept))
+         (class-of (mapcar #'(lambda (d) (nth (position d symlist :test #'equalp) symclass)) data))
+         (renum (normalize-class class-of #'=)))
+    (values renum
+            (loop for c from 0 to (if renum (apply #'max renum) -1)
+                  collect (list c (loop for s in symlist for i from 0
+                                        when (= c (nth (position s data :test #'equalp) renum))
+                                          collect (list i s)))))))
 
 (defun s-class-with-fixed (data n fixed &optional (fixed-dist nil) (norm nil) (mode t) (change 1) (insert 1) (delete 1) (inex 1) (mst nil))
   (declare (ignore mode))

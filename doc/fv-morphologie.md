@@ -83,12 +83,12 @@ About:
 
 ## Installation and loading
 
-The library is an ASDF system with no dependency outside ASDF/UIOP. Make the
-project directory visible to ASDF (for example with a symlink in
-`~/quicklisp/local-projects/`), then:
+The library is an ASDF system with no dependency outside ASDF/UIOP. Clone
+or symlink the project directory into `~/quicklisp/local-projects/` (or
+`~/common-lisp/` for plain ASDF), then:
 
 ```lisp
-(asdf:load-system :fv-morphologie)
+(ql:quickload :fv-morphologie)      ; or (asdf:load-system :fv-morphologie)
 (in-package :fv-morphologie)
 ```
 
@@ -97,7 +97,8 @@ All the examples below are evaluated in the `:fv-morphologie` package.
 - `graph>dot` needs [Graphviz](https://graphviz.org/) (`neato`) to produce
   images.
 - The tests use [FiveAM](https://github.com/lispci/fiveam), only for testing
-  the code: `(asdf:test-system :fv-morphologie)`.
+  the code: `(ql:quickload :fv-morphologie/tests)` then
+  `(asdf:test-system :fv-morphologie)`.
 
 In PWGL and OpenMusic, fv-morphologie required the
 [ompw](http://kiliansprotte.de/lisp/#ompw) library (Kilian Sprotte); the
@@ -456,14 +457,27 @@ not kept.
 (split '(a b x c d x e) '(x))        ;=> ((A B) (C D) (E))
 ```
 
-#### `graph-part (graph &optional mode)`
+#### `graph-part (graph &optional mode n)`
 
 Partitions a tree by removing its longest edge(s). The only mode is
-`:distance`. Experimental.
+`:distance` (the default). Experimental.
+
+- Without `n`, all the edges of maximum length are cut, so the number of
+  parts depends on how many edges share that length.
+- With an integer `n`, exactly the `n − 1` longest edges are cut (among equal
+  edges, the first one in the tree), giving `n` parts — never more than the
+  number of nodes.
+
+Returns two values: the edges of each part (`((node))` for a part made of a
+single node), and the nodes of each part.
 
 ```lisp
-(graph-part '((2 3 0.33333334) (0 2 1.0) (1 4 0.25) (0 4 0.25)))
-;=> (((2 3 0.33333334)) ((1 4 0.25) (0 4 0.25)))
+(graph-part '((0 1 1) (1 2 2) (2 3 2) (3 4 1)))
+;=> (((0 1 1)) ((2)) ((3 4 1)))
+;   ((0 1) (2) (4 3))
+(graph-part '((0 1 1) (1 2 2) (2 3 2) (3 4 1)) :distance 2)
+;=> (((0 1 1)) ((2 3 2) (3 4 1)))
+;   ((0 1) (2 3 4))
 ```
 
 ### 2.2 Concatenate
@@ -560,9 +574,11 @@ The number of classes and the algorithm must be given. Modes:
   frequency; with `:iter t`, it runs classes² times and returns the most
   frequent partition. `:dist` sets the distance (Euclidean by default).
 - `:1d-centroids`: classification of a list of numbers in one dimension
-  (e.g. a variation of intensity). An automatic partition of the successive
-  differences (N+1 − N) gives plausible classes for the centroid algorithm
-  (an original, empirical method, Fred Voisin 2010). `:dist` is then a
+  (e.g. a variation of intensity). The sorted data are cut at their
+  `classes − 1` largest successive differences (N+1 − N), and the mean of
+  each segment is an initial centre for the centroid algorithm (an original,
+  empirical method, Fred Voisin 2010); the result does not depend on random
+  starts. There are never more classes than distinct values. `:dist` is then a
   function applied to the successive differences, which changes the metric of
   the differentiation: for pitches, whose differentiation decreases roughly
   logarithmically as they rise, a function such as
@@ -585,7 +601,10 @@ and with the number of classes.
 
 Classification of symbolic forms made of arbitrary symbols. It partitions the
 minimum spanning tree built on the dissimilarities between the forms, by
-default their edit distances. Returns the class number of each form, from 0.
+default their edit distances, by cutting its `classes − 1` longest edges
+(single linkage; among equal edges, the first one in the tree is cut).
+Returns the class number of each form, from 0, numbered by order of first
+appearance; there are never more classes than distinct forms.
 
 - `mode`: `:edit-nn` (or `nil`), absolute edit distance; `:edit-norm`,
   relative edit distance.
@@ -602,7 +621,7 @@ default their edit distances. Returns the class number of each form, from 0.
 (class-sym '((a b c) (a b d) (x y z) (x y w) (a b c d)
              (k l m n o p) (k l m n o q))
            3 :edit-norm)
-;=> (0 0 2 2 0 1 1)
+;=> (0 0 1 1 0 2 2)
 ```
 
 ## 3. Evaluation
@@ -1074,9 +1093,6 @@ and classification from that tree (`class-sym` with `:mst`).
   size L/n without overlap.
 - **`dist-edit` docstring**: says `:norm` divides by the shortest sequence;
   the code (and the legacy doc) use the longest.
-- **`class-sym`** does not always return the requested number of classes,
-  and `class-num` in `:1d-centroids` mode returns 2 classes only (see the
-  TODO in the README).
 - **`(help 'keyword)`** is not usable yet; use `doc`.
 - **`graph-path`** accepts single nodes only, not lists of nodes.
 - **FV-examples** are still to be converted into Common Lisp examples.

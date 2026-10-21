@@ -56,3 +56,51 @@
                     (class-sym '((a b c) (a b d) (x y z) (x y w) (a b c d)
                                  (k l m n o p) (k l m n o q))
                                3 :edit-norm))))))
+
+(test class-num-nil-mode
+  ;; (case mode (nil ...)) never matched: mode nil returned nil
+  (let ((*random-state* #+sbcl (sb-ext:seed-random-state 42) #-sbcl (make-random-state nil)))
+    (is (equal '(0 0 1 1)
+               (first (class-num '((0 0) (0 1) (10 10) (10 11)) 2 nil))))))
+
+(test class-num-1d-centroids-n-classes
+  ;; used to return 2 classes whatever the number asked for
+  (let ((data '(0 1 2 10 11 12 30 31 32 60 61 62)))
+    (is (equal '(0 0 0 0 0 0 1 1 1 2 2 2)
+               (first (class-num data 3 :1d-centroids))))
+    (is (equal '(1.0 11.0 31.0 61.0)
+               (second (class-num data 4 :1d-centroids))))
+    (is (= 5 (length (remove-duplicates (first (class-num data 5 :1d-centroids))))))
+    ;; no more classes than distinct values
+    (is (equal '(0 0 1 1) (first (class-num '(1 1 2 2) 4 :1d-centroids))))))
+
+(test alphanump-list
+  ;; the list method returned a list of booleans, always true
+  (is-true (fv-morphologie::alphanump '(#\a #\B #\1)))
+  (is-false (fv-morphologie::alphanump '(#\! #\?)))
+  (is-true (fv-morphologie::alphanump '(#\! #\a) '(#\!))))
+
+(test class-sym-n-classes
+  ;; equal longest edges were all cut at once: 3 classes when 2 were asked for
+  (let ((segs '((a b c) (a b d) (x y z) (x y w) (a b c d) (k l m n o p) (k l m n o q))))
+    (loop for n from 2 to 7
+          do (is (= n (length (remove-duplicates (class-sym segs n :edit-norm))))))
+    (is (equal '(0 0 1 1 0 2 2) (class-sym segs 3 :edit-norm)))
+    ;; no more classes than distinct segments
+    (is (= 7 (length (remove-duplicates (class-sym segs 8 :edit-norm)))))
+    (is (equal '(0 1 0 1) (class-sym '((a b) (x y) (a b) (x y z)) 2 :edit-norm)))))
+
+(test graph-part-n-parts
+  (let ((g (list '(0 1 1) '(1 2 2) '(2 3 2) '(3 4 1))))
+    ;; without n, all the longest edges are cut
+    (is (equal '((0 1) (2) (4 3)) (nth-value 1 (fv-morphologie::graph-part g))))
+    ;; the graph given used to be sorted destructively
+    (is (equal '((0 1 1) (1 2 2) (2 3 2) (3 4 1)) g))
+    (is (equal '(((0 1 1)) ((2 3 2) (3 4 1))) (fv-morphologie::graph-part g :distance 2)))
+    (is (equal '((0 1) (2 3 4)) (nth-value 1 (fv-morphologie::graph-part g :distance 2))))
+    (loop for n from 1 to 5
+          do (is (= n (length (fv-morphologie::graph-part g :distance n)))))
+    ;; no more parts than nodes
+    (is (= 5 (length (fv-morphologie::graph-part g :distance 9))))
+    ;; nodes may be any symbols
+    (is (equal '((a b) (c d)) (nth-value 1 (fv-morphologie::graph-part '((a b 1) (b c 5) (c d 1)) :distance 2))))))

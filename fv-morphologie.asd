@@ -1,7 +1,7 @@
 ;;;; fv-morphologie.asd
 ;;;;
 ;;;; Common Lisp system definition for fv-morphologie.
-;;;; (asdf:load-system :fv-morphologie)
+;;;; (ql:quickload :fv-morphologie)  or  (asdf:load-system :fv-morphologie)
 ;;;; (asdf:test-system :fv-morphologie)
 ;;;;
 ;;;; FiveAM is used only by the test system (fv-morphologie/tests),
@@ -9,8 +9,13 @@
 
 (asdf:defsystem :fv-morphologie
   :description "Lisp tools to analyse musical and syntagmatic sequences as symbolic expressions."
+  :long-description #.(uiop:read-file-string
+                       (uiop:subpathname *load-pathname* "README.md"))
   :author "Frederic Voisin"
   :version "0.1.0"
+  :homepage "https://github.com/FredVoisin/fv-morphologie"
+  :bug-tracker "https://github.com/FredVoisin/fv-morphologie/issues"
+  :source-control (:git "https://github.com/FredVoisin/fv-morphologie.git")
   :depends-on (:uiop)
   :serial t
   :components ((:file "package")

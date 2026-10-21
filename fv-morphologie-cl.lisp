@@ -217,8 +217,7 @@ Keyword argument :iter to set the maximum iterations to run for partitioning ;
 (defmethod class-num ((data t) (classes integer) (mode symbol) &key (iter nil) (dist nil))
   (setf classes (max 2 classes))
   (case mode
-    (nil (fv-morphologie::n-class data classes iter dist))
-    (:centroids (fv-morphologie::n-class data classes iter dist))
+    ((nil :centroids) (fv-morphologie::n-class data classes iter dist))
     (:1d-centroids (fv-morphologie::1d-class data classes (if dist dist #'identity))) 
      (t nil)))
 
@@ -374,11 +373,12 @@ thes: thesaurus or list of symbols to be considered."))
 (defmethod graph-span ((mat-dist list) &optional (verbose nil))
   (minimum-spanning-tree mat-dist verbose))
 
-(defgeneric graph-part (graph &optional mode)
-  (:documentation  "GRAPH-PART: partition a graph according according to edges which have maximum length."))
+(defgeneric graph-part (graph &optional mode n)
+  (:documentation  "GRAPH-PART: partition a graph according to edges which have maximum length.
+Without <n>, all the edges of maximum length are cut ; with <n>, the n-1 longest edges are cut, giving n parts."))
 
-(defmethod graph-part ((graph list) &optional (mode :distance))
-  (part-graph graph mode))
+(defmethod graph-part ((graph list) &optional (mode :distance) (n nil))
+  (part-graph graph mode n))
 
 ;;; 4.2 MEASURING
 
