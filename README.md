@@ -77,5 +77,9 @@ under GPL-3.0.
 
 - **Code** (`.lisp` and `.asd` files): GNU General Public License,
   version 3 only (GPL-3.0-only), see [LICENSE](LICENSE).
-- **Documentation** (`doc/`): Creative Commons Attribution 4.0
-  International (CC BY 4.0), see [doc/LICENSE](doc/LICENSE).
+- **Documentation** (`doc/`) and **PWGL tutorial**
+  (`pwgl-legacy/tutorial/`): Creative Commons Attribution 4.0 International
+  (CC BY 4.0), see [doc/LICENSE](doc/LICENSE) and
+  [pwgl-legacy/tutorial/LICENSE](pwgl-legacy/tutorial/LICENSE). A few example
+  texts by other authors in the tutorial keep their own status, see
+  [pwgl-legacy/README.md](pwgl-legacy/README.md#license).
