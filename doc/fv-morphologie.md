@@ -1099,3 +1099,9 @@ and classification from that tree (`class-sym` with `:mst`).
 - **Figures**: `pictures/menu-*.png` (PWGL menus) and
   `1-Transcription/span-tree.bmp` (a spanning tree drawn with neato) are not
   used yet.
+
+---
+
+This documentation is licensed under the
+[Creative Commons Attribution 4.0 International License (CC BY 4.0)](LICENSE).
+The fv-morphologie code is licensed under GPL-3.0-only.

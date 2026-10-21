@@ -1,3 +1,23 @@
+;;;; This file is part of fv-morphologie.
+;;;; Copyright (C) 1992-2026 Frederic Voisin
+;;;;
+;;;; fv-morphologie is derived from Morphologie
+;;;; (https://github.com/openmusic-project/Morphologie), released under GPL-3.0.
+;;;;
+;;;; This program is free software: you can redistribute it and/or modify
+;;;; it under the terms of the GNU General Public License version 3
+;;;; as published by the Free Software Foundation.
+;;;;
+;;;; This program is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;;
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-only
+
 ;;;; fv-morphologie.asd
 ;;;;
 ;;;; Common Lisp system definition for fv-morphologie.
@@ -12,6 +32,7 @@
   :long-description #.(uiop:read-file-string
                        (uiop:subpathname *load-pathname* "README.md"))
   :author "Frederic Voisin"
+  :license "GPL-3.0-only"
   :version "0.1.0"
   :homepage "https://github.com/FredVoisin/fv-morphologie"
   :bug-tracker "https://github.com/FredVoisin/fv-morphologie/issues"

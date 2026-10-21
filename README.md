@@ -66,3 +66,16 @@ depend on it, only the `fv-morphologie/tests` system does.
 (ql:quickload :fv-morphologie/tests)  ; fetches FiveAM if needed
 (asdf:test-system :fv-morphologie)
 ```
+
+## License
+
+Copyright (C) 1992-2026 Frederic Voisin.
+
+fv-morphologie is derived from
+[Morphologie](https://github.com/openmusic-project/Morphologie), released
+under GPL-3.0.
+
+- **Code** (`.lisp` and `.asd` files): GNU General Public License,
+  version 3 only (GPL-3.0-only), see [LICENSE](LICENSE).
+- **Documentation** (`doc/`): Creative Commons Attribution 4.0
+  International (CC BY 4.0), see [doc/LICENSE](doc/LICENSE).
