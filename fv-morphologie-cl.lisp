@@ -74,26 +74,21 @@ Modes may be :values (default), :positions :all or :resampled"))
 ;;; 1.2 PREPROCESSING
 
 (defgeneric filt-fct (seq func wind &optional step)
-  (:documentation "Apply function <func> to sequence <seq> thru a sliding window of length <wind> by (optional) step <step>. Window size and step size may be an integer (samples) or float (seq/window ratio)."))
+  (:documentation "Apply function <func> to sequence <seq> thru a sliding window of length <wind> by (optional) step <step> (1 by default).
+Window size may be an integer (samples) or a fraction of the length of seq; step size may be an integer (samples) or a fraction of the window.
+With step 1 the window is centred on each value; with a larger step it is centred on each block of step values.
+A value returned by <func> is repeated for the block; a list replaces the block (step = wind), or gives the values of the block's positions."))
 
-(defmethod filt-fct ((seq list) (func function) (wind number) &optional step)
-  (cond ((zerop wind)
-	 (window-apply seq func 2 step))
-	 ((integerp wind)
-	  (window-apply seq func (max 2 wind) step))
-	 ((floatp wind)
-	  (assert (<= wind .5))
-	  (filt-fct seq func (round (* (length seq) wind)) step))
-	 (t seq)))
+(defmethod filt-fct ((seq list) (func function) (wind real) &optional (step 1))
+  (let ((wind (if (integerp wind) wind (max 1 (round (* wind (length seq)))))))
+    (fv-morphologie::window-apply seq func wind
+                                  (if (integerp step) step (max 1 (round (* step wind)))))))
 
 (defgeneric filt-mean (seq wind &optional step)
   (:documentation "Values replaced by their respective  windowed mean values."))
 
-(defmethod filt-mean ((seq list) (wind integer) &optional (step 1))
-  (fv-morphologie::window-mean seq wind (if (floatp step) (round (* step wind)) step)))
-
-(defmethod filt-mean ((seq list) (wind float) &optional (step 1))
-  (filt-mean seq (max 1 (round (* wind (length seq)))) step))
+(defmethod filt-mean ((seq list) (wind real) &optional (step 1))
+  (filt-fct seq #'fv-morphologie::mean wind step))
 
 ;(filt-mean '(1 2 1 1 3 4 5 6 0 0 1) 3)
 

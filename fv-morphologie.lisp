@@ -428,49 +428,43 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
 
 ; fonction generique pour appliquer une fonction arbitraire sur une liste selon une fenetre glissante de taille (plus ou moins) determinee (pouvant varier dynamiquement ?) remplace 
 
-(defun window-apply (seq func wind &optional step)
-  (cond ((null step)
-	 (setf step (1+ (floor (/ wind 2)))))
-	((floatp step)
-	 (setf step (round (* step wind))))
-	(t (setf step step)))
-  (let ((r (list))
-	(w (list))
-	(l (length seq))
-	(n 0)
-	(v nil))
-    (assert (>= wind step))
-    (loop until (>= n (length seq))
-       do
-	 (setf w (subseq seq n (min (+ n wind) l))
-	       v (funcall func w))
-	 (if (listp v)
-	     (setf r (append (reverse v) r))
-	     (dotimes (i (min step (- l n)))
-	       (push v r)))
-	 (incf n step))
-    (reverse r)))
+(defun window-block (result v start end bstart bend)
+  "The values given for the block [bstart, bend) of v by the result of a function applied
+to the window [start, end): an atom (or nil) is repeated for the block; a list replaces
+the block if the window is the block, otherwise it must be as long as the window and
+gives the values at the positions of the block."
+  (cond ((atom result) (make-list (- bend bstart) :initial-element result))
+        ((and (= start bstart) (= end bend)) (copy-list result))
+        ((= (length result) (- end start))
+         (loop for p from bstart below bend
+               collect (if (and (>= p start) (< p end))
+                           (nth (- p start) result)
+                           (aref v p))))
+        (t (error "The function returned a list of ~D values for a window of ~D values."
+                  (length result) (- end start)))))
 
-(defun window-mean (seq wind &optional (step 1))
-  "Mean over a window of wind values. With step 1, the window is centred on each value
-(an even wind is enlarged to the next odd size) and shrinks symmetrically at the edges,
-so the first and last values are kept. With a larger step, the mean of a window of wind
-values centred on each block of step values is repeated for the block."
+(defun window-apply (seq func wind &optional (step 1))
+  "Applies func to a window of wind values of seq.
+With step 1, the window is centred on each value (an even wind is enlarged to the next
+odd size) and shrinks symmetrically at the edges, so the first and last values are kept.
+With a larger step, func is applied to a window of wind values centred on each block of
+step values. See window-block for the values given by the result of func."
   (let* ((v (coerce seq 'vector))
          (l (length v))
          (wind (max 1 wind))
          (step (max 1 step)))
-    (flet ((mean-of (start end) (mean (coerce (subseq v start end) 'list))))
+    (flet ((apply-to (start end bstart bend)
+             (window-block (funcall func (coerce (subseq v start end) 'list))
+                           v start end bstart bend)))
       (if (= step 1)
           (let ((h (floor (if (evenp wind) (1+ wind) wind) 2)))
             (loop for i below l
-                  collect (let ((k (min h i (- l 1 i))))
-                            (mean-of (- i k) (+ i k 1)))))
+                  append (let ((k (min h i (- l 1 i))))
+                           (apply-to (- i k) (+ i k 1) i (1+ i)))))
           (loop for n from 0 below l by step
                 append (let* ((start (max 0 (- n (floor (- wind step) 2))))
-                              (end (min l (+ start wind)))
-                              (m (mean-of start end)))
-                         (make-list (min step (- l n)) :initial-element m)))))))
+                              (end (min l (+ start wind))))
+                         (apply-to start end n (min l (+ n step)))))))))
 
 ;(window-apply '(1 2 3 4 5 6 7 8 9 10 11 12) #'mean 3 3)
 ;(window-apply '(1 2 3 4 5 6 7 8 9 10 11 12) #'mean 4 1)

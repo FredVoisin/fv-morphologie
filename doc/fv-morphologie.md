@@ -297,8 +297,31 @@ to treat close values as identical.
 #### `filt-fct (seq func wind &optional step)`
 
 Applies the function `func` to a sliding window of `wind` values, by steps of
-`step`. Window and step may be integers (numbers of values) or floats
-(fractions of the sequence).
+`step` (1 by default). `wind` is an integer (number of values) or a fraction
+of the length of `seq`; `step` is an integer or a fraction of `wind`. The
+windows are placed as for `filt-mean`:
+
+- with `step` 1, the window is centred on each value (an even `wind` is
+  enlarged to the next odd size) and shrinks symmetrically at the edges;
+- with a larger `step`, the window is centred on each block of `step` values.
+
+What `func` returns gives the values of the position or block:
+
+- a value (`nil` included) is repeated for the block;
+- a list replaces the block when the window is the block (`step` = `wind`),
+  whatever its length: `func` may then reorder, add or remove values;
+- otherwise, a list must be as long as the window, and its values at the
+  positions of the block are kept.
+
+The result has the same length as `seq`, except when lists of another length
+replace whole blocks.
+
+```lisp
+(filt-fct '(0 0 0 9 0 0 0 0) (lambda (w) (apply #'max w)) 3)
+;=> (0 0 9 9 9 0 0 0)
+(filt-fct '(1 2 3 4 5 6 7 8) #'reverse 3 3)
+;=> (3 2 1 6 5 4 8 7)
+```
 
 ### 1.3 Delineate: graphs
 

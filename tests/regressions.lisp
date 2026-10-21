@@ -224,4 +224,26 @@
 
 (test window-apply-list-order
   ;; list results were reversed within each window
-  (is (equal '(1 2 3 4 5 6) (fv-morphologie::filt-fct '(1 2 3 4 5 6) #'identity 2 2))))
+  (is (equal '(1 2 3 4 5 6) (filt-fct '(1 2 3 4 5 6) #'identity 2 2))))
+
+(test filt-fct-centred
+  (flet ((mx (w) (apply #'max w)))
+    ;; the window looked ahead, and the default step was 1 + wind/2
+    (is (equal '(0 0 9 9 9 0 0 0) (filt-fct '(0 0 0 9 0 0 0 0) #'mx 3)))
+    (is (equal (filt-fct '(0 0 0 9 0 0 0 0) #'mx 3) (filt-fct '(0 0 0 9 0 0 0 0) #'mx 3 1)))
+    ;; wind 0 and 1 were forced to 2
+    (is (equal '(1 2 3 4) (filt-fct '(1 2 3 4) #'mx 1)))
+    (is (equal '(1 2 3 4) (filt-fct '(1 2 3 4) #'mx 0)))
+    ;; a float wind above 0.5 failed, a ratio was ignored, a large step failed
+    (is (equal '(1 3 5 7 8 8 8 8) (filt-fct '(1 2 3 4 5 6 7 8) #'mx 0.75)))
+    (is (equal '(1 3 4 5 6 7 8 8) (filt-fct '(1 2 3 4 5 6 7 8) #'mx 1/4)))
+    (is (equal '(4 4 4 4 4 8 8 8) (filt-fct '(1 2 3 4 5 6 7 8) #'mx 2 5))))
+  ;; overlapping windows returning lists used to lengthen the result
+  (is (equal '(1 2 3 4 5 6 7 8) (filt-fct '(1 2 3 4 5 6 7 8) #'identity 3)))
+  (is (equal '(1 2 3 4 5 6 7 8) (filt-fct '(1 2 3 4 5 6 7 8) #'reverse 3 1)))
+  (signals error (filt-fct '(1 2 3 4 5 6 7 8) (lambda (w) (remove 4 w)) 3 1))
+  ;; blocks (step = wind) are replaced by the lists, whatever their length
+  (is (equal '(3 2 1 6 5 4 8 7) (filt-fct '(1 2 3 4 5 6 7 8) #'reverse 3 3)))
+  (is (equal '(1 2 3 5 6 7 8) (filt-fct '(1 2 3 4 5 6 7 8) (lambda (w) (remove 4 w)) 4 4)))
+  ;; nil is a value, it used to remove the values
+  (is (equal '(nil t nil t) (filt-fct '(1 2 3 4) (lambda (w) (evenp (car w))) 1))))
