@@ -344,8 +344,54 @@
     ;; unknown modes and methods used to give nil or :minflexmax silently
     (signals error (exsample s :minmax :foo 0))
     (signals error (exsample s :foo :values 0))
-    ;; :landmarks and :major-extrema are not implemented yet (they gave :minflexmax)
-    (signals error (exsample s :landmarks :values 0))
-    (signals error (exsample s :major-extrema :resampled 0))
-    (signals error (int-signature s :landmarks 0))
-    (signals error (int-signature s :major-extrema 0))))
+    ;; :resampled keeps the length with all the methods
+    (dolist (m '(:minmax :minflexmax :major-extrema :landmarks))
+      (is (= 9 (length (exsample s m :resampled 0)))))))
+
+(test signature-major-extrema
+  ;; Fink & Gandhi important extrema (the name used to give :minflexmax); thres is absolute
+  (let ((r '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0)))
+    ;; thres 0: every strict local extremum
+    (is (equal (int-signature r :minmax 0) (int-signature r :major-extrema 0)))
+    (is (equal '((7 1 8) (11 -1 2) (12 1 5)) (int-signature r :major-extrema 2.4)))
+    (is (equal '((7 1 8)) (int-signature r :major-extrema 4.8)))
+    ;; absolute: scaling the data needs a scaled threshold
+    (is (equal (int-signature r :major-extrema 2.4)
+               (mapcar #'(lambda (p) (list (first p) (second p) (/ (third p) 10)))
+                       (int-signature (mapcar #'(lambda (x) (* 10 x)) r) :major-extrema 24))))
+    ;; extrema alternate
+    (is (loop for (a b) on (int-signature r :major-extrema 0.8) while b
+              always (= (second a) (- (second b)))))
+    ;; a distance function as option
+    (is (equal (int-signature r :major-extrema 2.4)
+               (int-signature r :major-extrema 2.4 #'(lambda (a b) (abs (- a b))))))
+    (is (equal '((1 -1 0)) (int-signature '(9 0 0 0 9) :major-extrema 0)))
+    (is (null (int-signature '(1 2 3 4) :major-extrema 0)))
+    (is (null (int-signature '(5) :major-extrema 0)))
+    (is (null (int-signature '() :major-extrema 0)))
+    (is (equal '(0 8 2 5 0) (exsample r :major-extrema :values 2.4)))))
+
+(test signature-landmarks
+  ;; Perng, Parker & Leung landmarks with MDPP smoothing (the name used to give :minflexmax)
+  (let ((r '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0))
+        (absolute '((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5)))
+        (relative '((2 1 3) (5 -1 1) (9 1 7.5) (11 -1 2) (12 1 5))))
+    ;; thres 0: the first-order landmarks, i.e. the local extrema
+    (is (equal (int-signature r :minmax 0) (int-signature r :landmarks 0)))
+    ;; absolute difference (default): the pairs (2 2.5) and (7 7.5) are removed
+    (is (equal absolute (int-signature r :landmarks 0.6)))
+    (is (equal absolute (int-signature r :landmarks 0.6 '(nil :absolute))))
+    ;; the relative difference of Perng et al.: the pairs (2 2.5) and (8 7) are removed
+    (is (equal relative (int-signature r :landmarks 0.3 '(nil :relative))))
+    ;; a difference function, alone or with D
+    (is (equal absolute (int-signature r :landmarks 0.6 #'(lambda (a b) (abs (- a b))))))
+    (is (equal absolute (int-signature r :landmarks 0.6 (list nil #'(lambda (a b) (abs (- a b)))))))
+    ;; D = 1: no pair is close enough to be removed; D = 2: both pairs are
+    (is (equal (int-signature r :landmarks 0) (int-signature r :landmarks 0.6 1)))
+    (is (equal absolute (int-signature r :landmarks 0.6 2)))
+    (is (equal relative (int-signature r :landmarks 0.3 '(2 :relative))))
+    (signals error (int-signature r :landmarks 1 '(nil :foo)))
+    (is (equal '((1 -1 0)) (int-signature '(9 0 0 0 9) :landmarks 0)))
+    (is (null (int-signature '(1 2 3 4) :landmarks 0)))
+    (is (null (int-signature '() :landmarks 0)))
+    (is (= 15 (length (exsample r :landmarks :resampled 0.6))))))

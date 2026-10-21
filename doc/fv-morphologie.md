@@ -482,21 +482,50 @@ In fv-morphologie, each salient point (fold) is a list of:
 - its type: minimum (`-1`), maximum (`1`) or inflexion (`0`);
 - for convenience, the value of the sequence at that position.
 
-`thres` (0.0–1.0) ignores variations smaller than this fraction of the
-overall range of the sequence (`nil` or 0: no threshold). Modes:
+`thres` is an absolute amplitude, in the unit of the values of `seq`:
+variations smaller than `thres` are ignored (`nil` or 0: no threshold).
+Modes:
 
 - `:minflexmax`: minima, maxima and inflexions (`option`: distance threshold,
   in ranks, for detecting inflexions);
 - `:minmax`: minima and maxima only;
-- `:major-extrema` (Fink & Gandhi method) and `:landmarks` (Perng, Parker &
-  Leung method): **not implemented yet**, they signal an error. (Until now
-  they silently gave the `:minflexmax` result.)
+- `:major-extrema`: the *important extrema* of Fink & Gandhi. A minimum
+  `a_m` is important if, on some interval `a_i … a_j` around it, it is the
+  lowest value and the sequence rises by at least `thres` on both sides:
+  dist(`a_m`, `a_i`) ≥ `thres` and dist(`a_m`, `a_j`) ≥ `thres`; important
+  maxima are the same upside down. With `thres` 0, every strict local
+  extremum is important. `option` may be a distance function `(a b)`
+  (|a − b| by default). Fink & Gandhi's linear algorithm is used.
+- `:landmarks`: the *landmarks* of Perng, Parker & Leung. The first-order
+  landmarks are the local extrema; they are then smoothed by MDPP: a pair of
+  consecutive landmarks (x₁, y₁), (x₂, y₂) is removed while x₂ − x₁ < D and
+  their difference is below `thres`. `option` gives D and the difference:
+  - `nil` (default): no D, difference |y₂ − y₁|;
+  - a number: D, difference |y₂ − y₁|;
+  - a function `(a b)`: no D, difference given by the function;
+  - a list `(D criterion)`: D (`nil` for no limit) and the criterion,
+    `:absolute` (|y₂ − y₁|), `:relative` (2|y₂ − y₁| / (|y₁| + |y₂|), the
+    percentage of Perng et al.) or a function `(a b)`.
+
+  Removing pairs may remove a peak and keep a neighbouring, slightly lower
+  one.
+
+As with the other methods, the signature does not include the first and last
+values (`exsample` adds them).
+(Until this version, `:major-extrema` and `:landmarks` silently gave the
+`:minflexmax` result.)
 
 `mode` `nil` means `:minflexmax`; any other mode is an error.
 
 ```lisp
 (int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0)
 ;=> ((2 1 4) (4 -1 1) (6 1 6))
+(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :major-extrema 2.4)
+;=> ((7 1 8) (11 -1 2) (12 1 5))
+(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6)
+;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
+(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 '(nil :relative))
+;=> ((2 1 3) (5 -1 1) (9 1 7.5) (11 -1 2) (12 1 5))
 ```
 
 References (as given in the PWGL tutorial):

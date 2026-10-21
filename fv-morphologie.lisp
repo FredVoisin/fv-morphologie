@@ -772,114 +772,120 @@ from s(0) = x(0) and b(0) = x(1) - x(0)."
     (if mode lm (remove-if #'(lambda (x) (zerop (cadr x))) lm))))
 
 
-;; d'aprs Fink & Gandhi 2004 (Important Extrema of Time Series)
-(defun output-ext (seq left right type res)
-  (if (= left right)
-      (push (list right type (nth right seq)) res)
-    (progn
-      (push (list left type (nth left seq)) res)
-      (loop for flat from (1+ left) to (1- right) do
-            (when (= (nth flat seq) (nth left seq))
-              (push (list flat type (nth flat seq) ) res)))
-      (push (list right type (nth right seq)) res)))
-  res)
+(defun major-extrema (seq r &optional (dist #'(lambda (a b) (abs (- a b)))))
+  "Important extrema of seq (Fink & Gandhi, 2007): a_m is an important minimum if there are i < m < j
+such that a_m is the minimum of a_i..a_j, dist(a_m, a_i) >= r and dist(a_m, a_j) >= r (and so for maxima).
+With r = 0, every strict local extremum. Linear algorithm of Fink & Gandhi; returns the inner extrema
+as (position type value), type -1 for a minimum and 1 for a maximum (the endpoints are not returned)."
+  (let* ((v (coerce seq 'vector))
+         (last (1- (length v)))
+         (out nil))
+    (labels ((near (a b) (let ((d (funcall dist a b))) (if (zerop r) (<= d 0) (< d r))))
+             (emit (i type) (when (< 0 i last) (push (list i type (aref v i)) out)))
+             (find-first ()
+               (let ((i 0) (imin 0) (imax 0))
+                 (loop while (and (< i last)
+                                  (near (aref v i) (aref v imax))
+                                  (near (aref v i) (aref v imin)))
+                       do (incf i)
+                          (when (< (aref v i) (aref v imin)) (setf imin i))
+                          (when (> (aref v i) (aref v imax)) (setf imax i)))
+                 (if (< imin imax) (emit imin -1) (emit imax 1))
+                 i))
+             (find-minimum (i)
+               (let ((imin i))
+                 (loop while (and (< i last) (near (aref v i) (aref v imin)))
+                       do (incf i)
+                          (when (< (aref v i) (aref v imin)) (setf imin i)))
+                 (when (or (< i last) (< (aref v imin) (aref v i))) (emit imin -1))
+                 i))
+             (find-maximum (i)
+               (let ((imax i))
+                 (loop while (and (< i last) (near (aref v imax) (aref v i)))
+                       do (incf i)
+                          (when (> (aref v i) (aref v imax)) (setf imax i)))
+                 (when (or (< i last) (> (aref v imax) (aref v i))) (emit imax 1))
+                 i)))
+      (when (> last 0)
+        (let ((i (find-first)))
+          (when (and (< i last) (< (aref v i) (aref v 0)))
+            (setf i (find-minimum i)))
+          (loop while (< i last)
+                do (setf i (find-maximum i))
+                   (when (< i last) (setf i (find-minimum i))))))
+      (nreverse out))))
 
-(defun find-max (seq i dist r res)
-  (let ((left i) (right i) (n (1- (length seq))))
-    (loop while (and (< i n) (and ;(> (nth (1+ i) seq) (nth left seq))
-                                 (< (funcall dist (nth (1+ i) seq) (nth left seq)) r)))
-       do (incf i)
-	 (when (< (nth left seq) (nth i seq))
-	   (setf left i))
-	 (when (<= (nth right seq) (nth i seq))
-	   (setf right i)))
-    (setf res (output-ext seq left right 1 res))
-    (list (1+ i) res)))
+(defun local-extrema (seq)
+  "The inner local extrema of seq, where the variation changes direction, as (position type value):
+type -1 for a minimum, 1 for a maximum. A flat extremum is given at its first position."
+  (let* ((v (coerce seq 'vector))
+         (l (length v))
+         (out nil)
+         (dir 0)       ; direction of the last variation: -1, 0 (none yet) or 1
+         (start 0))    ; first position of the current run of equal values
+    (loop for i from 1 below l
+          do (let ((d (signum (- (aref v i) (aref v (1- i))))))
+               (unless (zerop d)
+                 (when (and (/= dir 0) (/= d dir) (> start 0))
+                   (push (list start (if (> dir 0) 1 -1) (aref v start)) out))
+                 (setf dir d))
+               (when (/= (aref v i) (aref v (1- i))) (setf start i))))
+    (nreverse out)))
 
-(defun find-min (seq i dist r res)
-  (let ((left i) (right i) (n (1- (length seq))))
-    (loop while (and (< i n) (and ;(> (nth (1+ i) seq) (nth left seq))
-                                 (< (funcall dist (nth (1+ i) seq) (nth left seq)) r)))
-       do (incf i)
-	 (when (> (nth left seq) (nth i seq))
-            (setf left i))
-          (when (>= (nth right seq) (nth i seq))
-            (setf right i)))
-    (setf res (output-ext seq left right -1 res))
-    (list (1+ i) res)))
-
-(defun find-first (seq r dist)
-  (let (res 
-        (i 0)
-        (lmin 0) (rmin 0)
-        (lmax 0) (rmax 0)
-        (n (1- (length seq))))
-    (loop while (and (< i n)
-                     (< (funcall dist (nth (1+ i) seq) (nth lmax seq)) r)
-                     (< (funcall dist (nth (1+ i) seq) (nth lmin seq)) r))
-       do (incf i)
-	 (when (> (nth lmin seq) (nth i seq))
-	   (setf lmin i))
-	 (when (>= (nth rmin seq) (nth i seq))
-	   (setf rmin i))
-	 (when (< (nth lmax seq) (nth i seq))
-	   (setf lmax i))
-	 (when (<= (nth rmax seq) (nth i seq))
-	   (setf rmax i)))
-    (incf i)
-    (when (and (< i n) (> (nth i seq) (car seq)))
-      (setf res (output-ext seq lmin rmin -1 res)))
-    (when (and (< i n) (< (nth i seq) (car seq)))
-      (setf res (output-ext seq lmax rmax 1 res)))
-    (list i res)))
-
-(defun important-extrema (seq r &optional (dist #'(lambda (a b) (abs (- b a)))))
-  (let* ((ff (find-first seq r dist))
-         (i (car ff))
-         (res (cadr ff))
-         (n (1- (length seq))))
-    (when (and (< i n) (< (nth i seq) (car seq)))
-      (let ((fm (find-min seq i dist r res)))
-        (setf i (car fm)
-              res (cadr fm))))
-    (loop while (< i n) do
-          (let ((fmax (find-max seq i dist r res)))
-            (setf i (car fmax)
-                  res (cadr fmax)))
-          (let ((fmin (find-min seq i dist r res)))
-            (setf i (car fmin)
-                  res (cadr fmin))))
-    (butlast (remove-if #'(lambda (x) (member 'nil x))
-                        (sort res '< :key #'car)))))
-
-
-(defun mdpp (lm d p)  ;; best ?
-"Inspired by  Perng, Parker & Leung 1999 'Representing Time Series by Landmarks,' CIKM 1999, rev. 2000."
-(let (r)
-  (loop while lm do
-       (let ((yi (pop lm))
-	     (yi+1 (when lm (pop lm))))
-	 (if yi+1
-                (when (not (and (< (- (car yi+1) (car yi)) d)
-				(< (/ (* 2 (- (caddr yi+1) (caddr yi))) (+ (abs (caddr yi+1)) (abs (caddr yi)))) p)))
-                  (progn (push yi r) (push yi+1 r)))
-		(push yi r))))
-  (values (nreverse r))))
+(defun landmarks (seq thres &optional option)
+  "Landmarks of seq (Perng, Parker & Leung, 1999): the first-order landmarks (local extrema), smoothed
+by MDPP: a pair of consecutive landmarks (x1 y1) (x2 y2) is removed while x2 - x1 < D and their
+difference is below thres. option is nil (no D, difference |y2 - y1|), a number (D), a function (a b)
+giving the difference, or a list (D criterion), criterion being :absolute (|y2 - y1|), :relative
+(2 |y2 - y1| / (|y1| + |y2|), as in Perng et al.) or a function.
+Returns (position type value), type -1 for a minimum and 1 for a maximum."
+  (multiple-value-bind (d criterion)
+      (cond ((null option) (values nil :absolute))
+            ((realp option) (values option :absolute))
+            ((functionp option) (values nil option))
+            ((listp option) (values (first option) (or (second option) :absolute)))
+            (t (error "landmarks: option must be nil, a distance, a function or a list (distance criterion), not ~S." option)))
+    (let ((diff (cond ((eq criterion :absolute) #'(lambda (a b) (abs (- b a))))
+                      ((eq criterion :relative)
+                       #'(lambda (a b)
+                           (let ((m (+ (abs a) (abs b))))
+                             (if (zerop m) 0 (/ (* 2 (abs (- b a))) m)))))
+                      ((functionp criterion) criterion)
+                      (t (error "landmarks: criterion must be :absolute, :relative or a function, not ~S." criterion))))
+          (lm (local-extrema seq)))
+      (flet ((removable (a b)
+               (and (or (null d) (< (- (first b) (first a)) d))
+                    (< (funcall diff (third a) (third b)) thres))))
+        (loop for k = (loop for (a b) on lm
+                            for i from 0
+                            when (and b (removable a b)) return i)
+              while k
+              do (setf lm (append (subseq lm 0 k) (nthcdr (+ k 2) lm))))
+        lm))))
 
 (defgeneric signature (seq mode thres &optional option)
   (:documentation
 "Signature of a sequence with some threshold <thres> for variation in intensity.
-The argument <thres> may be nil (no threshold for variations in intensity), or an amount of the overall range of variation in the sequence <seq>, from 0.0 to 1.0 (where 0.0 means no threshold and 1.0 to remove all variation but the first).
+The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
 :miflexnmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
 :minmax, same with only maxima and minima (without inflexions);
-:major-extrema (Fink & Gandhi method, cf. Conference on Systems, Man and Cybernetics, 2007) and
-:landmarks (Perng, Parker and Leung method, cf. Conference on Information and Knowledge Management, 1999)
-are not implemented yet: they signal an error, as any unknown method.
-(:important-extrema and :mdpp are experimental attempts at them.)
+:major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
+ a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
+:landmarks, first-order landmarks smoothed by MDPP(D, P) (Perng, Parker & Leung, Conference on Information
+ and Knowledge Management, 1999): pairs of close landmarks whose difference is below thres are removed.
+Any other method is an error.
 Argument <thres> is the treshold value (delta) in amplitude.
 Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number)."))
+with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number);
+with :major-extrema, <option> may be a distance function (a b) for comparing values (|a - b| by default);
+with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks may be removed), a function (a b) giving the
+difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
+(2 |a - b| / (|a| + |b|), as in Perng et al.) or a function."))
+
+(defmethod signature ((seq null) (mode t) (thres t) &optional (option nil))
+  (declare (ignore option))
+  nil)
 
 (defmethod signature ((seq list) (mode t) (thres number) &optional (option nil))
   (let* ((max (lmax seq))
@@ -889,13 +895,10 @@ with :minflexmax method, <option> is the time (rank) distance threshold for dete
     (case mode
       (:minmax (primitives seq thres1 nil thres2))
       (:minflexmax (primitives seq thres1 t thres2))
-      (:important-extrema (important-extrema seq thres (if (functionp option) option #'(lambda (x y) (abs (- y x))))))
-      (:mdpp (mdpp (primitives-nothres seq)
-                   (max 2 thres2)
-                   (/ thres1 (- max min))))
-      ((:major-extrema :landmarks)
-       (error "signature: the ~S method is not implemented yet, use :minmax or :minflexmax." mode))
-      (t (error "signature: unknown method ~S, use :minmax or :minflexmax." mode)))))
+      (:major-extrema (major-extrema seq thres1
+                                     (if (functionp option) option #'(lambda (a b) (abs (- a b))))))
+      (:landmarks (landmarks seq thres1 option))
+      (t (error "signature: unknown method ~S, use :minmax, :minflexmax, :major-extrema or :landmarks." mode)))))
 
 (defmethod signature ((seq list) (mode t) (thres null) &optional (option nil))
   (signature seq mode 0 option))

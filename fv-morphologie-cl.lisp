@@ -40,7 +40,8 @@
 Available methods are (see int-signature for documentation):
 - :minmax
 - :minflexmax (default, or nil)
-(:landmarks and :major-extrema are not implemented yet.)
+- :major-extrema
+- :landmarks
 Modes may be :values (default, or nil), :positions, :all or :resampled"))
 
 (defmethod exsample ((seq list) (method symbol) (mode symbol) (thres number) &optional (option nil))
@@ -131,16 +132,21 @@ For instance (lambda (x l) (declare (ignore x)) (nth (random (length l)) l)) rep
 
 (defgeneric int-signature (seq mode thres &optional option)
   (:documentation "INT-SIGNATURE: signature of a sequence with some threshold <thres> for variation in intensity.
-The argument <thres> may be nil (no threshold for variations in intensity), or an amount of the overall range of variation in the sequence <seq>, from 0.0 to 1.0 (where 0.0 means no threshold and 1.0 to remove all variation but the first).
+The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
 :miflexnmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
 :minmax, same with only maxima and minima (without inflexions);
-:major-extrema (Fink & Gandhi method, cf. Conference on Systems, Man and Cybernetics, 2007) and
-:landmarks (Perng, Parker and Leung method, cf. Conference on Information and Knowledge Management, 1999)
-are not implemented yet: they signal an error.
+:major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
+ a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
+:landmarks, first-order landmarks smoothed by MDPP(D, P) (Perng, Parker & Leung, Conference on Information
+ and Knowledge Management, 1999): pairs of close landmarks whose difference is below thres are removed.
 Argument <thres> is the treshold value (delta) in amplitude.
 Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number)."))
+with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number);
+with :major-extrema, <option> may be a distance function (a b) for comparing values (|a - b| by default);
+with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks may be removed), a function (a b) giving the
+difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
+(2 |a - b| / (|a| + |b|), as in Perng et al.) or a function."))
 
 (defmethod int-signature ((seq t) (mode t) (thres number) &optional (option nil))
   (when (not mode) (setf mode :minflexmax))
