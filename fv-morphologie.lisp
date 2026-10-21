@@ -297,17 +297,31 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
 (defgeneric fnoise (list &optional mode val)
  (:documentation "noise based on variation"))
 
+(defun random-positive (q)
+  "A random float in ]0, q[."
+  (loop for r = (random (float q)) until (plusp r) finally (return r)))
+
 (defmethod fnoise ((list list) &optional mode val)
-  (if (member nil  (mapcar #'numberp list))
-      (randsort list val)
-    (let* ((sorted (sort (copy-tree list) '<))
-              (min (car sorted))
-              (max (car (last sorted))))
-      (case mode
-        (:nozero (a-zero list (* val (- max min))))
-        (:swap (randsort list val))
-        (t (message "not yet.")
-           list)))))
+  "Noise on list according to mode, with amount val (0.1 by default):
+:nozero replaces each zero by a random value in ]0, val * range[ (]0, val[ if all values are equal);
+:swap swaps val * length pairs of elements (val integer: number of swaps);
+:relative adds to each value a random amount in [-val * range, val * range].
+The range is max - min of list. A list which is not numerical is swapped (:swap)."
+  (let ((val (or val 0.1)))
+    (cond ((null list) nil)
+          ((notevery #'numberp list) (randsort list val))
+          (t (let ((range (- (reduce #'max list) (reduce #'min list))))
+               (case mode
+                 (:nozero
+                  (let ((q (if (plusp range) (* val range) val)))
+                    (unless (plusp q)
+                      (error "filt-noise :nozero: val must be positive, not ~S." val))
+                    (mapcar #'(lambda (x) (if (zerop x) (random-positive q) x)) list)))
+                 (:swap (randsort list val))
+                 (:relative
+                  (let ((q (float (* val range))))
+                    (mapcar #'(lambda (x) (+ x (* q (- (random 2.0) 1.0)))) list)))
+                 (t (error "filt-noise: unknown mode ~S, use :nozero, :swap or :relative." mode))))))))
 
 #|
 ; deep-tree to do

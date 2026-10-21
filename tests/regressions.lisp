@@ -288,3 +288,25 @@
   (is (equal '(a b) (filt-local-rep '(a a b) :linear)))
   (is (equal '(5 5 5) (filt-local-rep '(5 5 5) :linear)))
   (is (null (filt-local-rep '() :linear))))
+
+(test filt-noise-modes
+  (let ((*random-state* (seeded-random-state)))
+    ;; :nozero: all zeros used to crash; integer val could leave zeros
+    (is (notany #'zerop (filt-noise '(0 0 0))))
+    (is (every #'(lambda (x) (< 0 x 0.1)) (filt-noise '(0 0 0))))
+    (is (loop repeat 200 never (find-if #'zerop (filt-noise '(0 10) :nozero 1))))
+    (is (equal '(5 10) (cdr (filt-noise '(0 5 10)))))
+    (signals error (filt-noise '(0 10) :nozero 0))
+    ;; :relative was not implemented: noise within val * range
+    (is (loop repeat 200
+              always (every #'(lambda (x y) (<= (abs (- y x)) 20.0001))
+                            '(100 200 0 50) (filt-noise '(100 200 0 50) :relative 0.1))))
+    (is (every #'approx= '(5 5 5) (filt-noise '(5 5 5) :relative 0.1)))
+    ;; :swap keeps the elements
+    (is (equal '(1 2 3 4 5 6 7 8) (sort (filt-noise '(1 2 3 4 5 6 7 8) :swap 0.5) #'<)))
+    ;; unknown modes used to return the list silently; empty lists crashed
+    (signals error (filt-noise '(1 2 3) :foo))
+    (is (null (filt-noise '())))
+    (let ((l (list 0 1 2)))
+      (filt-noise l :relative 0.5)
+      (is (equal '(0 1 2) l)))))

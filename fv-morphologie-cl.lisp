@@ -115,10 +115,12 @@ or, for numbers, replace them by a linear interpolation (mode :linear, or :inter
     (t (error "filt-local-rep: unknown mode ~S, use nil, :delete or :linear." mode))))
 
 (defgeneric filt-noise (seq &optional mode val)
-  (:documentation  "FILT-NOISE: jitters or adds some noise into sequence <seq> using different methods, according to the first optional argument <mode>:
- :nozero : replaces each zero value of <seq> with some random value
- :swap : substitue some value of seq by another
- :relative : "))
+  (:documentation  "FILT-NOISE: jitters or adds some noise into sequence <seq> using different methods, according to the first optional argument <mode>,
+with the amount <val> (0.1 by default), relative to the range (max - min) of <seq>:
+ :nozero : replaces each zero value of <seq> with a random value in ]0, val * range[
+ :swap : swaps val * length pairs of elements (val integer: the number of swaps)
+ :relative : adds to each value a random amount in [-val * range, val * range]
+A sequence which is not numerical is swapped."))
 
 (defmethod filt-noise ((seq t) &optional (mode :nozero) (val 0.1))
   (fv-morphologie::fnoise seq mode val))

@@ -208,11 +208,24 @@ Reads a string (or a list of strings) as a list (or lists) of symbols.
 #### `filt-noise (seq &optional mode val)`
 
 *PWGL box: `randomize`.* Jitters a sequence or adds noise to it, according to
-`mode`:
+`mode`, with the amount `val` (0.1 by default) relative to the range
+(max − min) of `seq`:
 
-- `:nozero` (default): replaces each zero value with a random value;
-- `:swap`: substitutes some values with others;
-- `:relative`: relative noise of amount `val`.
+- `:nozero` (default): replaces each zero with a random value in
+  ]0, `val` × range[ (]0, `val`[ if all the values are equal); the other
+  values are kept;
+- `:swap`: swaps `val` × length pairs of elements (an integer `val` is the
+  number of swaps);
+- `:relative`: adds to each value a random amount in
+  [−`val` × range, `val` × range].
+
+A sequence which is not numerical is swapped (`:swap`). Another mode is an
+error; `seq` itself is not modified.
+
+```lisp
+(filt-noise '(0 5 0 10))                  ;=> (0.10159576 5 0.14144969 10)
+(filt-noise '(100 200 0 50) :relative 0.1) ;=> (81.438194 194.18185 -5.740862 65.08263)
+```
 
 ### 1.2 Filter
 
