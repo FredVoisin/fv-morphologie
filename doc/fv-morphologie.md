@@ -656,20 +656,25 @@ structures are sorted by length. Three presentations of the result (`out`):
 - `:struct` (or `nil`): only the structures;
 - `:pos`: each structure with the positions of its segments, followed by the
   segments: `(structure (positions segment-i ... segment-n))`;
-- `:raw`: each structure with each segment and its position:
-  `(structure ((segment-i position-i) ... (segment-n position-n)))`.
+- `:raw`: each structure with each different segment, followed by all its
+  positions: `(structure ((segment-a position ...) ... (segment-z position ...)))`.
+
+Another value of `out` is an error.
 
 Options:
 
 - `:diss`: tolerance for dissimilarity between segments, as a normalized edit
   distance. Two segments with different initial marks can then be considered
   similar.
-- `:test`: identity of the initial marks. Its choice defines the
-  *contrastive* criterion of segmentation (default: `#'equalp`). For example,
+- `:test`: identity of elements (default: `#'equalp`). It defines the
+  identity of the initial marks, and so the *contrastive* criterion of
+  segmentation; it is also used to compare the elements of the segments (edit
+  distance) and for `:rem-loc-dup`. For example,
   `(lambda (x y) (< (- y x) 2))` segments only where the marks make a small
   ascending movement.
-- `:rem-loc-dup`: if true (default), consecutive identical elements are
-  removed from the sequence first.
+- `:rem-loc-dup`: if true (default), consecutive identical elements (according
+  to `:test`) are removed inside each segment; the positions still refer to
+  the original sequence.
 
 ```lisp
 (mark-structure '(a b c a b d a b) nil)
@@ -677,6 +682,10 @@ Options:
 (mark-structure '(a b c a b d a b) :pos)
 ;=> (((0 1 2) ((1 4 7) (B C A) (B D A) (B)))
 ;    ((0 1 2) ((0 3 6) (A B C) (A B D) (A B))))
+(mark-structure '(a b c a b c a b c) :raw)
+;=> (((0 0 1) (((C A B) 2 5) ((C) 8)))
+;    ((0 0 1) (((B C A) 1 4) ((B C) 7)))
+;    ((0 0 0) (((A B C) 0 3 6))))
 ```
 
 #### `motif-structure (seq)`

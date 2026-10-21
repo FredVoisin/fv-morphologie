@@ -1468,11 +1468,13 @@ w-rep: weigth for 'repetition' structure."))
 ;(apos '(1 1 2 1 3 1 4 1 2 1 3 1 4) #'=)
 ;(apos '(a a b b a a a c c a d a e f g h a i a j a k l m n o) #'equal)
 
-(defun segpos (seq pos &optional (rem-loc-rep t))
+(defun segpos (seq pos &optional (rem-loc-rep t) (test #'equalp))
+  "The segments of seq starting at the positions pos; with rem-loc-rep, without their local
+repetitions (consecutive elements identical according to test)."
   (let ((r (list)))
     (dotimes (i (length pos) (reverse r))
       (if rem-loc-rep
-          (setf r (cons (rem-local-rep (subseq seq (nth i pos) (nth (+ i 1) pos))) r))
+          (setf r (cons (rem-local-rep (subseq seq (nth i pos) (nth (+ i 1) pos)) test) r))
         (setf r (cons (subseq seq (nth i pos) (nth (+ i 1) pos)) r))))))
 
 ;(segpos '(a a b a a c a d a b a c a d) (cdar (apos '(a a b a a c a d a b a c a d) #'eq)) t)
@@ -1482,14 +1484,14 @@ w-rep: weigth for 'repetition' structure."))
 selon le critere d'identite des elements defini par la fontion test."
   (let ((r (list)) (p (apos seq test)))
     (do ((i 0 (+ i 1)))	((= i (length p)) (sort r '> :key #'length))
-      (setf r (cons (segpos seq (cdr (nth i p) ) rem) r)))))
+      (setf r (cons (segpos seq (cdr (nth i p) ) rem test) r)))))
 
 ;(segs '(a b a a c a d a e f g h a i a j a k l m n o) t)
 ;(segs '(a b a c a d a e f g h a i a j a k l m n o)
 ;      (lambda (x y) (< (abs (- (char-code (char (string x) 0)) (char-code (char (string y) 0)))) 3)))
 
 (defun c-seg (seq &optional (rem t) (test #'equalp))
-  (mapcar (lambda (x) (append (list (cdr x)) (segpos seq (cdr x) rem))) (apos seq test)))
+  (mapcar (lambda (x) (append (list (cdr x)) (segpos seq (cdr x) rem test))) (apos seq test)))
 
 ;(c-seg '(a b a a c a b a d a e f g h a i a j a k l m n o))
 
@@ -1547,6 +1549,8 @@ test: condition of identity for marks, for instance (lambda (x y) (< x y)) (defa
 
 (defmethod mark-strct ((seq list) (out symbol)  &optional (tolerance 0) (rem-loc-rep t) (test #'equalp))
   (when (not out) (setf out :struct))
+  (unless (member out '(:struct :pos :raw))
+    (error "mark-structure: unknown output ~S, use :struct, :pos or :raw." out))
   (let ((allsegs (c-seg seq rem-loc-rep test)) (r (list)))
     (dolist (a allsegs)
       (when (> (length a) 1)

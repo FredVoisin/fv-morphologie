@@ -471,3 +471,23 @@
     (is (<= (nth-value 1 (class-num d 3 :centroids :iter 20)) 1))
     ;; (0) divided by zero: at least one run
     (is (approx= 1 (second (first (class-num d 3 :centroids :iter (list 0))))))))
+
+(test mark-structure-fixes
+  (let ((close (lambda (x y) (< (abs (- x y)) 1))))
+    ;; segment grouping
+    (is (equal '((0 1 0 2 1)) (remove-if-not #'(lambda (s) (= 5 (length s)))
+                                             (mark-structure '(a 1 a 2 a 1 a 3 a 2) nil))))
+    ;; :raw gives each different segment followed by all its positions
+    (is (equal '((0 0 0) (((a b c) 0 3 6)))
+               (find '(0 0 0) (mark-structure '(a b c a b c a b c) :raw) :key #'car :test #'equal)))
+    ;; :rem-loc-dup inside segments, positions in the original sequence
+    (is (equal '((0 0) ((0 3) (a b) (a b)))
+               (find '(0 0) (mark-structure '(a a b a b) :pos) :key #'car :test #'equal)))
+    ;; :rem-loc-dup uses :test (it used equalp)
+    (is (equal '((0 1) ((0 4) (1 2 9) (1 2 7)))
+               (first (mark-structure '(1 1.5 2 9 1 2 2.2 7) :pos :test close))))
+    (is (equal '((0 1) ((0 4) (1 1.5 2 9) (1 2 2.2 7)))
+               (first (mark-structure '(1 1.5 2 9 1 2 2.2 7) :pos :test close :rem-loc-dup nil))))
+    ;; an unknown output returned nil silently
+    (signals error (mark-structure '(a b a) :foo))
+    (is (equal (mark-structure '(a b c a b d a b) :struct) (mark-structure '(a b c a b d a b) nil)))))

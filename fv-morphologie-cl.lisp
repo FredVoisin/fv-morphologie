@@ -178,12 +178,14 @@ Option :group-t defines the test function for comparing the different segments."
 (defgeneric mark-structure  (seq out &key diss rem-loc-dup test)
   (:documentation "MARK-STRUCTURE: returns possible structures of input <seq> based on marks retrieved from <seq>.
 The output is sorted by structures's length.
-Use output menu <out> to define result form:
-:struct lists all possible structures according to different marks of <seq>
+Use output menu <out> to define result form (another output is an error):
+:struct (or nil) lists all possible structures according to different marks of <seq>
 :pos each structure is consed to the list of positions for each segment followed by the list of the segments themselves
-:raw each structure is consed to the list of each segment with its positions in <seq>.
+:raw each structure is consed to the list of the different segments, each followed by all its positions in <seq>.
 Option :diss defines the dissemblance threshold to consider different segment as the same.
-Option :test defines the test function to consider the marks."))
+Option :test (equalp by default) defines the identity of elements: of the marks, of the elements of the segments
+compared by the edit distance, and of the consecutive elements removed by :rem-loc-dup.
+Option :rem-loc-dup (t by default) removes the local repetitions inside each segment; positions refer to <seq>."))
 
 (defmethod mark-structure  ((seq t) (out t) &key (diss 0) (rem-loc-dup t) (test #'equalp))
   (when (not out) (setf out :struct))
