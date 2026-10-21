@@ -877,12 +877,15 @@ e.g. `(pitch duration)`. The edit distance is applied to each descriptive
 dimension and weighted. All elements must have the same number of
 descriptors.
 
-`wgth` gives the weight of each dimension (a number gives the same weight to
-all); a weight of 0 ignores a dimension. Other options are as for
-`dist-edit`.
+`wgth` gives the weight of each dimension: a number gives the same weight to
+all, a list gives one weight per dimension (a list too short is completed
+with its last weight, a list too long is cut, with a message). The weights
+are normalized to sum to 1; a weight of 0 ignores a dimension, and if all
+are 0 the distance is 0. Other options are as for `dist-edit`.
 
 ```lisp
-(dist-multi-edit '((a 1) (b 2)) '((a 1) (c 2)) 1)   ;=> 0.25
+(dist-multi-edit '((a 1) (b 2)) '((a 1) (c 2)) 1)            ;=> 0.25
+(dist-multi-edit '((a 1 x) (b 2 y)) '((a 1 x) (c 2 z)) '(2 1 1)) ;=> 0.375
 ```
 
 #### `dist-structure (a b &key w-occ w-rep test)`

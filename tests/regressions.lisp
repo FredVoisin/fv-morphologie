@@ -247,3 +247,24 @@
   (is (equal '(1 2 3 5 6 7 8) (filt-fct '(1 2 3 4 5 6 7 8) (lambda (w) (remove 4 w)) 4 4)))
   ;; nil is a value, it used to remove the values
   (is (equal '(nil t nil t) (filt-fct '(1 2 3 4) (lambda (w) (evenp (car w))) 1))))
+
+(test dist-multi-edit-weights
+  (let ((a '((a 1 x) (b 2 y)))
+        (b '((a 1 x) (c 2 z)))
+        (*standard-output* (make-broadcast-stream)))
+    ;; fewer events than dimensions, or fewer weights than dimensions, used to crash
+    (is (approx= 1/3 (dist-multi-edit a b 1)))
+    (is (approx= 1/3 (dist-multi-edit a b '(1 1))))
+    (is (approx= 1/3 (dist-multi-edit a b '(1))))
+    ;; more weights than dimensions used to scale the distance down
+    (is (approx= 1/3 (dist-multi-edit a b '(1 1 1 1))))
+    (is (approx= 1/6 (dist-multi-edit '((a 1) (b 2) (c 3)) '((a 1) (c 2) (c 3)) 1)))
+    ;; a list of weights was not accepted
+    (is (approx= 0.375 (dist-multi-edit a b '(2 1 1))))
+    (is (approx= 0.375 (dist-multi-edit a b '(2 1))))
+    (is (approx= 0.5 (dist-multi-edit a b '(1 0 0))))
+    ;; all weights 0: all dimensions ignored (used to divide by zero)
+    (is (approx= 0 (dist-multi-edit a b '(0 0 0))))
+    (finishes (dist-multi-edit a b '(1 1) :uncom 0.5))
+    ;; pairwise distances
+    (is (approx= 1/3 (third (first (fv-morphologie::multi-edit-dist (list a b) nil 1)))))))

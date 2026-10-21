@@ -317,9 +317,11 @@ Keywords arguments are:
   (fv-morphologie::edit-dist seq1 seq2 sub ins del uncom norm test))
 
 (defgeneric dist-multi-edit (seq1 seq2 wgth &key sub ins del uncom test)
-  (:documentation "DIST-MULTI-EDIT: "))
+  (:documentation "DIST-MULTI-EDIT: edit distance between seq1 and seq2, whose elements are lists of descriptors (one per dimension),
+the distances of the dimensions being weighted by wgth: a number (same weight for all) or a list of weights, one per dimension
+(a list too short is completed with its last weight, a list too long is cut). The weights are normalized to sum to 1."))
 
-(defmethod dist-multi-edit ((seq1 t) (seq2 t) (wgth number) &key (sub 1) (ins 1) (del 1) (uncom 0) (test #'equalp))
+(defmethod dist-multi-edit ((seq1 t) (seq2 t) (wgth t) &key (sub 1) (ins 1) (del 1) (uncom 0) (test #'equalp))
   (fv-morphologie::multi-edit-dist seq1 seq2 wgth :change sub :insert ins :delete del :inex uncom :test test))
 
 (defgeneric dist-structure  (a b &key w-occ w-rep test)

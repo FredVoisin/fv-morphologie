@@ -1162,20 +1162,32 @@ If a and b are lists with not same size (i.e points with not same dimensions),
 (defmethod edit-dist ((seq1 number) (seq2 number) &optional (change 1) (insert 1) (delete 1) (inex 0) (normalized nil) (test #'equalp))
   (edit-dist (alpha>num seq1) (alpha>num seq2) change insert delete inex normalized test))
 
+(defun dimension-weights (wgth n)
+  "The weights of n dimensions, summing to 1, from wgth: a number gives the same weight to all;
+a list too short is completed with its last weight, a list too long is cut.
+If all the weights are 0, all are 0 (every dimension is ignored)."
+  (let ((w (cond ((numberp wgth) (make-list n :initial-element wgth))
+                 ((< (length wgth) n)
+                  (message (format nil "wgth has ~D weights for ~D dimensions: the last weight is used for the missing ones."
+                                   (length wgth) n))
+                  (append wgth (make-list (- n (length wgth)) :initial-element (or (car (last wgth)) 1))))
+                 ((> (length wgth) n)
+                  (message (format nil "wgth has ~D weights for ~D dimensions: the extra weights are ignored."
+                                   (length wgth) n))
+                  (subseq wgth 0 n))
+                 (t wgth))))
+    (if (zerop (apply #'+ w))
+        w
+        (normalize w))))
+
 (defun edit-dist-ldl1 (seq1 seq2 &key (change 1) (insert 1) (delete 1) (wgth '(1 1)) (test #'equalp))
   (assert (and (apply #'= (mapcar #'length seq1))
 	       (apply #'= (mapcar #'length seq2))
 	       (= (length (car seq1)) (length (car seq2)))))
-  (setf wgth (normalize wgth))
   (let* ((r 0)
 	 (matrix1 (mat-transpose seq1))
 	 (matrix2 (mat-transpose seq2))
-	 (wgth (if (not (= (length wgth) (length (car seq1))))
-		   (if (< (length wgth) (length (car seq1)))
-		       (cons wgth (make-list (- (length (car seq1)) (length wgth))
-					     :initial-element (car (last wgth))))
-		       (subseq wgth 0 (length (car seq1))))
-		   wgth)))
+	 (wgth (dimension-weights wgth (length (car seq1)))))
     (dotimes (n (length matrix1) r) ;(/ r (length (car seq1))))
       (incf r (* (nth n wgth)
 		 (edit-dist1 (nth n matrix1) (nth n matrix2)
@@ -1185,17 +1197,10 @@ If a and b are lists with not same size (i.e points with not same dimensions),
   (assert (and (apply #'= (mapcar #'length seq1))
 	       (apply #'= (mapcar #'length seq2))
 	       (= (length (car seq1)) (length (car seq2)))))
-  (setf wgth (normalize wgth))
   (let* ((r 0)
 	 (matrix1 (mat-transpose seq1))
 	 (matrix2 (mat-transpose seq2))
-	 (wgth (if (not (= (length wgth) (length (car seq1))))
-		   (progn (message "bad definition of wgth; setting all weigths to the first of wgth list")
-			(if (< (length wgth) (length (car seq1)))
-			    (cons wgth (make-list (- (length (car seq1)) (length wgth))
-						  :initial-element (car (last wgth))))
-			    (subseq wgth 0 (length (car seq1)))))
-		   wgth)))
+	 (wgth (dimension-weights wgth (length (car seq1)))))
     (dotimes (n (length matrix1) r) ;(/ r (length (car seq1))))
       (incf r (* (nth n wgth)
 		 (edit-dist2 (nth n matrix1) (nth n matrix2)
@@ -1208,7 +1213,7 @@ returns the editing distance between seq1 and seq2 according to the weigthed dim
 By symbolic dimensions, I consider a structured list of 'arbitrary' symbols describing an event, such as, for instance,
  '(a IV x)."))
 
-(defmethod multi-edit-dist ((seq1 list) (seq2 list) (wgth list)
+(defmethod multi-edit-dist ((seq1 list) (seq2 list) (wgth t)
 			    &key (change 1) (insert 1) (delete 1) (inex 0) (test #'equalp))
   (if inex
       (if (zerop inex)
@@ -1216,17 +1221,7 @@ By symbolic dimensions, I consider a structured list of 'arbitrary' symbols desc
 	  (edit-dist-ldl2 seq1 seq2 :change change :insert insert :delete delete :inex inex :wgth wgth :test test))
       (edit-dist-ldl1 seq1 seq2 :change change :insert insert :delete delete :wgth wgth :test test)))
 
-(defmethod multi-edit-dist ((seq1 list) (seq2 list) (wgth number)
-			    &key (change 1) (insert 1) (delete 1) (inex 0) (test #'equalp))
-  (multi-edit-dist seq1 seq2 (make-list (length seq1) :initial-element wgth)
-                   :change change :insert insert :delete delete :inex inex :test test))
-
-(defmethod multi-edit-dist ((seq1 list) (seq2 null) (wgth number)
-			    &key (change 1) (insert 1) (delete 1) (inex 0) (test #'equalp))
-  (multi-edit-dist seq1 seq2 (make-list (length (car seq1)) :initial-element wgth)
-                   :change change :insert insert :delete delete :inex inex :test test))
-
-(defmethod multi-edit-dist ((seq1 list) (seq2 null) (wgth list)
+(defmethod multi-edit-dist ((seq1 list) (seq2 null) (wgth t)
 			    &key (change 1) (insert 1) (delete 1) (inex 0) (test #'equalp))
   ;(assert (apply #'= (mapcar #'length seq1)))
   (let (r (l (length seq1)))
