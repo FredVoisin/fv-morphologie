@@ -455,3 +455,19 @@
     (with-open-file (out file :direction :output :if-exists :supersede)
       (format out "single"))
     (is (equal '("single") (read-text (namestring file) :mode nil)))))
+
+(test class-num-iter-frequencies
+  ;; k + 1 runs were divided by k: the frequencies summed to (k + 1)/k
+  (let ((*random-state* (seeded-random-state))
+        (d '((0 0) (0 1) (5 5) (5 6) (10 10) (10 11))))
+    (dolist (k '(1 2 5 20))
+      (let ((r (class-num d 3 :centroids :iter (list k))))
+        (is (approx= 1 (reduce #'+ (mapcar #'second r)) 1e-5))
+        (is (every #'(lambda (x) (<= 0 (second x) 1)) r))
+        ;; the most frequent first
+        (is (apply #'>= (mapcar #'second r)))))
+    ;; an integer iter gave a frequency of 2.0 for 1 run
+    (is (approx= 1 (nth-value 1 (class-num d 3 :centroids :iter 1))))
+    (is (<= (nth-value 1 (class-num d 3 :centroids :iter 20)) 1))
+    ;; (0) divided by zero: at least one run
+    (is (approx= 1 (second (first (class-num d 3 :centroids :iter (list 0))))))))

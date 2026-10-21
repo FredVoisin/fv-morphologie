@@ -2395,10 +2395,11 @@ There are fewer than n classes only if data has fewer than n distinct points."))
   (:documentation "Classification of data into N classes using the 'dynamic clouds' algorithm.
 Adapted from Diday & all: Elements d'analyse de donnees, Dunod, Paris, 1982.
 The first optional argument <iter> fixes the output form:
-if nil, runs only one iteration of the main algorithm ;
-if t, returns N * N iterations of the algorithm, where N is the number of classes to be find ;
-if <iter> is a number, returns this number iterations of the algorithm ;
-if <iter> is a list of one number, returns the classification which have the higher probability after number tries.
+if nil, runs the algorithm once and returns (classes centres iterations) ;
+if <iter> is a list of one number k, runs the algorithm k times and returns each different classification
+with its frequency (the frequencies sum to 1), the most frequent first ;
+if <iter> is a number k, runs the algorithm k times and returns two values: the most frequent classification and its frequency ;
+if t, the same with N * N runs, where N is the number of classes to be found, and returns the most frequent classification.
 The second argument <dist> is the distance function (#'dist-euclid by default).
 "))
 
@@ -2407,13 +2408,14 @@ The second argument <dist> is the distance function (#'dist-euclid by default).
     (setf data (mat-transpose (list data (make-list (length data) :initial-element 0)))))
   (cond
    ((null iter) (multiple-value-bind (r c i) (nuees data n dist) (list r c i)))
-   ((listp iter) (let* ((r (loop for i from 0 to (car iter)
-                                 collect (multiple-value-bind (k) (nuees data n dist)
-					   (values k))))
+   ((listp iter) (let* ((k (max 1 (car iter)))
+                        (r (loop repeat k
+                                 collect (values (nuees data n dist))))
                         (p (remove-duplicates r :test #'equalp)))
                    (sort (mapcar #'(lambda (x)
-                                     (list x (float (/ (length (remove-if-not #'(lambda (y) (equalp x y)) r))
-                                                       (car iter))))) p) '> :key #'cadr)))
+                                     (list x (float (/ (count x r :test #'equalp) k))))
+                                 p)
+                         '> :key #'cadr)))
    ((integerp iter)
     (let ((r (dynclouds data n (list iter) dist)))
       (values (caar r) (cadar r))))
@@ -2428,10 +2430,11 @@ The second argument <dist> is the distance function (#'dist-euclid by default).
   (:documentation "Classification of data into N classes using the 'dynamic clouds' algorithm.
 Adapted from Diday & all: Elements d'analyse de donnees, Dunod, Paris, 1982.
 The first optional argument <iter> fixes the output form:
-if nil, runs only one iteration of the main algorithm ;
-if t, returns N * N iterations of the algorithm, where N is the number of classes to be find ;
-if <iter> is a number, returns this number iterations of the algorithm ;
-if <iter> is a list of one number, returns the classification which have the higher probability after number tries.
+if nil, runs the algorithm once and returns (classes centres iterations) ;
+if <iter> is a list of one number k, runs the algorithm k times and returns each different classification
+with its frequency (the frequencies sum to 1), the most frequent first ;
+if <iter> is a number k, runs the algorithm k times and returns two values: the most frequent classification and its frequency ;
+if t, the same with N * N runs, where N is the number of classes to be found, and returns the most frequent classification.
 The second argument <dist> is the distance function (#'dist-euclid by default).
 "))
 

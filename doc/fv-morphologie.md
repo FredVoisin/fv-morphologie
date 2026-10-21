@@ -704,8 +704,11 @@ The number of classes and the algorithm must be given. Modes:
   iterations needed for the algorithm to converge. As the centroids start at
   random, results can vary: with an integer `:iter` *k*, the algorithm runs
   *k* times and returns two values, the most frequent partition and its
-  frequency; with `:iter t`, it runs classes² times and returns the most
-  frequent partition. `:dist` sets the distance (Euclidean by default).
+  frequency; with `:iter (k)` (a list of one integer), it runs *k* times and
+  returns each different partition with its frequency, the most frequent
+  first (the frequencies sum to 1); with `:iter t`, it runs classes² times
+  and returns the most frequent partition. `:dist` sets the distance
+  (Euclidean by default).
 - `:1d-centroids`: classification of a list of numbers in one dimension
   (e.g. a variation of intensity). The sorted data are cut at their
   `classes − 1` largest successive differences (N+1 − N), and the mean of
