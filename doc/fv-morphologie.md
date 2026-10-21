@@ -315,10 +315,20 @@ compared with each other by the edit distance of their signatures, and
 
 #### `graph-path (from to graph)`
 
-The nodes on the path between two nodes of a tree.
+The nodes on the path between two nodes of a tree (`nil` if they are not
+connected). Only the two nodes of each edge `(node-a node-b distance)` are
+compared, never the distance.
+
+- `from` or `to` `nil`: the paths from the other node to each leaf of the
+  tree.
+- `from` and `to` `nil`: the paths between all the pairs of leaves.
+- `from` and/or `to` a list of nodes: the paths for each of them.
 
 ```lisp
 (graph-path 'a 'c '((a b 1) (b c 2) (b d 1)))   ;=> (A B C)
+(graph-path 'a 'b '((a b 1) (b c 2) (b d 1)))   ;=> (A B)
+(graph-path 'a nil '((a b 1) (b c 2) (b d 1)))  ;=> ((A B C) (A B D))
+(graph-path nil nil '((a b 1) (b c 2) (b d 1))) ;=> ((A B C) (A B D) (C B D))
 ```
 
 #### `graph>dot (graph out &key dis scale shape legend)`
@@ -1104,7 +1114,6 @@ and classification from that tree (`class-sym` with `:mst`).
 - **`dist-edit` docstring**: says `:norm` divides by the shortest sequence;
   the code (and the legacy doc) use the longest.
 - **`(help 'keyword)`** is not usable yet; use `doc`.
-- **`graph-path`** accepts single nodes only, not lists of nodes.
 - **FV-examples** are still to be converted into Common Lisp examples.
 - **Figures**: `pictures/menu-*.png` (PWGL menus) and
   `1-Transcription/span-tree.bmp` (a spanning tree drawn with neato) are not

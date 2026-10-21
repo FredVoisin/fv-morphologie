@@ -160,3 +160,26 @@
   ;; simple smoothing
   (is (every #'approx= '(0 5 2.5 6.25 3.125) (filt-lowpass '(0 10 0 10 0) 0.5)))
   (is (null (filt-lowpass '() 0.5))))
+
+(test graph-path-nodes-not-lengths
+  ;; edge lengths were taken for nodes: 3 and 1 looked adjacent through (1 2 3)
+  (let ((g '((0 1 2) (1 2 3) (2 3 1)))
+        (s '((a b 1) (b c 2) (b d 1))))
+    (is (equal '(3 2 1) (graph-path 3 1 g)))
+    (is (equal '(0 1 2) (graph-path 0 2 g)))
+    ;; adjacent nodes used to give the edge instead of the nodes
+    (is (equal '(0 1) (graph-path 0 1 g)))
+    (is (equal '(a b) (graph-path 'a 'b s)))
+    ;; used to loop forever
+    (is (equal '(c b a) (graph-path 'c 'a s)))
+    (is (equal '(c b d) (graph-path 'c 'd s)))
+    (is (equal '(a) (graph-path 'a 'a s)))
+    (is (null (graph-path 'a 'z s)))
+    (is (equal '("x" "y" "z") (graph-path "x" "z" '(("x" "y" 1) ("y" "z" 2)))))
+    ;; paths to the leaves
+    (is (equal '((a b c) (a b d)) (graph-path 'a nil s)))
+    (is (equal '((1 0) (1 2 3)) (graph-path 1 nil g)))
+    (is (equal '((a b c) (a b d) (c b d)) (graph-path nil nil s)))
+    ;; dist-graph is 0 between adjacent nodes no more
+    (is (= 1 (dist-graph 'a 'b s)))
+    (is (= 4 (dist-graph 3 1 g)))))

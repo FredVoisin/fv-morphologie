@@ -1978,113 +1978,70 @@ Algorithm from: E. Diday & all, 1982 : Elements d'analyse de donnees, Dunod, Par
 (defmethod minimum-spanning-tree ((graph list) &optional (verbose nil))
   (prim-tree graph verbose)) ;; sort '< :key #'car - string-lessp))
 
-(defun lul (l1 l2)
-  (cond ((equalp (car (last l1)) (car l2)) (append (butlast l1) l2))
-	((equalp (car (last l1)) (cadr l2)) (append (butlast l1) (reverse l2)))
-	(t (lul (reverse l1) l2))))
+(defun find-path (tree start end)
+  "The nodes of the path from start to end in tree, a list of edges (node-a node-b distance),
+or nil if there is no path. Only the two nodes of each edge are compared, never the distance."
+  (let ((parent (list (cons start nil)))
+        (queue (list start)))
+    (loop while (and queue (not (assoc end parent :test #'equalp)))
+          do (let ((n (pop queue)))
+               (dolist (e tree)
+                 (let ((m (cond ((equalp (first e) n) (list (second e)))
+                                ((equalp (second e) n) (list (first e))))))
+                   (when (and m (not (assoc (car m) parent :test #'equalp)))
+                     (push (cons (car m) n) parent)
+                     (setf queue (append queue m)))))))
+    (when (assoc end parent :test #'equalp)
+      (let ((path nil) (n end))
+        (loop (push n path)
+              (when (equalp n start) (return path))
+              (setf n (cdr (assoc n parent :test #'equalp))))))))
 
-(defun lul1 (ldl)
-  (if (null (cdr ldl))
-      (flat-1 ldl)
-      (lul1 (append (list (lul (car ldl) (cadr ldl))) (cddr ldl)))))
+(defun tree-leaf-nodes (tree)
+  "The nodes of degree 1 of tree, a list of edges (node-a node-b distance)."
+  (remove-if-not #'(lambda (v)
+                     (= 1 (count-if #'(lambda (e) (or (equalp v (first e)) (equalp v (second e))))
+                                    tree)))
+                 (all-vertices tree)))
 
-(defun topotree (tree)
-  (setf tree (mapcar #'butlast tree))
-  (let ((points (remove-duplicates (append (mapcar #'car tree) (mapcar #'cadr tree)) :test #'equalp))
-	(non-extr (copy-list tree))
-	noeuds extremites)
-    (setf extremites (extremites points tree))
-    (dolist (x extremites) (setf non-extr (remove x non-extr :test #'equalp)))
-    (setf non-extr (remove-duplicates (flat-1 non-extr) :test #'equalp)
-	  extremites (remove-duplicates (flat-1 extremites) :test #'equalp))
-    (dolist (x non-extr)
-      (setf extremites (remove x extremites :test #'equalp)))
-    (setf noeuds
-	  (remove-ifonly-1
-	   (mapcar #'(lambda (a) (remove 'nil a))
-		   (mapcar #'(lambda (point) (mapcar #'(lambda (x) (when (not (equalp 'nil (member point x))) x)) tree))
-			   points))))
-    (values extremites noeuds)))
-
-(defun extr-to-extr (start extr noeuds r count)
-  (let ((copy-of-noeuds (copy-tree noeuds)))
-    (loop for i from 0 to (1- (length copy-of-noeuds))
-       do (dotimes (j (length (nth i copy-of-noeuds)))
-	    (when (and (not (member (nth j (nth i copy-of-noeuds)) r :test #'equalp))
-		       (member start (nth j (nth i copy-of-noeuds)) :test #'equalp))
-	      (push (nth j (nth i copy-of-noeuds)) r)
-	      (setf start (car (remove-if #'(lambda (x) (eq start x)) (nth j (nth i copy-of-noeuds))))
-		    (nth j (nth i copy-of-noeuds)) 'nil
-		    count 0))))
-    (cond ((and (not (member start extr)) (zerop count))
-	   (extr-to-extr start extr copy-of-noeuds r (1+ count)))
-	  (t (list r start count)))))
-
-(defun extr-to-extr2 (start extr noeuds r)
-  (if (null extr)
-      (mapcar #'reverse r)
-      (let ((p (extr-to-extr start extr noeuds 'nil 0)))
-        ;(print (list start extr p))
-	(cond ((> (car (last p)) 0)
-	       (setf noeuds (mapcar #'(lambda (x) (remove-if #'(lambda (a) (member (cadr p) a)) x)) noeuds)
-		     extr (remove (cadr p) extr))
-	       (extr-to-extr2 start extr noeuds r))
-	      (t (push (car p) r)
-		 (setf noeuds
-		       (mapcar #'(lambda (x) (remove (caar r) x :test #'equalp)) noeuds)
-		       extr (remove (cadr p) extr))
-		 (extr-to-extr2 start extr noeuds r))))))
-
-(defun extr-to-extr3 (start extr noeuds)
-  (extr-to-extr2 start extr noeuds 'nil))
-
-(defun parcours (start tree)
-  (multiple-value-bind (extremites noeuds)
-      (topotree tree)
-    (mapcar #'lul1 (extr-to-extr3 start extremites noeuds))))
+(defun paths-to-leaves (start tree)
+  "The paths from start to each leaf of tree."
+  (loop for l in (tree-leaf-nodes tree)
+        unless (equalp l start)
+          collect (find-path tree start l)))
 
 (defun all-paths (tree)
-  (let ((extremites (topotree tree)))
-    (mapcar #'(lambda (x) (remove 'nil (parcours x tree))) extremites)))
-
-(defun find-path (tree start end)
-  (assert (not (position-if #'(lambda (x) (equalp (car x) (cadr x))) tree)))
-  (multiple-value-bind (extremites noeuds)
-      (topotree tree)
-    (let ((long-path
-	   (car (remove-if-not #'(lambda (x) (and (member start x :test #'equalp) (member end x :test #'equalp)))
-			       (mapcar #'lul1 (extr-to-extr3 start extremites noeuds))))))
-      (subseq long-path 0 (1+ (position end long-path :test #'equalp))))))
+  "The paths between all the pairs of leaves of tree."
+  (loop for (l . others) on (tree-leaf-nodes tree)
+        append (loop for o in others collect (find-path tree l o))))
 
 (defgeneric tree-path (from to tree)
   (:documentation "path from vertex to vertex in tree."))
 
 (defmethod tree-path ((from number) (to number) (tree list))
-  (let* ((k (remove-if-not #'(lambda (x) (member from x)) tree))
-         (p (position-if #'(lambda (x) (member to x)) k)))
-    (if p (list (nth p k))
-      (find-path tree from to))))
+  (find-path tree from to))
 
 (defmethod tree-path ((from symbol) (to symbol) (tree list))
-  (let* ((k (remove-if-not #'(lambda (x) (member from x)) tree))
-         (p (position-if #'(lambda (x) (member to x)) k)))
-    (if p (list (nth p k))
-      (find-path tree from to))))
+  (find-path tree from to))
 
 (defmethod tree-path ((from null) (to null) (tree list))
-   (apply #'append (all-paths tree)) )
+  (all-paths tree))
 
 (defmethod tree-path ((from t) (to null) (tree list))
-  (parcours from tree))
+  (paths-to-leaves from tree))
+
+;; nil is a symbol: without this method, (tree-path 'a nil tree) would look for a node named nil
+(defmethod tree-path ((from symbol) (to null) (tree list))
+  (paths-to-leaves from tree))
 
 (defmethod tree-path ((from null) (to t) (tree list))
-  (parcours to tree))
+  (paths-to-leaves to tree))
 
 (defmethod tree-path ((from list) (to null) (tree list))
-  (mapcar #'(lambda (v) (parcours v tree)) from))
+  (mapcar #'(lambda (v) (paths-to-leaves v tree)) from))
 
 (defmethod tree-path ((from null) (to list) (tree list))
-  (mapcar #'(lambda (v) (parcours v tree)) to))
+  (mapcar #'(lambda (v) (paths-to-leaves v tree)) to))
 
 (defmethod tree-path ((from list) (to list) (tree list))
   (mapcar #'(lambda (s)
@@ -2104,10 +2061,7 @@ Algorithm from: E. Diday & all, 1982 : Elements d'analyse de donnees, Dunod, Par
     (setf npath (tree-path (cdr (assoc from table :test #'equalp))
                            (cdr (assoc to table :test #'equalp))
                            ntree))
-    (loop for n in npath
-      collect (list (car (rassoc (car n) table :test #'equalp))
-                    (car (rassoc (cadr n) table :test #'equalp))
-                    (caddr n)))))
+    (mapcar #'(lambda (n) (car (rassoc n table))) npath)))
 
 ;; a tree is a list of list of edges each defined by two vertices, such as: ( (a b) (b c) (b d) (c e)...) 
 ; any edge can be defined by some properties in the rest of the list of its vertices ;
@@ -2186,7 +2140,8 @@ Algorithm from: E. Diday & all, 1982 : Elements d'analyse de donnees, Dunod, Par
     (dotimes (i (1- (length path)) d)
       (incf d (third (find-if #'(lambda (x)
 				  (let ((s (subseq x 0 2)))
-				    (and (member (nth i path) s) (member (nth (1+ i) path) s))))
+				    (and (member (nth i path) s :test #'equalp)
+					 (member (nth (1+ i) path) s :test #'equalp))))
 			      tree))))))
 
 (defmethod tree-dist ((vertex1 t) (vertex2 list) (tree list))
