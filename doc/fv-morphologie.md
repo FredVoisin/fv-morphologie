@@ -1129,12 +1129,18 @@ Imports data from a text file into a list. Modes:
   even a line of one word (`((1) (2) (3))` for one number per line); empty
   lines are ignored;
 - `nil` (*flat*): one flat list of strings;
-- `:ascii-7b`, `:ascii-8b`: reads the characters as 7-bit or 8-bit ASCII
-  codes, useful when some characters cannot be read by Lisp.
+- `:charcode`: the segments of the file as lists of character codes (Unicode
+  code points), for an analysis character by character.
 
-`:sep` is a string of separator characters, besides blanks (e.g. all
-punctuation). `:rem-test` is a predicate for words to remove (e.g. words of
-less than four letters).
+Another mode is an error. (The PWGL modes `:ascii-7b` and `:ascii-8b`, for
+old character encodings, are no longer needed: UTF-8 files are read directly.)
+
+`:sep` is a string of separator characters, besides blanks (spaces,
+tabulations, newlines), or `t` for the usual punctuation marks. With
+`:charcode`, it may also be a list of characters or codes, or
+`(:ignore c ...)` to separate at every character which is not a letter or a
+digit (in any alphabet), except `c ...`. `:rem-test` is a predicate for words
+to remove (e.g. words of less than four letters).
 
 Some special signs, such as punctuation or parentheses (Lisp
 S-expressions), may cause errors when reading a file.
@@ -1142,6 +1148,8 @@ S-expressions), may cause errors when reading a file.
 ```lisp
 ;; alist.txt contains lines such as "0, 1 2;"
 (read-text "alist.txt" :sep ",;")   ;=> ((0 1 2) (1 3 4) (2 5 6))
+;; a file containing "été, ça" (two lines: "été," and "ça")
+(read-text "words.txt" :mode :charcode :sep ",")   ;=> ((233 116 233) (231 97))
 ```
 
 #### `write-list (list file &optional mode)`

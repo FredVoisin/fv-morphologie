@@ -487,12 +487,14 @@ Keywords:
 ;;; 5.1 READING FILES
 
 (defgeneric read-text (file &key mode sep rem-test)
-  (:documentation "READ-TEXT: reads text <file> using following <mode> formats:
- T : each line of file as a list
- NIL : flat mode, reads file as a single list
- :ascii-7b : reads file as a 7 bits ascii format
- :ascii- 8b : reads file as extended ascii (8 bits) format.
-Additional keyword :sep is a string defining all characters defining a separator;
+  (:documentation "READ-TEXT: reads text <file> using following <mode> formats (another mode is an error):
+ T : each line of file as a list of symbols or numbers
+ NIL : flat mode, reads file as a single list of strings
+ :charcode : the segments of the file, as lists of character codes.
+Additional keyword :sep is a string defining all characters defining a separator, besides blanks
+(spaces, tabulations, newlines), or t for the usual punctuation marks; with :charcode, it may also
+be a list of characters or codes, or (:ignore c ...) to separate at all the characters which are
+not letters or digits (in any alphabet), but c ...
 Additional Keyword :rem-test defines a function to remove choosen words."))
 
 (defmethod read-text ((file t)  &key (mode t) (sep nil) (rem-test nil))

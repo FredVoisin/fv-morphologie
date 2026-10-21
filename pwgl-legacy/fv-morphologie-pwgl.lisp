@@ -516,9 +516,9 @@ All other keyword arguments are same as dist-edit."
   :class morphologie-box
   :menu (mode (t "lines") (nil "flat") (:ascii-7b "ascii-7b") (:ascii-8b "ascii-8b"))
   (case mode
-    (:ascii-7b (read-txt-file file :mode :charcode :marks sep :rem-test rem-test :8bits nil))
-    (:ascii-8b (read-txt-file file :mode :charcode :marks sep :rem-test rem-test :8bits t))
-    (t (read-txt-file file :mode mode :marks sep :rem-test rem-test :8bits nil))))
+    (:ascii-7b (read-txt-file file :mode :charcode :marks sep :rem-test rem-test))
+    (:ascii-8b (read-txt-file file :mode :charcode :marks sep :rem-test rem-test))
+    (t (read-txt-file file :mode mode :marks sep :rem-test rem-test))))
 
 ; (define-box read-midi ((file))
 ; (define-box read-sdif ((file))

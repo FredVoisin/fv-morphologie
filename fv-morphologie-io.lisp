@@ -94,44 +94,37 @@
   (with-open-file (in file :direction :input)
     (slurp-stream in)))
  
-(defun read-txt-file (file &key (mode t) (marks nil) (rem-test nil) (8bits nil))
+(defun read-txt-file (file &key (mode t) (marks nil) (rem-test nil))
+  "Reads the text file: mode t, each line as a list; nil, one flat list of strings; :charcode, the
+segments of the file as lists of character codes. marks are the separators, besides blanks (spaces,
+tabulations, newlines and other characters of code up to 32): a string, a list of characters or codes,
+t for the usual punctuation marks, or, with :charcode, (:ignore c ...) for all the characters which are
+not letters or digits, but c ..."
   (if (not file) nil
     (progn
       (when (not rem-test) (setf rem-test #'(lambda (x) (declare (ignore x)) nil)))
       (when (not marks) (setf marks " "))
       (when (eq 'T marks) (setf marks " ,;:?./@&\"'(!)-_#*+=<>{}[]$`%^"))
+      (unless (member mode '(t nil :charcode))
+        (error "read-text: unknown mode ~S, use t (lines), nil (flat) or :charcode." mode))
       (if mode
           (case mode
             (:charcode
-	     (cond ((eq T marks)
-		    (remove-if rem-test
-			       (split-list-using-marks
-				(string2code (slurp-file file))
-				#'(lambda (x) (not (alphanump x nil 8bits))))))
-		   ((null marks)
-		    (remove-if rem-test
-			       (remove-if-not #'(lambda (x) (alphanump x '(32) 8bits))
-					      (string2code (slurp-file file)))))
-		   ((stringp marks)
-		    (remove-if rem-test
-			       (split-list-using-marks
-				(string2code (slurp-file file))
-				(string2code marks))))
-		   ((listp marks)
-		    (if (eql :ignore (car marks))
-			(remove-if rem-test
-			       (split-list-using-marks
-				(string2code (slurp-file file))
-				#'(lambda (x) (not (alphanump
-						    x
-						    (all2char-code (cdr marks))
-						    8bits)))))
-			(remove-if rem-test
-			       (split-list-using-marks
-				(string2code (slurp-file file))
-				(all2char-code marks)))))
-		   (t (message "read-txt-file: marks must be a string or a list.")
-		      (abort))))
+             (flet ((blankp (c) (<= c 32))
+                    (letterp (c) (alphanumericp (code-char c))))
+               (remove-if rem-test
+                          (split-list-using-marks
+                           (string2code (slurp-file file))
+                           (cond ((stringp marks)
+                                  (let ((codes (string2code marks)))
+                                    #'(lambda (c) (or (blankp c) (member c codes)))))
+                                 ((and (listp marks) (eql :ignore (car marks)))
+                                  (let ((kept (all2char-code (cdr marks))))
+                                    #'(lambda (c) (not (or (letterp c) (member c kept))))))
+                                 ((listp marks)
+                                  (let ((codes (all2char-code marks)))
+                                    #'(lambda (c) (or (blankp c) (member c codes)))))
+                                 (t (error "read-text: :sep must be a string or a list, not ~S." marks)))))))
 	    (t (mapcar #'(lambda (x) (string2sym (split-string x marks)))
 		       (remove-if #'(lambda (x) (zerop (length x)))
 				  (read-text-lines file)))))
