@@ -2261,26 +2261,6 @@ IN : string or list (of symbols or lists or strings)."
       (normalize-class classes)
       (mapcar #'(lambda (x) (normalize-class x)) classes)))
 
-(defun rand-classes (m n)
-  "Liste de m nombre de n classes"
-  (let ((alea nil) (alea-test nil))
-    (dotimes (a m alea) (push (random n) alea))
-    (setf alea-test (remove-duplicates alea))
-    (cond ((= n (length alea-test)) (setf alea alea)) (t (rand-classes m n)))))
-
-(defun quasi-rand-classes (m n data)
-  "Hack of rand-class with not-completely random :)"
-  (let* ((max (apply #'max data))
-         (min (apply #'min data))
-         (mx (position-if #'(lambda (x) (= max x)) data))
-         (mn (position-if #'(lambda (x) (= min x)) data))
-         (alea (rand-classes m n)))
-    (setf (nth mx alea) (1- n)
-          (nth mn alea) 0)
-    (values alea)))
-
-;(quasi-rand-classes 10 2 '(0 1 2 3 7 8 9 0 9 0 8))
-
 (defun random-dot (data)
   "A random point in the space defined by data"
   (loop for j from 0 to (length (car data))
