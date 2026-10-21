@@ -71,20 +71,24 @@
 ; (print (file-list-rec '("/home/fred/lisp/")))
 
 (defun read-text-lines (file)
+  "The lines of the text file, as strings."
+  ;; read-line until the end of the file: file-position counts bytes, not characters
   (with-open-file (in-stream file
 			     :direction :input
                              :element-type 'character)
-    (loop with length = (file-length in-stream)
-          while (< (file-position in-stream) length)
-          collect (read-line in-stream))))
+    (loop for line = (read-line in-stream nil nil)
+          while line
+          collect line)))
 
 (defun slurp-stream (stream)
+  "The whole contents of the character stream, as a string."
 ;src: www.ymeme.com/slurping-a-file-common-lisp-83.html
 ;www.emmett.ca/~sabetts/slurp.html
+  ;; file-length counts bytes: with multi-byte characters (UTF-8), fewer characters are
+  ;; read, and only these are kept
   (let* ((l (file-length stream))
          (seq (make-string l)))
-    (read-sequence seq stream :end l)
-    seq))
+    (subseq seq 0 (read-sequence seq stream :end l))))
 
 (defun slurp-file (file)
   (with-open-file (in file :direction :input)

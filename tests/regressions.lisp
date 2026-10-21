@@ -580,3 +580,20 @@
   (let* ((*random-state* (seeded-random-state))
          (s (loop repeat 120 collect (nth (random 4) '(a b c d)))))
     (is (every #'(lambda (m) (>= (length (cdr m)) 2)) (motif-list s :length :diss 0.25)))))
+
+(test slurp-file-multibyte
+  ;; file-length counts bytes: a UTF-8 file gave one NUL (SBCL) or space (ECL)
+  ;; per extra byte at the end of the string
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (with-open-file (out file :direction :output :if-exists :supersede :external-format :utf-8)
+      (format out "~a~%~a" (coerce (list (code-char 233) #\t (code-char 233)) 'string) "abc"))
+    (let ((s (fv-morphologie::slurp-file file))
+          (lines (fv-morphologie::read-text-lines file)))
+      (is (equal 2 (length lines)))
+      (is (= (length s) (+ (reduce #'+ (mapcar #'length lines)) (1- (length lines)))))
+      (is (notany #'(lambda (c) (member (char-code c) '(0))) s))
+      (is (char= #\c (char s (1- (length s)))))))
+  ;; an empty file
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (is (equal "" (fv-morphologie::slurp-file file)))
+    (is (null (fv-morphologie::read-text-lines file)))))
