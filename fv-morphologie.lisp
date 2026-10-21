@@ -306,9 +306,14 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
 :nozero replaces each zero by a random value in ]0, val * range[ (]0, val[ if all values are equal);
 :swap swaps val * length pairs of elements (val integer: number of swaps);
 :relative adds to each value a random amount in [-val * range, val * range].
-The range is max - min of list. A list which is not numerical is swapped (:swap)."
+The range is max - min of list. A list which is not numerical is swapped (:swap).
+If mode is a function of two arguments (x l), each element x of list is replaced by its result,
+l being (a copy of) the whole list, shared by all the calls (it should not be modified)."
   (let ((val (or val 0.1)))
-    (cond ((null list) nil)
+    (cond ((functionp mode)
+           (let ((l (copy-list list)))
+             (mapcar #'(lambda (x) (funcall mode x l)) list)))
+          ((null list) nil)
           ((notevery #'numberp list) (randsort list val))
           (t (let ((range (- (reduce #'max list) (reduce #'min list))))
                (case mode
@@ -321,7 +326,7 @@ The range is max - min of list. A list which is not numerical is swapped (:swap)
                  (:relative
                   (let ((q (float (* val range))))
                     (mapcar #'(lambda (x) (+ x (* q (- (random 2.0) 1.0)))) list)))
-                 (t (error "filt-noise: unknown mode ~S, use :nozero, :swap or :relative." mode))))))))
+                 (t (error "filt-noise: unknown mode ~S, use :nozero, :swap, :relative or a function." mode))))))))
 
 #|
 ; deep-tree to do

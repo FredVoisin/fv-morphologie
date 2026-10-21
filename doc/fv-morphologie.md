@@ -219,12 +219,25 @@ Reads a string (or a list of strings) as a list (or lists) of symbols.
 - `:relative`: adds to each value a random amount in
   [−`val` × range, `val` × range].
 
+`mode` may also be a function of two arguments `(x l)` (`#'name` or a
+`lambda`, not a quoted symbol): each element `x` of `seq` is replaced by its
+result, `l` being the whole `seq` (a copy of it, shared by all the calls:
+the function should not modify it), and `val` is ignored. This
+applies any kind of noise, numerical or not, element by element; declare
+`(declare (ignore x))` or `(declare (ignore l))` for an argument you do not
+use.
+
 A sequence which is not numerical is swapped (`:swap`). Another mode is an
 error; `seq` itself is not modified.
 
 ```lisp
 (filt-noise '(0 5 0 10))                  ;=> (0.10159576 5 0.14144969 10)
 (filt-noise '(100 200 0 50) :relative 0.1) ;=> (81.438194 194.18185 -5.740862 65.08263)
+(filt-noise '(60 62 64) (lambda (x l) (declare (ignore l)) (+ x (random 2))))
+;=> (61 62 65)
+;; each element replaced by a random element of the list
+(filt-noise '(a b c d) (lambda (x l) (declare (ignore x)) (nth (random (length l)) l)))
+;=> (C A C D)
 ```
 
 ### 1.2 Filter

@@ -120,7 +120,9 @@ with the amount <val> (0.1 by default), relative to the range (max - min) of <se
  :nozero : replaces each zero value of <seq> with a random value in ]0, val * range[
  :swap : swaps val * length pairs of elements (val integer: the number of swaps)
  :relative : adds to each value a random amount in [-val * range, val * range]
-A sequence which is not numerical is swapped."))
+A sequence which is not numerical is swapped.
+<mode> may also be a function of two arguments (x l): each element x of <seq> is replaced by its result, l being the whole <seq>; <val> is ignored.
+For instance (lambda (x l) (declare (ignore x)) (nth (random (length l)) l)) replaces each element by a random element of <seq>."))
 
 (defmethod filt-noise ((seq t) &optional (mode :nozero) (val 0.1))
   (fv-morphologie::fnoise seq mode val))

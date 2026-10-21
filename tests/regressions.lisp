@@ -310,3 +310,21 @@
     (let ((l (list 0 1 2)))
       (filt-noise l :relative 0.5)
       (is (equal '(0 1 2) l)))))
+
+(test filt-noise-function-mode
+  ;; mode may be a function (x l) applied to each element x, l being the whole list
+  (is (equal '(10 20 30) (filt-noise '(1 2 3) (lambda (x l) (declare (ignore l)) (* x 10)))))
+  (is (equal '(3 3 3) (filt-noise '(a b c) (lambda (x l) (declare (ignore x)) (length l)))))
+  (is (equal '(1/6 2/6 3/6) (filt-noise '(1 2 3) (lambda (x l) (/ x (reduce #'+ l))))))
+  ;; replace each element by a random element of the list
+  (let ((*random-state* (seeded-random-state)))
+    (is (loop repeat 50
+              always (subsetp (filt-noise '(a b c d)
+                                          (lambda (x l) (declare (ignore x)) (nth (random (length l)) l)))
+                              '(a b c d)))))
+  (is (null (filt-noise '() (lambda (x l) (declare (ignore l)) x))))
+  ;; the function gets a copy of the list: seq is not modified
+  (let ((s (list 3 1 2)))
+    (filt-noise s (lambda (x l) (setf (first l) 0) x))
+    (is (equal '(3 1 2) s)))
+  (signals error (filt-noise '(1 2) 'reverse)))
