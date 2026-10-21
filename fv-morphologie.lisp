@@ -1071,34 +1071,27 @@ If a and b are lists with not same size (i.e points with not same dimensions),
   change: cost if changing a elt in sequences;
   insert: cost if deleting or inserting;
   normalized (T or NIL): normalized distance - 0 the closest, 1 the farest."
-  (let ((matcouts nil) d d1 d2 d3 c1 c2)
-    (dotimes (j (+ (length seq2) 1))
-      (dotimes (i (+ (length seq1) 1))
-	(setf d (+ i (* j (+ (length seq1) 1))))
-	(cond ((and (> i 0) (> j 0))
-	       (if (funcall test (nth (- i 1) seq1) (nth (- j 1) seq2))
-		   (setf c1 0)
-		   (setf c1 change))
-	       (setf d1 (nth (+ 1 (length seq1)) matcouts)
-                     d2 (nth (length seq1) matcouts)
-                     d3 (car matcouts))
-	       (push (apply #'min (list (+ c1 d1) (+ insert d2) (+ delete d3))) matcouts))
-	      (t
-	       (if (and (zerop i) (zerop j))
-                   (setf c1 0 c2 0)
-                 (setf c1 insert c2 delete))
-	       (cond ((and (zerop i) (> j 0))
-		      (setf d (nth (length seq1) matcouts))
-		      (push (+ c1 d) matcouts))
-		     ((and (> i 0) (zerop j))
-		      (setf d (car matcouts))
-		      (push (+ c2 d) matcouts))
-		     (t (push 0 matcouts)))))))
-    (if normalized
-	(if (> (length seq1) (length seq2))
-		(float (/ (car matcouts) (length seq1)))
-		(float (/ (car matcouts) (length seq2))))
-	(car matcouts))))
+  (let* ((a (coerce seq1 'vector))
+         (b (coerce seq2 'vector))
+         (la (length a))
+         (lb (length b))
+         (prev (make-array (1+ la)))
+         (row (make-array (1+ la))))
+    ;; row j of the matrix of costs: (aref row i) for the first i elements of seq1, j of seq2
+    (dotimes (i (1+ la)) (setf (aref prev i) (* i delete)))
+    (loop for j from 1 to lb
+          do (setf (aref row 0) (+ (aref prev 0) insert))
+             (loop for i from 1 to la
+                   do (setf (aref row i)
+                            (min (+ (aref prev (1- i))
+                                    (if (funcall test (aref a (1- i)) (aref b (1- j))) 0 change))
+                                 (+ (aref prev i) insert)
+                                 (+ (aref row (1- i)) delete))))
+             (rotatef prev row))
+    (let ((d (aref prev la)))
+      (if normalized
+          (if (zerop (max la lb)) 0.0 (float (/ d (max la lb))))
+          d))))
 
 (defun edit-dist2 (seq1 seq2 &key (change 1) (insert 1) (delete 1) (inex 0) (normalized nil) (test #'equalp))
   "Returns the smallest distance between two lists of symbols.
@@ -1107,46 +1100,34 @@ If a and b are lists with not same size (i.e points with not same dimensions),
   insert: cost if deleting or inserting;
   inex = cost if changing with an element which doesn't exist on the other sequence;
   normalized (T or NIL): normalized distance, 0 the closest, 1 the farest."
-  (let ((matcouts nil) d d1 d2 d3 c1 c2 ex ey)
-    (dotimes (j (+ (length seq2) 1))
-      (dotimes (i (+ (length seq1) 1))
-	(setf d (+ i (* j (+ (length seq1) 1))))
-	(cond ((and (> i 0) (> j 0))
-	       (if (not (member (nth (- i 1) seq1) seq2))
-		   (setf ex 1)
-		   (setf ex 0))
-	       (if (not (member (nth (- j 1) seq2) seq1))
-		   (setf ey 1)
-		   (setf ey 0))
-	       (if (funcall test (nth (- i 1) seq1) (nth (- j 1) seq2))
-		   (setf c1 0)
-		   (setf c1 (+ change (* (+ ex ey) inex))))
-	       (setf d1 (nth (+ 1 (length seq1)) matcouts)
-                     d2 (nth (length seq1) matcouts)
-                     d3 (car matcouts))
-	       (push (apply #'min (list (+ c1 d1) (+ insert (* ey inex) d2) (+ delete (* ex inex) d3))) matcouts))
-	      (t
-	       (if (and (zerop i) (zerop j))
-		   (setf c1 0 c2 0)
-		   (setf c1 insert c2 delete))
-	       (cond ((and (zerop i) (> j 0))
-		      (if (not (member (nth (- j 1) seq2) seq1))
-			  (setf ey 1)
-			  (setf ey 0))
-		      (setf d (nth (length seq1) matcouts))
-		      (push (+ c1 d (* ey inex)) matcouts))
-		     ((and (> i 0) (zerop j))
-		      (if (not (member (nth (- i 1) seq1) seq2))
-			  (setf ex 1)
-			  (setf ex 0))
-		      (setf d (car matcouts))
-		      (push (+ c2 d (* ex inex)) matcouts))
-		     (t (push 0 matcouts)))))))
-    (if normalized
-	(if (> (length seq1) (length seq2))
-		(float (/ (car matcouts) (length seq1)))
-		(float (/ (car matcouts) (length seq2))))
-	(car matcouts))))
+  (let* ((a (coerce seq1 'vector))
+         (b (coerce seq2 'vector))
+         (la (length a))
+         (lb (length b))
+         ;; 1 for an element which does not exist (according to test) in the other sequence
+         (ex (map 'vector #'(lambda (x) (if (member x seq2 :test test) 0 1)) a))
+         (ey (map 'vector #'(lambda (y) (if (member y seq1 :test test) 0 1)) b))
+         (prev (make-array (1+ la)))
+         (row (make-array (1+ la))))
+    (setf (aref prev 0) 0)
+    (loop for i from 1 to la
+          do (setf (aref prev i) (+ (aref prev (1- i)) delete (* (aref ex (1- i)) inex))))
+    (loop for j from 1 to lb
+          do (setf (aref row 0) (+ (aref prev 0) insert (* (aref ey (1- j)) inex)))
+             (loop for i from 1 to la
+                   do (let ((exi (aref ex (1- i))) (eyj (aref ey (1- j))))
+                        (setf (aref row i)
+                              (min (+ (aref prev (1- i))
+                                      (if (funcall test (aref a (1- i)) (aref b (1- j)))
+                                          0
+                                          (+ change (* (+ exi eyj) inex))))
+                                   (+ (aref prev i) insert (* eyj inex))
+                                   (+ (aref row (1- i)) delete (* exi inex))))))
+             (rotatef prev row))
+    (let ((d (aref prev la)))
+      (if normalized
+          (if (zerop (max la lb)) 0.0 (float (/ d (max la lb))))
+          d))))
 
 (defun editing-dist (seq1 seq2 change insert delete inex normalized test)
 "Editing distance between sequences of symbols.

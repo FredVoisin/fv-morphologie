@@ -491,3 +491,15 @@
     ;; an unknown output returned nil silently
     (signals error (mark-structure '(a b a) :foo))
     (is (equal (mark-structure '(a b c a b d a b) :struct) (mark-structure '(a b c a b d a b) nil)))))
+
+(test edit-dist-rewrite
+  ;; edit-dist2: whether an element exists in the other sequence is decided by test (it was eql)
+  (is (= 2 (fv-morphologie::edit-dist2 '(1.0 2) '(2 1) :inex 1)))
+  (is (= 4 (fv-morphologie::edit-dist2 '(1.0 2) '(2 1) :inex 1 :test #'eql)))
+  ;; usual values
+  (is (= 1 (fv-morphologie::edit-dist1 '(a b c) '(a b d))))
+  (is (= 3 (fv-morphologie::edit-dist1 '() '(a b c))))
+  (is (approx= 1/3 (fv-morphologie::edit-dist1 '(a b c) '(a b d) :normalized t)))
+  ;; two empty sequences, normalized, divided by zero
+  (is (approx= 0 (fv-morphologie::edit-dist1 '() '() :normalized t)))
+  (is (approx= 0 (fv-morphologie::edit-dist2 '() '() :inex 1 :normalized t))))
