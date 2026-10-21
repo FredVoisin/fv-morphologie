@@ -148,3 +148,15 @@
                                                  3 :centroids))))))))
   ;; no more classes than distinct points
   (is (equal '(0 0 1) (first (class-num '((0 0) (0 0) (1 1)) 3 :centroids)))))
+
+(test filt-lowpass-double
+  ;; (1- alpha) is alpha - 1, not 1 - alpha: constants were not kept,
+  ;; and the last value was missing
+  (is (every #'approx= '(5 5 5 5 5) (filt-lowpass '(5 5 5 5 5) 0.5 0.5)))
+  (is (every #'approx= '(0 1 2 3 4 5) (filt-lowpass '(0 1 2 3 4 5) 0.3 0.7)))
+  (is (every #'approx= '(0 10 10 12.5 8.125) (filt-lowpass '(0 10 0 10 0) 0.5 0.5)))
+  (is (= 5 (length (filt-lowpass '(0 10 0 10 0) 0.5 0.5))))
+  (is (equal '(3) (filt-lowpass '(3) 0.5 0.5)))
+  ;; simple smoothing
+  (is (every #'approx= '(0 5 2.5 6.25 3.125) (filt-lowpass '(0 10 0 10 0) 0.5)))
+  (is (null (filt-lowpass '() 0.5))))

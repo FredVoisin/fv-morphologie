@@ -494,18 +494,27 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
       seq (values (median-simple seq window))))
 
 (defun exponential-smoothing (data alpha)
-  (let ((r (list (car data))))
-    (dolist (x (cdr data) (reverse r))
-      (push (+ (car r) (* alpha (- x (car r)))) r))))
+  "s(t) = s(t-1) + alpha (x(t) - s(t-1)), s(0) = x(0)."
+  (when data
+    (let ((r (list (car data))))
+      (dolist (x (cdr data) (reverse r))
+        (push (+ (car r) (* alpha (- x (car r)))) r)))))
 
 (defun double-exponential-smoothing (data alpha gamma)
-  (let ((r (list ))
-        (b (- (cadr data) (car data)))
-        (st (car data)))
-    (dolist (x (cdr data) (reverse r))
-      (push st r)
-      (setf st (+ (* alpha x) (* (1- alpha) (+ (car r) b))))
-      (setf b (+ (* gamma (- st (car r))) (* (1- gamma) b))))))
+  "Holt's double exponential smoothing, with level s and trend b:
+s(t) = alpha x(t) + (1 - alpha) (s(t-1) + b(t-1))
+b(t) = gamma (s(t) - s(t-1)) + (1 - gamma) b(t-1)
+from s(0) = x(0) and b(0) = x(1) - x(0)."
+  (if (null (cdr data))
+      (copy-list data)
+      (let* ((s (car data))
+             (b (- (cadr data) (car data)))
+             (r (list s)))
+        (dolist (x (cdr data) (nreverse r))
+          (let ((s1 (+ (* alpha x) (* (- 1 alpha) (+ s b)))))
+            (setf b (+ (* gamma (- s1 s)) (* (- 1 gamma) b))
+                  s s1)
+            (push s r))))))
 
 ;;filtre extreme (contraire de median)
 

@@ -28,7 +28,7 @@
                 ;; encodage
                 #:transcode #:alpha>num #:num>alpha #:num>base #:concaten #:list>sym
                 #:str->symb #:split #:split-string
-                #:filt-median #:filt-local-rep
+                #:filt-median #:filt-local-rep #:filt-lowpass
                 ;; distances
                 #:dist-euclid #:dist-euclidian #:dist-citybloc #:dist-hamming
                 #:dist-edit #:dist-multi-edit #:dist-structure #:dist-graph

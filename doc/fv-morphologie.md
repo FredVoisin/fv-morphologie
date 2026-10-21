@@ -235,11 +235,21 @@ Sliding mean over `wind` values.
 #### `filt-lowpass (seq alpha &optional gamma)`
 
 *PWGL box: `filt-exponential`.* Exponential smoothing: each value moves by
-the fraction `alpha` towards the input. With `gamma`, double exponential
-smoothing.
+the fraction `alpha` (between 0 and 1) towards the input:
+s(t) = s(t−1) + α (x(t) − s(t−1)), from s(0) = x(0).
+
+With `gamma` (between 0 and 1), double exponential smoothing (Holt), which
+also follows the trend b of the sequence:
+s(t) = α x(t) + (1 − α) (s(t−1) + b(t−1)) and
+b(t) = γ (s(t) − s(t−1)) + (1 − γ) b(t−1), from s(0) = x(0) and
+b(0) = x(1) − x(0). A constant or linear sequence is then left unchanged.
+
+The result has the same length as `seq`.
 
 ```lisp
-(filt-lowpass '(0 10 0 10 0) 0.5)    ;=> (0 5.0 2.5 6.25 3.125)
+(filt-lowpass '(0 10 0 10 0) 0.5)        ;=> (0 5.0 2.5 6.25 3.125)
+(filt-lowpass '(0 10 0 10 0) 0.5 0.5)    ;=> (0 10.0 10.0 12.5 8.125)
+(filt-lowpass '(0 1 2 3 4 5) 0.5 0.5)    ;=> (0 1.0 2.0 3.0 4.0 5.0)
 ```
 
 #### `filt-local-rep (seq &optional mode test)`
