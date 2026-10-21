@@ -50,13 +50,18 @@ Modes may be :values (default, or nil), :positions, :all or :resampled"))
       nil))
 
 (defgeneric split (seq &optional marks)
-  (:documentation "SPLIT: splits <seq> according to marks. Seq may be a list or a string, marks must be a string defining a set of marks."))
+  (:documentation "SPLIT: splits <seq> according to marks, which are not kept, and returns the list of its segments.
+A string is split at the characters of the string <marks> and at blanks.
+A list is split at the elements of the list <marks> (compared with equalp), at a single mark, or where the predicate <marks> is true."))
 
 (defmethod split ((seq list) &optional (marks nil))
   (split-list-using-marks seq marks))
 
 (defmethod split ((seq string) &optional (marks " "))
-  (split-string seq marks))
+  (let ((r (split-string seq (or marks " "))))
+    (cond ((listp r) r)
+          ((zerop (length (string-trim '(#\Space #\Tab #\Newline #\Return) r))) nil)
+          (t (list r)))))
 
 (defgeneric num>base (num base)
   (:documentation "NUM>BASE: converts an number to its representation in base <base>."))

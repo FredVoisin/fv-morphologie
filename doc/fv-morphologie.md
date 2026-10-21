@@ -576,13 +576,18 @@ Another mode or method is an error.
 #### `split (seq &optional marks)`
 
 *PWGL box: `mark-cut`.* Cuts a string at any of the characters in `marks`
-(and at blanks), or a list at any element of the list `marks`. The marks are
-not kept.
+(and at blanks), or a list at its marks: the elements of the list `marks`
+(compared with `equalp`, so strings or lists can be marks), a single mark, or
+the elements for which the predicate `marks` is true. The marks are not
+kept, and empty segments are removed. The result is always a list of
+segments (`nil` for an empty string).
 
 ```lisp
 (split "hello big world")            ;=> ("hello" "big" "world")
 (split "a,b;c" ",;")                 ;=> ("a" "b" "c")
 (split '(a b x c d x e) '(x))        ;=> ((A B) (C D) (E))
+(split '(1 2 3 4 1 2) (lambda (x) (< x 2)))  ;=> ((2 3 4) (2))
+(split "hello")                      ;=> ("hello")
 ```
 
 #### `graph-part (graph &optional mode n)`

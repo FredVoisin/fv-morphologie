@@ -26,11 +26,10 @@
 (in-package :fv-morphologie)
 
 (defun make-name-from-path (path)
-  (cond ((pathnamep path)
-         (pathname-name path))
-        ((stringp path)
-         (car (last (split-string (car (split-string path ".")) "/"))))
-        (t "span-graph")))
+  "The name of the file path (without directory and type), for naming the graph."
+  (or (and (or (pathnamep path) (stringp path))
+           (pathname-name (pathname path)))
+      "span-graph"))
 
 (defun 2dot (graph min dis shape1 shape2 out legend &key (name "span-graph"))
   (let ((date (date))

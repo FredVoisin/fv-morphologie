@@ -410,3 +410,30 @@
   (is (null (int-signature '(0 0 0 5 5 5) :minmax 0)))
   ;; sequences without plateaus are unchanged
   (is (equal '((2 1 4) (4 -1 1) (6 1 6)) (int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0))))
+
+(test split-fixes
+  ;; lists: marks used to be compared with eql (string or list marks never matched)
+  (is (equal '(("a") ("b")) (split '("a" "," "b") '(","))))
+  (is (equal '(((a) (b)) ((c))) (split '((a) (b) (0) (c)) '((0)))))
+  ;; a single mark used to return the list unsplit
+  (is (equal '((a) (b)) (split '(a x b) 'x)))
+  (is (equal '((a b) (c)) (split '(a b x x c x) '(x))))
+  (is (equal '((2 3 4) (2)) (split '(1 2 3 4 1 2) (lambda (x) (< x 2)))))
+  (is (equal '((a b c)) (split '(a b c))))
+  (is (null (split '(x x) '(x))))
+  ;; strings: the result is always a list ("hello" gave "hello", "" gave "")
+  (is (equal '("hello") (split "hello")))
+  (is (null (split "")))
+  (is (null (split "   ")))
+  (is (equal '("a" "b") (split "a b" nil)))
+  (is (equal '("a" "b" "c") (split "a,b;c" ",;")))
+  (is (equal '("été" "à") (split "été,à" ","))))
+
+(test graph-name-from-path
+  ;; a path without "/" crashed, and blanks cut the name
+  (is (equal "out" (fv-morphologie::make-name-from-path "out.dot")))
+  (is (equal "out" (fv-morphologie::make-name-from-path "out")))
+  (is (equal "my graph" (fv-morphologie::make-name-from-path "my graph.dot")))
+  (is (equal "c" (fv-morphologie::make-name-from-path "a.b/c.dot")))
+  (is (equal "y" (fv-morphologie::make-name-from-path #p"/x/y.png")))
+  (is (equal "span-graph" (fv-morphologie::make-name-from-path t))))
