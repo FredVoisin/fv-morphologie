@@ -891,8 +891,8 @@ The list of the motifs repeated in `seq`, with their positions:
 The search is exhaustive: its time grows quickly with the length of the
 sequence. For exact repetitions it takes a few tenths of a second for 120
 elements; with a tolerance (`:diss`), each candidate motif is compared with
-every window of the sequence, which takes much longer (about half a minute
-for 120 elements).
+every window of the sequence (each edit distance stops as soon as it exceeds
+the tolerance), which takes longer: a few seconds for 120 elements.
 
 ```lisp
 (motif-list '(a b c a b c d a b c) nil)

@@ -1706,25 +1706,61 @@ Returns the positions of sequence <ptrn> into sequence <seq> with some tolerance
 <seq> : sequence of symbols.
 Optional argument: distance function in lambda form, for instance : (lambda (a b) (edit-dist a b))."))
 
+(defun edit-dist-bounded (a b start lb bound &optional (test #'equalp))
+  "The edit distance (costs 1) between the vector a and the lb elements of the vector b from
+position start, if it is not more than the integer bound, else nil. The computation stops as
+soon as the distance is certainly more than bound: the minimum of a row of the matrix of costs
+never decreases in the next rows."
+  (declare (simple-vector a b) (fixnum start lb bound) (function test))
+  (let ((la (length a)))
+    (declare (fixnum la))
+    (when (<= (abs (- la lb)) bound)
+      (let ((prev (make-array (1+ la) :element-type 'fixnum))
+            (row (make-array (1+ la) :element-type 'fixnum)))
+        (declare (type (simple-array fixnum (*)) prev row))
+        (dotimes (i (1+ la)) (setf (aref prev i) i))
+        (loop for j fixnum from 1 to lb
+              do (setf (aref row 0) j)
+                 (let ((m j) (bj (svref b (+ start j -1))))
+                   (declare (fixnum m))
+                   (loop for i fixnum from 1 to la
+                         do (let ((d (min (+ (aref prev (1- i))
+                                             (if (funcall test (svref a (1- i)) bj) 0 1))
+                                          (1+ (aref prev i))
+                                          (1+ (aref row (1- i))))))
+                              (declare (fixnum d))
+                              (setf (aref row i) d)
+                              (when (< d m) (setf m d))))
+                   (when (> m bound) (return-from edit-dist-bounded nil)))
+                 (rotatef prev row))
+        (let ((d (aref prev la)))
+          (when (<= d bound) d))))))
+
 (defun find-pos-in (motif v start diss l-var distance-fct &optional (test #'equalp))
   "Positions (first last) of motif in the vector v, from position start (see find-pos).
 Without distance-fct, the normalized edit distance is used, test being the identity of elements;
 with diss 0 too, the windows are compared element by element with test, which gives the same
 result without computing distances."
-  (let* ((m (coerce motif 'vector))
+  (let* ((m (coerce motif 'simple-vector))
+         (v (coerce v 'simple-vector))
          (l (length m))
          (lseq (length v))
          (l+ (floor (* l l-var)))   ; for length tolerance
          (exact (and (null distance-fct) (zerop diss)))
+         ;; with a margin for the rounding of floats
+         (rdiss (+ (rational diss) 1/1000000))
          pos)
     (flet ((match-p (i j)
              (if exact
                  (and (= j l)
                       (loop for k below l always (funcall test (aref m k) (aref v (+ i k)))))
-                 (let ((window (make-array j :displaced-to v :displaced-index-offset i)))
-                   (>= diss (if distance-fct
-                                (funcall distance-fct motif (coerce window 'list))
-                                (edit-dist1 m window :normalized t :test test)))))))
+                 (if distance-fct
+                     (>= diss (funcall distance-fct motif (coerce (subseq v i (+ i j)) 'list)))
+                     ;; the normalized edit distance, computed only while it may be <= diss;
+                     ;; same decision as before
+                     (let* ((maxlen (max l j))
+                            (d (edit-dist-bounded m v i j (floor (* rdiss maxlen)) test)))
+                       (and d (>= diss (float (/ d maxlen)))))))))
       (loop for i from start to (- lseq l+ 1)
             do (loop for j from (max 1 (- l l+)) to (+ l l+)
                      while (<= (+ i j) lseq)

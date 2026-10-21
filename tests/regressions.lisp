@@ -560,3 +560,23 @@
   (let* ((*random-state* (seeded-random-state))
          (s (loop repeat 120 collect (nth (random 4) '(a b c d)))))
     (is (every #'(lambda (m) (>= (length (cdr m)) 2)) (motif-list s :length)))))
+
+(test edit-dist-bounded
+  ;; the bounded edit distance is the edit distance when it is not more than the bound, else nil
+  (let ((*random-state* (seeded-random-state)))
+    (is (loop repeat 500
+              always (let* ((a (loop repeat (random 8) collect (nth (random 3) '(a b c))))
+                            (b (loop repeat (random 8) collect (nth (random 3) '(a b c))))
+                            (d (fv-morphologie::edit-dist1 a b))
+                            (bound (random 6))
+                            (r (fv-morphologie::edit-dist-bounded (coerce a 'simple-vector)
+                                                                  (coerce b 'simple-vector)
+                                                                  0 (length b) bound)))
+                       (if (<= d bound) (eql r d) (null r)))))
+    ;; from an offset in b
+    (is (= 1 (fv-morphologie::edit-dist-bounded #(a b c) #(x x a b d x) 2 3 1)))
+    (is (null (fv-morphologie::edit-dist-bounded #(a b c) #(x x a d d x) 2 3 1))))
+  ;; a search with a tolerance, which took about 30 s for 120 elements
+  (let* ((*random-state* (seeded-random-state))
+         (s (loop repeat 120 collect (nth (random 4) '(a b c d)))))
+    (is (every #'(lambda (m) (>= (length (cdr m)) 2)) (motif-list s :length :diss 0.25)))))
