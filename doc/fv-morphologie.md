@@ -488,10 +488,11 @@ overall range of the sequence (`nil` or 0: no threshold). Modes:
 - `:minflexmax`: minima, maxima and inflexions (`option`: distance threshold,
   in ranks, for detecting inflexions);
 - `:minmax`: minima and maxima only;
-- `:major-extrema`: Fink & Gandhi method (`option`: distance for comparing
-  local extrema);
-- `:landmarks`: Perng, Parker & Leung method (`option`: distance threshold,
-  in ranks, for detecting a major extremum).
+- `:major-extrema` (Fink & Gandhi method) and `:landmarks` (Perng, Parker &
+  Leung method): **not implemented yet**, they signal an error. (Until now
+  they silently gave the `:minflexmax` result.)
+
+`mode` `nil` means `:minflexmax`; any other mode is an error.
 
 ```lisp
 (int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0)
@@ -523,12 +524,14 @@ to extract its signature.
 `method` is one of the `int-signature` modes (`nil` means `:minflexmax`).
 `mode` is:
 
-- `:values` (default): the values;
+- `:values` (default, or `nil`): the values;
 - `:positions`: their positions;
 - `:all`: `(position value)` pairs;
 - `:resampled`: the time proportions between the points are kept, with a
   linear interpolation between them; the result has the same number of values
   as the original sequence.
+
+Another mode or method is an error.
 
 ```lisp
 (exsample '(0 2 4 3 1 2 6 5 0) :minmax :values 0)     ;=> (0 4 1 6 0)

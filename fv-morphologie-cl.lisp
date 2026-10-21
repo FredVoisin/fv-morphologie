@@ -36,19 +36,17 @@
 ;;; 1.1 TO TRANSCODE
 
 (defgeneric exsample (seq method mode thres &optional option)
-  (:documentation "EXSAMPLE: samples a sequence of numerical values according to its signature.
+  (:documentation "EXSAMPLE: samples a sequence of numerical values according to its signature (with its first and last values).
 Available methods are (see int-signature for documentation):
 - :minmax
-- :minflexmax (default)
-- :landmarks
-- :major-extrema
-Modes may be :values (default), :positions :all or :resampled"))
-
-(defmethod exsample ((seq list) (method null) (mode null) (thres number) &optional (option nil))
-  (exsample seq :minflexmax :values thres option))
+- :minflexmax (default, or nil)
+(:landmarks and :major-extrema are not implemented yet.)
+Modes may be :values (default, or nil), :positions, :all or :resampled"))
 
 (defmethod exsample ((seq list) (method symbol) (mode symbol) (thres number) &optional (option nil))
-  (if seq (echantillonage seq method mode thres option) nil))
+  (if seq
+      (echantillonage seq (or method :minflexmax) (or mode :values) thres option)
+      nil))
 
 (defgeneric split (seq &optional marks)
   (:documentation "SPLIT: splits <seq> according to marks. Seq may be a list or a string, marks must be a string defining a set of marks."))
@@ -137,13 +135,12 @@ The argument <thres> may be nil (no threshold for variations in intensity), or a
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
 :miflexnmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
 :minmax, same with only maxima and minima (without inflexions);
-:major-extrema, using Fink & Gandhi method (cf. Conference on Systems, Man and Cybernetics, 2007);
-:landmarks, using Perng, Parker and Leung method for landmarks (cf. Conference on Information and Knowledge Management, 1999);
+:major-extrema (Fink & Gandhi method, cf. Conference on Systems, Man and Cybernetics, 2007) and
+:landmarks (Perng, Parker and Leung method, cf. Conference on Information and Knowledge Management, 1999)
+are not implemented yet: they signal an error.
 Argument <thres> is the treshold value (delta) in amplitude.
 Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number);
-with :major-extrema, <option> defines the distance for comparing local extrema ; 
-with :landmarks method, <option> is the time (rank) distance threshold for detecting a major extrema."))
+with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number)."))
 
 (defmethod int-signature ((seq t) (mode t) (thres number) &optional (option nil))
   (when (not mode) (setf mode :minflexmax))

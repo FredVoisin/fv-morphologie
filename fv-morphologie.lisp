@@ -873,13 +873,13 @@ The argument <thres> may be nil (no threshold for variations in intensity), or a
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
 :miflexnmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
 :minmax, same with only maxima and minima (without inflexions);
-:major-extrema, using Fink & Gandhi method (cf. Conference on Systems, Man and Cybernetics, 2007);
-:landmarks, using Perng, Parker and Leung method for landmarks (cf. Conference on Information and Knowledge Management, 1999);
+:major-extrema (Fink & Gandhi method, cf. Conference on Systems, Man and Cybernetics, 2007) and
+:landmarks (Perng, Parker and Leung method, cf. Conference on Information and Knowledge Management, 1999)
+are not implemented yet: they signal an error, as any unknown method.
+(:important-extrema and :mdpp are experimental attempts at them.)
 Argument <thres> is the treshold value (delta) in amplitude.
 Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number);
-with :major-extrema, <option> defines the distance for comparing local extrema ; 
-with :landmarks method, <option> is the time (rank) distance threshold for detecting a major extrema."))
+with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number)."))
 
 (defmethod signature ((seq list) (mode t) (thres number) &optional (option nil))
   (let* ((max (lmax seq))
@@ -893,7 +893,9 @@ with :landmarks method, <option> is the time (rank) distance threshold for detec
       (:mdpp (mdpp (primitives-nothres seq)
                    (max 2 thres2)
                    (/ thres1 (- max min))))
-      (t (signature seq :minflexmax thres option)))))
+      ((:major-extrema :landmarks)
+       (error "signature: the ~S method is not implemented yet, use :minmax or :minflexmax." mode))
+      (t (error "signature: unknown method ~S, use :minmax or :minflexmax." mode)))))
 
 (defmethod signature ((seq list) (mode t) (thres null) &optional (option nil))
   (signature seq mode 0 option))
@@ -905,14 +907,14 @@ with :landmarks method, <option> is the time (rank) distance threshold for detec
       (list pente (- (cadr a) (* pente (car a)))))))
 
 (defun echantillonage (seq method mode thres option)
-  (let ((pos (case method
-               (:major-extrema
-                (append (mapcar #'car (remove-if #'(lambda (x)
-						     (zerop (cadr x)))
-						 (signature seq method thres option)))
-                        (list (1- (length seq)))))
-               (t (append (list 0) (mapcar #'car (signature seq method thres option))
-			  (list (1- (length seq))))))))
+  "The points of the signature of seq, with its first and last values, according to mode
+(:values, :positions, :all or :resampled)."
+  (unless (member mode '(:values :positions :all :resampled))
+    (error "exsample: unknown mode ~S, use :values, :positions, :all or :resampled." mode))
+  (let ((pos (remove-duplicates
+              (append (list 0)
+                      (mapcar #'car (signature seq method thres option))
+                      (list (1- (length seq)))))))
     (case mode
       (:values
        (mapcar #'(lambda (x) (nth x seq)) pos))

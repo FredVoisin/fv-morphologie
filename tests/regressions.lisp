@@ -328,3 +328,24 @@
     (filt-noise s (lambda (x l) (setf (first l) 0) x))
     (is (equal '(3 1 2) s)))
   (signals error (filt-noise '(1 2) 'reverse)))
+
+(test exsample-fixes
+  (let ((s '(0 2 4 3 1 2 6 5 0)))
+    (is (equal '(0 4 1 6 0) (exsample s :minmax :values 0)))
+    (is (equal '(0 2 4 5/2 1 7/2 6 3 0) (exsample s :minmax :resampled 0)))
+    ;; nil method or mode: the defaults (mode nil used to give nil)
+    (is (equal '(0 4 1 6 0) (exsample s nil :values 0)))
+    (is (equal '(0 4 1 6 0) (exsample s :minmax nil 0)))
+    ;; a single value used to be doubled
+    (is (equal '(3) (exsample '(3) :minmax :resampled 0)))
+    (is (equal '(0) (exsample '(3) :minmax :positions 0)))
+    ;; :resampled keeps the length
+    (is (= 9 (length (exsample s :minflexmax :resampled 0))))
+    ;; unknown modes and methods used to give nil or :minflexmax silently
+    (signals error (exsample s :minmax :foo 0))
+    (signals error (exsample s :foo :values 0))
+    ;; :landmarks and :major-extrema are not implemented yet (they gave :minflexmax)
+    (signals error (exsample s :landmarks :values 0))
+    (signals error (exsample s :major-extrema :resampled 0))
+    (signals error (int-signature s :landmarks 0))
+    (signals error (int-signature s :major-extrema 0))))
