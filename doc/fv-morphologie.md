@@ -218,10 +218,19 @@ Reads a string (or a list of strings) as a list (or lists) of symbols.
 
 #### `filt-median (seq window)`
 
-Sliding median over `window` values: removes isolated peaks.
+Sliding median over `window` values centred on each value: removes the
+peaks narrower than half the window, and keeps steps and ramps in place.
+The window is odd, so that the median is always the one middle value and
+the result is made of values of `seq` only: an even `window` is enlarged to
+the next odd size (4 gives 5). At the edges, the first and last values are
+repeated (so a peak on the very first or last value is kept). The result has
+the same length as `seq`.
 
 ```lisp
-(filt-median '(1 9 1 1 1 9 1) 3)     ;=> (1 1 1 1 1 1 1)
+(filt-median '(1 9 1 1 1 9 1) 3)          ;=> (1 1 1 1 1 1 1)
+(filt-median '(0 0 9 9 0 0 0) 3)          ;=> (0 0 9 9 0 0 0)
+(filt-median '(0 0 0 9 9 0 0 0 0) 5)      ;=> (0 0 0 0 0 0 0 0 0)
+(filt-median '(9 0 0 0) 3)                ;=> (9 0 0 0)
 ```
 
 #### `filt-mean (seq wind &optional step)`

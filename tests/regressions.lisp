@@ -183,3 +183,25 @@
     ;; dist-graph is 0 between adjacent nodes no more
     (is (= 1 (dist-graph 'a 'b s)))
     (is (= 4 (dist-graph 3 1 g)))))
+
+(test filt-median-centred
+  ;; the window looked ahead over w+1 values: steps and ramps were shifted
+  (is (equal '(0 0 0 0 10 10 10 10) (filt-median '(0 0 0 0 10 10 10 10) 3)))
+  (is (equal '(1 2 3 4 5 6 7 8) (filt-median '(1 2 3 4 5 6 7 8) 3)))
+  ;; a peak is removed if narrower than half the window, kept otherwise
+  (is (equal '(0 0 9 9 0 0 0) (filt-median '(0 0 9 9 0 0 0) 3)))
+  (is (equal '(0 0 0 0 0 0 0 0 0) (filt-median '(0 0 0 9 9 0 0 0 0) 5)))
+  ;; the first and last values are repeated at the edges: edge peaks are kept
+  (is (equal '(9 0 0 0) (filt-median '(9 0 0 0) 3)))
+  (is (equal '(0 0 0 9) (filt-median '(0 0 0 9) 3)))
+  ;; odd windows only, so that the result is made of values of seq:
+  ;; an even window is enlarged to the next odd size
+  (is (equal (filt-median '(1 5 2 8 3) 5) (filt-median '(1 5 2 8 3) 4)))
+  (is (equal '(1 2 3 3 3) (filt-median '(1 5 2 8 3) 4)))
+  (is (subsetp (filt-median '(1 5 2 8 3 7 4) 4) '(1 5 2 8 3 7 4)))
+  ;; same length, short lists filtered too, real window
+  (is (equal '(5 5 5 5 5) (filt-median '(5 1 5 5 5) 3)))
+  (is (equal '(2 2 3) (filt-median '(2 1 3) 3)))
+  (is (equal '(1 1 1 1 1 1 1) (filt-median '(1 9 1 1 1 9 1) 3.0)))
+  (is (equal '(4 2 7) (filt-median '(4 2 7) 1)))
+  (is (null (filt-median '() 3))))

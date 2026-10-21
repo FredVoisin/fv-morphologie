@@ -470,13 +470,15 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
 		  (push (nth (min (round (* a k)) (1- l)) data) r))))))
 
 (defun median-simple (list w)
-  (let ((r nil) (i  (1+ (floor (/ w 2)))))
-    (loop until (null list)
-       do (let ((window (loop for k from 0 to w
-			   collect (let ((z (nth k list))) (if z z (car r))))))
-            (push (nth i (sort window '<)) r)
-            (pop list)))
-    (nreverse r)))
+  "Sliding median over w values centred on each value of list, w odd: the median is always a value of list.
+At the edges, the first and last values are repeated. The result has the same length as list."
+  (let* ((v (coerce list 'vector))
+         (n (length v))
+         (h (floor w 2)))
+    (loop for i below n
+          collect (nth h (sort (loop for k from (- i h) to (+ i h)
+                                     collect (aref v (max 0 (min (1- n) k))))
+                               #'<)))))
 
 (defun median (list w) ;; ???
   (let ((r nil) ) ; (i  (1+ (floor (/ w 2)))))
@@ -490,8 +492,13 @@ Optional argument is the amount randomness if <n> a float (0.0 to 1.0) or the nu
   (:documentation "Median filter."))
 
 (defmethod median-filter ((seq list) (window integer))
-  (if (<= (length seq) window)
-      seq (values (median-simple seq window))))
+  "Median filter over an odd window: an even window is enlarged to the next odd size."
+  (if (< window 2)
+      (copy-list seq)
+      (median-simple seq (if (evenp window) (1+ window) window))))
+
+(defmethod median-filter ((seq list) (window real))
+  (median-filter seq (round window)))
 
 (defun exponential-smoothing (data alpha)
   "s(t) = s(t-1) + alpha (x(t) - s(t-1)), s(0) = x(0)."
