@@ -871,7 +871,7 @@ The list of the motifs repeated in `seq`, with their positions:
 `((motif (start end) ...) ...)`.
 
 - `out`: `:length` (or `nil`) sorts by decreasing length of the motifs,
-  `:freq` by decreasing frequency.
+  `:freq` by decreasing frequency; another value is an error.
 - When a motif is an exact sub-sequence of a longer motif and always occurs
   inside it, only the positions of the longer motif are given.
 - `:diss`: maximum dissimilarity (0–1, relative edit distance). Only the
@@ -881,11 +881,18 @@ The list of the motifs repeated in `seq`, with their positions:
 - `:l-var`: tolerance on the variation of length of similar motifs, as a
   fraction of their length. It is implicitly linked to `:diss`: allowing a
   variation of length makes little sense if the dissimilarity threshold is 0.
-- `:n`: maximum length of the motifs.
+- `:n`: the lengths of the motifs, a maximum `n` (lengths 2 to `n`) or a list
+  `(min max)`. By default, 3 to half the length of `seq`, so repetitions of 1
+  or 2 elements are not found unless asked for.
+- `:change`, `:insert`, `:delete`, `:uncom` and `:test` tune the edit distance
+  (see `dist-edit`); `:test` is also the identity of elements for exact
+  repetitions.
 
 The search is exhaustive: its time grows quickly with the length of the
-sequence (about ten times for twice the length; a few tenths of a second for
-240 elements).
+sequence. For exact repetitions it takes a few tenths of a second for 120
+elements; with a tolerance (`:diss`), each candidate motif is compared with
+every window of the sequence, which takes much longer (about half a minute
+for 120 elements).
 
 ```lisp
 (motif-list '(a b c a b c d a b c) nil)

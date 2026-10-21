@@ -205,18 +205,28 @@ arguments :change :ins/sup :uncom and :test for tuning the editing distance (see
 
 (defgeneric motif-list (seq out &key diss l-var n change insert delete uncom test)
   (:documentation "MOTIF-LIST: returns the list of all motifs found into <seq> where a motif is any segment repeted at least one time according to editing distance.
-Output can be sorted according to the length of segment (:length) or to their frequency (:freq).
+Output can be sorted according to the length of segment (:length, or nil) or to their frequency (:freq); another output is an error.
 Argument :diss is a threshold (from 0 to 1.0) of dissimilarity according to the normalized editing distance under which two different segments are considered to be the same ;
 argument :l-var is the threshold for variation in length of the segments to be compared ;
-argument :n is the maxinum length of segments to be compared ;
+argument :n is the maximum length of the motifs (lengths 2 to n), or a list (min max) (default: 3 to half the length of <seq>) ;
 arguments :change :ins/sup :uncom and :test for tuning the editing distance (see dist-edit)."))
 
 (defmethod motif-list ((seq t) (out t)
 		       &key (diss 0) (l-var 0) (n nil)
 		       (change 1) (insert 1) (delete 1) (uncom 0) (test #'equalp))
   (when (not out) (setf out :length))
-  (find-self seq out diss l-var n
-             #'(lambda (a b) (edit-dist a b change insert delete uncom t test))))
+  (unless (member out '(:length :freq))
+    (error "motif-list: unknown output ~S, use :length or :freq." out))
+  (fv-morphologie::find-self
+   seq out diss l-var n
+   ;; the default distance (nil) gives the same results faster: with diss 0 and positive costs,
+   ;; a distance of 0 means identical elements by test; with the default costs, it is the same
+   ;; normalized edit distance
+   (if (or (and (zerop diss) (plusp change) (plusp insert) (plusp delete) (not (minusp uncom)))
+           (and (= change insert delete 1) (zerop uncom)))
+       nil
+       #'(lambda (a b) (edit-dist a b change insert delete uncom t test)))
+   test))
 
 (defgeneric motif-structure (seq &key lengths test diss l-var criteria distance)
   (:documentation "MOTIF-STRUCTURE: structure of <seq> in terms of its repeated motifs, as a list of two elements:

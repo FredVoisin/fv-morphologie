@@ -544,3 +544,19 @@
              (motif-structure '(a b c a b c a b) :criteria :freq)))
   (signals error (motif-structure '(a b c) :criteria :foo))
   (signals error (motif-structure '(a b c) :lengths '(3 2))))
+
+(test motif-list-fixes
+  ;; an unknown output returned the motifs unsorted silently
+  (signals error (motif-list '(a b c a b c d a b c) :foo))
+  (is (equal (motif-list '(a b c a b c d a b c) nil) (motif-list '(a b c a b c d a b c) :length)))
+  ;; motifs of 3 elements or more by default; :n a maximum length or (min max)
+  (is (null (motif-list '(x a b y a b z a b) nil)))
+  (is (equal '(((a b) (1 2) (4 5) (7 8))) (motif-list '(x a b y a b z a b) nil :n 2)))
+  (is (equal '(((a b) (1 2) (4 5) (7 8))) (motif-list '(x a b y a b z a b) nil :n '(2 3))))
+  ;; :test, with and without a tolerance
+  (let ((close (lambda (a b) (<= (abs (- a b)) 1))))
+    (is (equal '(((60 62 64) (0 2) (4 6))) (motif-list '(60 62 64 70 61 62 65 72) nil :test close))))
+  ;; 120 elements took about 30 s (a distance per window, even for exact repetitions)
+  (let* ((*random-state* (seeded-random-state))
+         (s (loop repeat 120 collect (nth (random 4) '(a b c d)))))
+    (is (every #'(lambda (m) (>= (length (cdr m)) 2)) (motif-list s :length)))))

@@ -1815,20 +1815,20 @@ result without computing distances."
 ;; for huge lists of symbols, I rather like to do the same but using an random search to be tuned - kind of sondage or windowing -
 ;; in the list, following more flexible or fuzzy/lazy rules for probabiltistic retrieval - may be use of a dict ?
 
-(defgeneric find-self (seq out &optional diss l-var n distance-fct)
+(defgeneric find-self (seq out &optional diss l-var n distance-fct test)
   (:documentation "List all patterns in seq found using ptrn-find."))
 
-(defmethod find-self ((seq list) (out symbol) &optional (diss 0) (l-var 0) (n nil) (distance-fct nil))
+(defmethod find-self ((seq list) (out symbol) &optional (diss 0) (l-var 0) (n nil) (distance-fct nil) (test #'equalp))
+  ;; distance-fct nil: the normalized edit distance with test (see find-pos-in)
   (when (null diss) (setf diss 0))
   (when (null l-var) (setf l-var 0))
   (when (null out) (setf out ':length))
-  (when (not distance-fct) (setf distance-fct #'(lambda (a b) (edit-dist a b 1 1 1 0 T #'equalp))))
   (case out
     (:length
-     (sort (whenlooploopwhenwhen seq diss l-var n distance-fct) '> :key (lambda (x) (length (car x)))))
+     (sort (whenlooploopwhenwhen seq diss l-var n distance-fct test) '> :key (lambda (x) (length (car x)))))
     (:freq
-     (sort (whenlooploopwhenwhen seq diss l-var n distance-fct) '> :key (lambda (x) (length (cdr x)))))
-    (t (whenlooploopwhenwhen seq diss l-var n distance-fct))))
+     (sort (whenlooploopwhenwhen seq diss l-var n distance-fct test) '> :key (lambda (x) (length (cdr x)))))
+    (t (whenlooploopwhenwhen seq diss l-var n distance-fct test))))
 
 ;(print (find-self '(t x a  b c y  t a e  b c k  r t x  a t x  a b c  i y t  a e c  e i b  c k r) :length))
 ;(print (find-self '(t x a  b c y  t a e  b c k  r t x  a t x  a b c  i y t  a e c  e i b  c k r) :freq))
