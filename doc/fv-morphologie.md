@@ -688,14 +688,41 @@ Options:
 ;    ((0 0 0) (((A B C) 0 3 6))))
 ```
 
-#### `motif-structure (seq)`
+#### `motif-structure (seq &key lengths test diss l-var criteria distance)`
 
-The structure of `seq` in terms of its repeated motifs: the positions of the
-motifs, then the motifs.
+The structure of `seq` in terms of its repeated motifs: a list of two
+elements, the positions where motifs begin (each followed by the numbers of
+the motifs beginning there), then the motifs. A motif is a segment repeated
+at least once, later in `seq` and without overlapping. Among motifs contained
+in one another with the same number of repetitions, only one is kept.
+
+- `:lengths`: the lengths of the motifs searched, `(min max)`, or a maximum
+  `k` for lengths 2 to `k`. By default, 3 to half the length of `seq`, so
+  repetitions of 1 or 2 elements are not found unless asked for.
+- `:test`: the identity of elements (default `#'equalp`), for instance
+  `(lambda (a b) (<= (abs (- a b)) 1))` for pitches within a semitone.
+- `:diss`: the tolerance, the maximum normalized edit distance (0 to 1)
+  between a motif and its repetitions (default 0: exact repetitions).
+- `:l-var`: the length variation of the repetitions, a fraction of the
+  length of the motif (default 0); used with a tolerance.
+- `:criteria`: `:length` (default) or `:freq`, to keep the longest or the
+  most frequent of motifs contained in one another.
+- `:distance`: a function `(a b)` giving the distance between two segments
+  (lists), used instead of the edit distance; `:diss` is then a threshold in
+  the unit of this function.
+
+With a tolerance (`:test`, `:diss` or `:distance`), the first segment of a
+family of similar segments is the motif, and the others are its repetitions;
+they are not listed as motifs of their own.
 
 ```lisp
 (motif-structure '(a b c a b c d))
 ;=> (((0 0) (3 0)) ((A B C)))
+(motif-structure '(x a b y a b z a b) :lengths '(2 2))
+;=> (((1 0) (4 0) (7 0)) ((A B)))
+(motif-structure '(60 62 64 70 61 62 65 72 60 63 64) :lengths '(3 3)
+                 :test (lambda (a b) (<= (abs (- a b)) 1)))
+;=> (((0 0) (4 0) (8 0)) ((60 62 64)))
 ```
 
 #### `class-num (data classes mode &key iter dist)`
@@ -849,14 +876,16 @@ The list of the motifs repeated in `seq`, with their positions:
   inside it, only the positions of the longer motif are given.
 - `:diss`: maximum dissimilarity (0–1, relative edit distance). Only the
   first occurrence of each motif is given, followed by the positions of its
-  more or less different repetitions.
+  more or less different repetitions; these repetitions are not listed as
+  motifs of their own.
 - `:l-var`: tolerance on the variation of length of similar motifs, as a
   fraction of their length. It is implicitly linked to `:diss`: allowing a
   variation of length makes little sense if the dissimilarity threshold is 0.
 - `:n`: maximum length of the motifs.
 
-The search is exhaustive: time and memory grow exponentially with the length
-of the sequence.
+The search is exhaustive: its time grows quickly with the length of the
+sequence (about ten times for twice the length; a few tenths of a second for
+240 elements).
 
 ```lisp
 (motif-list '(a b c a b c d a b c) nil)

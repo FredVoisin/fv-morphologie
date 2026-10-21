@@ -218,11 +218,26 @@ arguments :change :ins/sup :uncom and :test for tuning the editing distance (see
   (find-self seq out diss l-var n
              #'(lambda (a b) (edit-dist a b change insert delete uncom t test))))
 
-(defgeneric motif-structure (seq)
-  (:documentation "MOTIF-STRUCTURE: to be set"))
+(defgeneric motif-structure (seq &key lengths test diss l-var criteria distance)
+  (:documentation "MOTIF-STRUCTURE: structure of <seq> in terms of its repeated motifs, as a list of two elements:
+the positions where motifs begin, each followed by the numbers of the motifs beginning there, then the motifs.
+A motif is a segment repeated at least once, later and without overlapping.
+:lengths the lengths of the motifs searched: (min max), or a maximum k for lengths 2 to k (default: 3 to half the length of <seq>);
+:test the identity of elements (equalp by default);
+:diss the tolerance, the maximum normalized edit distance (0 to 1) between a motif and its repetitions (0 by default: exact repetitions);
+:l-var the length variation of the repetitions, a fraction of the length of the motif (0 by default; used with a tolerance);
+:criteria :length (default) or :freq, to keep the longest or the most frequent of the motifs contained in one another;
+:distance a function (a b) giving the distance between two segments (lists), instead of the edit distance; :diss is then in its unit."))
 
-(defmethod  motif-structure ((seq t))
-  (fv-morphologie::rep-strct seq))
+(defmethod motif-structure ((seq t) &key (lengths nil) (test #'equalp) (diss 0) (l-var 0) (criteria :length) (distance nil))
+  (unless (member criteria '(:length :freq))
+    (error "motif-structure: :criteria must be :length or :freq, not ~S." criteria))
+  (unless (or (null lengths) (and (integerp lengths) (plusp lengths))
+              (and (listp lengths) (= 2 (length lengths)) (every #'integerp lengths)
+                   (<= 1 (first lengths) (second lengths))))
+    (error "motif-structure: :lengths must be (min max) or a maximum length, not ~S." lengths))
+  (fv-morphologie::rep-strct seq :diss diss :l-var l-var :n lengths :criteria criteria
+                                 :distance-fct distance :test test))
 
 (defgeneric motif-group (seq test &optional key)
   (:documentation "MOTIF-GROUP: assembles consecutive elements or motifs of <seq> for which the comparison <test> (by default: equalp) is successful.

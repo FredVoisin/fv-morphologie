@@ -514,3 +514,33 @@
     (is (every #'(lambda (k) (>= (count k (mapcan #'(lambda (p) (copy-list (cdr p))) (first r))) 2))
                (loop for k below (length (second r)) collect k))))
   (is (equal '(((0 0) (3 0)) ((a b c))) (motif-structure '(a b c a b c d)))))
+
+(test motif-structure-keywords
+  ;; defaults: motifs of 3 elements or more, exact repetitions
+  (is (equal '(nil nil) (motif-structure '(a b a b a b))))
+  ;; :lengths
+  (is (equal '(((1 0) (4 0) (7 0)) ((a b))) (motif-structure '(x a b y a b z a b) :lengths '(2 2))))
+  (is (equal (motif-structure '(x a b y a b z a b) :lengths '(2 2))
+             (motif-structure '(x a b y a b z a b) :lengths 2)))
+  ;; :test, element identity
+  (let ((close (lambda (a b) (<= (abs (- a b)) 1)))
+        (s '(60 62 64 70 61 62 65 72 60 63 64)))
+    (is (equal '(nil nil) (motif-structure s :lengths '(3 3))))
+    ;; one motif: its repetitions are not listed as motifs of their own
+    (is (equal '(((0 0) (4 0) (8 0)) ((60 62 64))) (motif-structure s :lengths '(3 3) :test close))))
+  ;; :diss, normalized edit distance
+  (is (equal '(((0 0) (8 0)) ((a b c))) (motif-structure '(a b c x a b d y a b c) :lengths '(3 3))))
+  (is (equal '(((0 1) (3 0) (4 1) (7 0) (8 1)) ((x a b) (a b c)))
+             (motif-structure '(a b c x a b d y a b c) :lengths '(3 3) :diss 0.34)))
+  ;; motif-list too: (a b d) is a repetition of (a b c), not another motif
+  (is (equal '(((x a b) (3 5) (7 9)) ((a b c) (0 2) (4 6) (8 10)))
+             (motif-list '(a b c x a b d y a b c) :length :diss 0.34)))
+  ;; :distance on whole segments: same total interval
+  (flet ((span (s) (- (car (last s)) (first s))))
+    (is (equal '(((0 0) (4 0) (8 0)) ((1 2 3)))
+               (motif-structure '(1 2 3 9 2 3 4 9 5 6 7) :lengths '(3 3)
+                                :distance #'(lambda (a b) (abs (- (span a) (span b))))))))
+  (is (equal '(((0 2) (1 1) (2 0) (3 2) (4 1) (5 0)) ((c a b) (b c a) (a b c)))
+             (motif-structure '(a b c a b c a b) :criteria :freq)))
+  (signals error (motif-structure '(a b c) :criteria :foo))
+  (signals error (motif-structure '(a b c) :lengths '(3 2))))

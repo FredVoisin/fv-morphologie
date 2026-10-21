@@ -1706,10 +1706,11 @@ Returns the positions of sequence <ptrn> into sequence <seq> with some tolerance
 <seq> : sequence of symbols.
 Optional argument: distance function in lambda form, for instance : (lambda (a b) (edit-dist a b))."))
 
-(defun find-pos-in (motif v start diss l-var distance-fct)
+(defun find-pos-in (motif v start diss l-var distance-fct &optional (test #'equalp))
   "Positions (first last) of motif in the vector v, from position start (see find-pos).
-Without distance-fct, the normalized edit distance is used; with diss 0 too, the windows are
-compared element by element (equalp), which gives the same result without computing distances."
+Without distance-fct, the normalized edit distance is used, test being the identity of elements;
+with diss 0 too, the windows are compared element by element with test, which gives the same
+result without computing distances."
   (let* ((m (coerce motif 'vector))
          (l (length m))
          (lseq (length v))
@@ -1719,11 +1720,11 @@ compared element by element (equalp), which gives the same result without comput
     (flet ((match-p (i j)
              (if exact
                  (and (= j l)
-                      (loop for k below l always (equalp (aref m k) (aref v (+ i k)))))
+                      (loop for k below l always (funcall test (aref m k) (aref v (+ i k)))))
                  (let ((window (make-array j :displaced-to v :displaced-index-offset i)))
                    (>= diss (if distance-fct
                                 (funcall distance-fct motif (coerce window 'list))
-                                (edit-dist1 m window :normalized t)))))))
+                                (edit-dist1 m window :normalized t :test test)))))))
       (loop for i from start to (- lseq l+ 1)
             do (loop for j from (max 1 (- l l+)) to (+ l l+)
                      while (<= (+ i j) lseq)
@@ -1770,7 +1771,7 @@ compared element by element (equalp), which gives the same result without comput
 ;(subseq-p '(a b c) '(x y a b z))
 ;(subseq-p '(a b c) '(x y a c d z) #'(lambda (a b) (<= (- (char-code (elt (format nil "~S" a) 0)) (char-code (elt (format nil "~S" b) 0))) 1)))
 
-(defun whenlooploopwhenwhen (seq &optional (diss 0) (l-var 0) (n nil) (distance-fct nil))
+(defun whenlooploopwhenwhen (seq &optional (diss 0) (l-var 0) (n nil) (distance-fct nil) (test #'equalp))
   (let ((r (list))
 	(n- 2)
 	(n+ nil)
@@ -1785,8 +1786,11 @@ compared element by element (equalp), which gives the same result without comput
     (loop for i from 0 to (- l (max 2 n-)) 
        do (loop for j from n- to (if n+ (min n+ (- l i)) (- l i))
 	     do (let (f (candidat (subseq seq i (+ i j))))
-		  (when (not (assoc candidat r :test #'equalp))
-		    (setf f (find-pos-in candidat v (+ i j) diss l-var distance-fct)))
+		  ;; skip a candidate identical to an earlier motif, or which is one of its repetitions
+		  (when (not (or (assoc candidat r :test #'equalp)
+				 (let ((range (list i (+ i j -1))))
+				   (some #'(lambda (x) (member range (cdr x) :test #'equal)) r))))
+		    (setf f (find-pos-in candidat v (+ i j) diss l-var distance-fct test)))
 		  (when f (push (append (list candidat) (cons (list i (+ i j -1)) f)) r)))))
     (remove-if #'(lambda (x)
 		   (some #'(lambda (a) (l-subpos-p (cdr x) (cdr a)))
@@ -1885,13 +1889,12 @@ compared element by element (equalp), which gives the same result without comput
 ; ((Y T A E) (5 8) (22 25))
 ; ((T X A) (0 2) (13 15) (16 18)))
 
-(defgeneric rep-strct (seq &key diss l-var n criteria distance-fct)
+(defgeneric rep-strct (seq &key diss l-var n criteria distance-fct test)
   (:documentation "Possibles structures of seq based of automatically found patterns (plist)."))
 
-(defmethod rep-strct ((seq t) &key (diss 0) (l-var 0) (n nil) (criteria :length) distance-fct)
-  (let* ((x (whenlooploopwhenwhen seq diss l-var n
-                                  ;; with diss 0, the default distance is only a test of identity
-                                  (or distance-fct (if (zerop diss) nil #'(lambda (a b) (edit-dist a b))))))
+(defmethod rep-strct ((seq t) &key (diss 0) (l-var 0) (n nil) (criteria :length) distance-fct (test #'equalp))
+  ;; without distance-fct, the normalized edit distance with test (with diss 0: element by element)
+  (let* ((x (whenlooploopwhenwhen seq diss l-var n distance-fct test))
          (ptrns
           (case criteria
             (:length
