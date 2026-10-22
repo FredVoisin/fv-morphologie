@@ -2010,14 +2010,14 @@ result without computing distances."
 (defun spanning-tree (graph &optional verbose)
   "Minimum spanning tree of graph, a list of edges (vertex-a vertex-b distance), by Kruskal's algorithm:
 the edges are taken by increasing distance (in their order in graph for equal distances), and kept if
-they join two parts not yet joined. Vertices are compared with equalp. The result is deterministic;
+they join two parts not yet joined. Vertices are compared with equal. The result is deterministic;
 if graph is not connected, it is a minimum spanning forest (one tree for each connected part)."
-  (let ((parent (make-hash-table :test #'equalp))
+  (let ((parent (make-hash-table :test #'equal))
         (tree nil)
         (vertices 0))
     (labels ((root (x)
                (let ((p (gethash x parent x)))
-                 (if (equalp p x) x (setf (gethash x parent) (root p))))))
+                 (if (equal p x) x (setf (gethash x parent) (root p))))))
       (dolist (e graph)
         (dolist (v (list (first e) (second e)))
           (unless (nth-value 1 (gethash v parent))
@@ -2025,7 +2025,7 @@ if graph is not connected, it is a minimum spanning forest (one tree for each co
             (incf vertices))))
       (dolist (e (stable-sort (copy-list graph) #'< :key #'third))
         (let ((ra (root (first e))) (rb (root (second e))))
-          (unless (equalp ra rb)
+          (unless (equal ra rb)
             (setf (gethash ra parent) rb)
             (when verbose (message e))
             (push e tree))))
@@ -2044,42 +2044,87 @@ Dunod, Paris. pp. 110-111)."))
 (defmethod minimum-spanning-tree ((graph list) &optional (verbose nil))
   (spanning-tree graph verbose))
 
+(defun graph-neighbours (graph)
+  "Hash table (test equal) of the neighbours of each node of graph, a list of edges
+(node-a node-b distance): a list of (neighbour . distance), in the order of the edges."
+  (let ((nb (make-hash-table :test #'equal)))
+    (dolist (e graph nb)
+      (push (cons (second e) (third e)) (gethash (first e) nb))
+      (push (cons (first e) (third e)) (gethash (second e) nb)))
+    (maphash #'(lambda (k v) (setf (gethash k nb) (nreverse v))) nb)
+    nb))
+
+(defun shortest-paths (neighbours start)
+  "Dijkstra's algorithm from start: two hash tables (test equal), the distance of each node
+reachable from start, and its predecessor on a shortest path. Distances must be positive or 0."
+  (let ((dist (make-hash-table :test #'equal))
+        (pred (make-hash-table :test #'equal))
+        (done (make-hash-table :test #'equal))
+        (frontier (list start)))
+    (setf (gethash start dist) 0)
+    (loop while frontier
+          do (let* ((n (let ((best (first frontier)))
+                         (dolist (x (rest frontier) best)
+                           (when (< (gethash x dist) (gethash best dist)) (setf best x)))))
+                    (dn (gethash n dist)))
+               (setf frontier (delete n frontier :test #'equal :count 1)
+                     (gethash n done) t)
+               (dolist (m (gethash n neighbours))
+                 (let ((node (car m)) (d (+ dn (cdr m))))
+                   (unless (gethash node done)
+                     (multiple-value-bind (old found) (gethash node dist)
+                       (when (or (not found) (< d old))
+                         (unless found (push node frontier))
+                         (setf (gethash node dist) d
+                               (gethash node pred) n))))))))
+    (values dist pred)))
+
+(defun path-to (pred start end)
+  "The nodes of the path from start to end, from the predecessors pred (see shortest-paths)."
+  (let ((path (list end)))
+    (loop until (equal (first path) start)
+          do (push (gethash (first path) pred) path))
+    path))
+
 (defun find-path (tree start end)
-  "The nodes of the path from start to end in tree, a list of edges (node-a node-b distance),
-or nil if there is no path. Only the two nodes of each edge are compared, never the distance."
-  (let ((parent (list (cons start nil)))
-        (queue (list start)))
-    (loop while (and queue (not (assoc end parent :test #'equalp)))
-          do (let ((n (pop queue)))
-               (dolist (e tree)
-                 (let ((m (cond ((equalp (first e) n) (list (second e)))
-                                ((equalp (second e) n) (list (first e))))))
-                   (when (and m (not (assoc (car m) parent :test #'equalp)))
-                     (push (cons (car m) n) parent)
-                     (setf queue (append queue m)))))))
-    (when (assoc end parent :test #'equalp)
-      (let ((path nil) (n end))
-        (loop (push n path)
-              (when (equalp n start) (return path))
-              (setf n (cdr (assoc n parent :test #'equalp))))))))
+  "The nodes of the shortest path (by distance) from start to end in tree, a list of edges
+(node-a node-b distance), or nil if there is no path. Nodes are compared with equal.
+In a tree there is only one path; in other graphs, Dijkstra's algorithm gives the shortest."
+  (if (equal start end)
+      (list start)
+      (multiple-value-bind (dist pred) (shortest-paths (graph-neighbours tree) start)
+        (when (nth-value 1 (gethash end dist))
+          (path-to pred start end)))))
+
+(defun graph-distance (tree start end)
+  "The length of the shortest path from start to end in tree, or nil if there is no path."
+  (if (equal start end)
+      0
+      (values (gethash end (shortest-paths (graph-neighbours tree) start)))))
 
 (defun tree-leaf-nodes (tree)
   "The nodes of degree 1 of tree, a list of edges (node-a node-b distance)."
   (remove-if-not #'(lambda (v)
-                     (= 1 (count-if #'(lambda (e) (or (equalp v (first e)) (equalp v (second e))))
+                     (= 1 (count-if #'(lambda (e) (or (equal v (first e)) (equal v (second e))))
                                     tree)))
                  (all-vertices tree)))
 
+(defun paths-from (start ends neighbours)
+  "The shortest paths from start to each of ends reachable from it (one search from start)."
+  (multiple-value-bind (dist pred) (shortest-paths neighbours start)
+    (loop for e in ends
+          when (nth-value 1 (gethash e dist))
+            collect (path-to pred start e))))
+
 (defun paths-to-leaves (start tree)
   "The paths from start to each leaf of tree."
-  (loop for l in (tree-leaf-nodes tree)
-        unless (equalp l start)
-          collect (find-path tree start l)))
+  (paths-from start (remove start (tree-leaf-nodes tree) :test #'equal) (graph-neighbours tree)))
 
 (defun all-paths (tree)
   "The paths between all the pairs of leaves of tree."
-  (loop for (l . others) on (tree-leaf-nodes tree)
-        append (loop for o in others collect (find-path tree l o))))
+  (let ((nb (graph-neighbours tree)))
+    (loop for (l . others) on (tree-leaf-nodes tree)
+          append (paths-from l others nb))))
 
 (defgeneric tree-path (from to tree)
   (:documentation "path from vertex to vertex in tree."))
@@ -2113,21 +2158,10 @@ or nil if there is no path. Only the two nodes of each edge are compared, never 
   (mapcar #'(lambda (s)
               (remove-duplicates (mapcar #'(lambda (e)
                                              (find-path tree s e)) to)
-                                 :test #'equalp))  from))
+                                 :test #'equal))  from))
 
 (defmethod tree-path ((from string) (to string) (tree list))
-  (let* ((table (loop for i from 0 for mot in (remove-duplicates (apply #'append (mapcar #'butlast tree))
-                                                                :test #'equalp)
-                     collect (cons mot i)))
-         
-         (ntree (loop for n in tree
-                      collect (list (cdr (assoc (car n) table :test #'equalp))
-                                    (cdr (assoc (cadr n) table :test #'equalp))
-                                    (caddr n))))  npath)
-    (setf npath (tree-path (cdr (assoc from table :test #'equalp))
-                           (cdr (assoc to table :test #'equalp))
-                           ntree))
-    (mapcar #'(lambda (n) (car (rassoc n table))) npath)))
+  (find-path tree from to))
 
 ;; a tree is a list of list of edges each defined by two vertices, such as: ( (a b) (b c) (b d) (c e)...) 
 ; any edge can be defined by some properties in the rest of the list of its vertices ;
@@ -2142,7 +2176,7 @@ or nil if there is no path. Only the two nodes of each edge are compared, never 
           (t (string-lessp (name a) (name b))))))
 
 (defun all-vertices (tree)
-  (let ((v (remove-duplicates (apply #'append (mapcar #'(lambda (x) (subseq x 0 2)) tree)) :test #'equalp)))
+  (let ((v (remove-duplicates (apply #'append (mapcar #'(lambda (x) (subseq x 0 2)) tree)) :test #'equal)))
     (sort v #'vertex<)))
 
 (defun min-total-length (tree)
@@ -2155,7 +2189,7 @@ or nil if there is no path. Only the two nodes of each edge are compared, never 
   (min-total-length tree))
 
 (defun tree-degree (vertex tree)
-  (length (remove-if-not #'(lambda (x) (member vertex (butlast x))) tree)))
+  (count-if #'(lambda (x) (or (equal vertex (first x)) (equal vertex (second x)))) tree))
 
 (defgeneric tree-deg (vertex tree)
   (:documentation "Degree of a vertex in a tree."))
@@ -2171,10 +2205,10 @@ or nil if there is no path. Only the two nodes of each edge are compared, never 
 
 (defun nodes (tree &optional (min-degree 2))
   (let* ((e  (mapcar #'butlast (remove-if #'(lambda (x) (zerop (caddr x))) tree)))  ;; remove if dist = 0
-         (v (remove-duplicates (apply #'append e)))
+         (v (remove-duplicates (apply #'append e) :test #'equal))
          (r (list)))
     (dolist (k v)
-      (push (list k (remove-if-not #'(lambda (x) (member k x :test #'equalp)) e)) r))
+      (push (list k (remove-if-not #'(lambda (x) (member k x :test #'equal)) e)) r))
     (mapcar #'car (remove-if #'(lambda (x) (< (length (cadr x)) min-degree)) r))))
 
 (defgeneric tree-nodes (tree &optional min-deg)
@@ -2185,10 +2219,10 @@ or nil if there is no path. Only the two nodes of each edge are compared, never 
 
 (defun leaves (tree)
   (let* ((e  (mapcar #'butlast tree))
-         (v (remove-duplicates (apply #'append e)))
+         (v (remove-duplicates (apply #'append e) :test #'equal))
          (r (list)))
     (dolist (k v)
-      (push (list k (remove-if-not #'(lambda (x) (member k x :test #'equalp)) e)) r))
+      (push (list k (remove-if-not #'(lambda (x) (member k x :test #'equal)) e)) r))
     (mapcar #'car (remove-if-not #'(lambda (x) (= (length (cadr x)) 1)) r))))
 
 (defgeneric tree-leaves (tree)
@@ -2201,20 +2235,14 @@ or nil if there is no path. Only the two nodes of each edge are compared, never 
    (:documentation "Distance between vertex1 and vertex2 in tree."))
 
 (defmethod tree-dist ((vertex1 t) (vertex2 t) (tree list))
-  (let ((d 0)
-	(path (tree-path vertex1 vertex2 tree)))
-    (dotimes (i (1- (length path)) d)
-      (incf d (third (find-if #'(lambda (x)
-				  (let ((s (subseq x 0 2)))
-				    (and (member (nth i path) s :test #'equalp)
-					 (member (nth (1+ i) path) s :test #'equalp))))
-			      tree))))))
+  ;; the length of the shortest path, nil if there is none (it gave 0)
+  (graph-distance tree vertex1 vertex2))
 
 (defmethod tree-dist ((vertex1 t) (vertex2 list) (tree list))
   (mapcar #'(lambda (x) (tree-dist vertex1 x tree)) vertex2))
 
 (defmethod tree-dist ((vertex1 t) (vertex2 null) (tree list))
-  (mapcar #'(lambda (x) (length (tree-path vertex1 x tree))) (remove vertex1 (all-vertices tree) :test #'equalp)))
+  (mapcar #'(lambda (x) (length (tree-path vertex1 x tree))) (remove vertex1 (all-vertices tree) :test #'equal)))
 
 ;;Strahler number to do
 
@@ -2602,18 +2630,18 @@ for each node, the class of its component, numbered from 0 by order of first nod
   "Split a tree into n partitions by cutting its n-1 longest edges (the first one in the tree if equal).
 Returns the edges of each partition (((node)) for a single node) and the nodes of each partition."
   (let* ((nodes (remove-duplicates (append (mapcar #'first tree) (mapcar #'second tree))
-                                   :test #'equalp :from-end t))
+                                   :test #'equal :from-end t))
          (cut (subseq (stable-sort (copy-list tree) '> :key #'third)
                       0 (min (max 0 (1- n)) (length tree))))
          (kept (remove-if #'(lambda (e) (member e cut :test #'eq)) tree))
          (comp (tree-components (length nodes)
-                                (mapcar #'(lambda (e) (list (position (first e) nodes :test #'equalp)
-                                                            (position (second e) nodes :test #'equalp)))
+                                (mapcar #'(lambda (e) (list (position (first e) nodes :test #'equal)
+                                                            (position (second e) nodes :test #'equal)))
                                         kept)))
          (parts (loop for c from 0 to (if comp (apply #'max comp) -1)
                       collect (loop for x in nodes for k in comp when (= k c) collect x))))
     (values (mapcar #'(lambda (p)
-                        (or (remove-if-not #'(lambda (e) (member (first e) p :test #'equalp)) kept)
+                        (or (remove-if-not #'(lambda (e) (member (first e) p :test #'equal)) kept)
                             (list p)))
                     parts)
             parts)))

@@ -708,3 +708,22 @@
   (uiop:with-temporary-file (:pathname file :type "txt")
     (write-list '((a b c) (1 2 3)) (namestring file))
     (is (equal '("A B C" "1 2 3") (uiop:read-file-lines file)))))
+
+(test graph-nodes-equal-and-shortest-paths
+  ;; strings differing only in case are different nodes (equalp took them for one)
+  (is (null (graph-path "A" "c" '(("A" "b" 1) ("a" "c" 1)))))
+  (is (equal '("A" "b") (graph-path "A" "b" '(("A" "b" 1) ("a" "c" 1)))))
+  (is (equal '("A" "a" "b" "c") (graph-nodes '(("A" "b" 1) ("a" "c" 1)))))
+  (is (= 2 (length (graph-span '(("A" "b" 1) ("a" "b" 1) ("A" "a" 5))))))
+  (is (= 1 (graph-degree "a" '(("A" "b" 1) ("a" "c" 1)))))
+  ;; a graph with a cycle: the shortest path by distance (it was the one with fewest edges)
+  (let ((g '((a b 1) (b c 1) (c d 1) (a d 10))))
+    (is (equal '(a b c d) (graph-path 'a 'd g)))
+    (is (= 3 (dist-graph 'a 'd g))))
+  ;; no path: nil (dist-graph gave 0)
+  (is (null (dist-graph 'a 'c '((a b 1) (c d 1)))))
+  (is (= 0 (dist-graph 'a 'a '((a b 1)))))
+  ;; a path of 3000 nodes took 0.2 s, all the leaf-to-leaf paths of 300 nodes 2 s
+  (let ((g (loop for i below 2999 collect (list i (1+ i) 1))))
+    (is (= 3000 (length (graph-path 0 2999 g))))
+    (is (= 2999 (dist-graph 0 2999 g)))))

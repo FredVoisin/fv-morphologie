@@ -378,7 +378,7 @@ draw the tree, with the smallest total length. It is computed with Kruskal's
 algorithm: the edges are taken by increasing distance, and kept when they join
 two parts not yet joined. The result is deterministic: the edges are given by
 increasing distance, and among equal distances the first edges of `mat-dist`
-are preferred. The objects may be of any kind (compared with `equalp`). If the
+are preferred. The objects may be of any kind (compared with `equal`). If the
 objects are not all connected, the result is a minimum spanning forest, one
 tree for each connected part, and a message says so.
 
@@ -398,8 +398,11 @@ compared with each other by the edit distance of their signatures, and
 #### `graph-path (from to graph)`
 
 The nodes on the path between two nodes of a tree (`nil` if they are not
-connected). Only the two nodes of each edge `(node-a node-b distance)` are
-compared, never the distance.
+connected). In a graph which is not a tree, it is the shortest path by
+distance (Dijkstra's algorithm; the distances must be positive or 0). Only
+the two nodes of each edge `(node-a node-b distance)` are compared, never the
+distance. Nodes are compared with `equal`: strings are case-sensitive, and
+nodes cannot be lists (a list stands for several nodes).
 
 - `from` or `to` `nil`: the paths from the other node to each leaf of the
   tree.
@@ -914,8 +917,8 @@ the tolerance), which takes longer: a few seconds for 120 elements.
 
 #### `graph-nodes (graph)`, `graph-extrem (graph)`
 
-All the nodes of a graph (each once, sorted: numbers first, then by name),
-and its extremities (leaves).
+All the nodes of a graph (each once, compared with `equal`; sorted: numbers
+first, then by name), and its extremities (leaves).
 
 ```lisp
 (graph-nodes '((a b 1) (b c 2) (b d 1)))    ;=> (A B C D)
@@ -1039,8 +1042,8 @@ dissimilarity).
 #### `dist-graph (v1 v2 graph)`
 
 Distance between two nodes of a graph: the length of the shortest path
-between them. Tested only on minimum spanning trees, for which it was
-written.
+between them (Dijkstra's algorithm, see `graph-path`), 0 from a node to
+itself, `nil` if there is no path.
 
 ```lisp
 (dist-graph 'a 'c '((a b 1) (b c 2) (b d 1)))   ;=> 3
