@@ -2783,14 +2783,15 @@ Returns the class of each datum, numbered by order of first appearance, and the 
 ;; stats
 
 (defun histogramme (data &key (test #'equalp) (thes nil))
-  (let ((cl (if thes thes (remove-duplicates data :test test)))
-	(histo (list)))
-    (dolist (c cl)
-      (push (list c (length (remove-if-not #'(lambda (x) (funcall test c x)) data)))
-	    histo))
-    (if (not (member nil (mapcar #'numberp cl)))
-        (sort histo '< :key 'car)
-      (sort histo '> :key 'cadr))))
+  "The list of (element count) of data, for the different elements (or those of thes): sorted by
+increasing value for numbers, else by decreasing count, elements of equal count in their order of
+first appearance (in data, or in thes)."
+  (let* ((cl (or thes (remove-duplicates data :test test :from-end t)))
+         (histo (mapcar #'(lambda (c) (list c (count-if #'(lambda (x) (funcall test c x)) data)))
+                        cl)))
+    (if (every #'numberp cl)
+        (stable-sort histo #'< :key #'car)
+        (stable-sort histo #'> :key #'cadr))))
 
 ;;;
 ;; info theory

@@ -759,3 +759,17 @@
   (is (approx= 0 (fv-morphologie::mountford-similarity '() '(a b))))
   (is (approx= 2/3 (fv-morphologie::mountford-similarity '(a b c) '(a b))))
   (is (approx= 0.2 (fv-morphologie::mountford-similarity '(a b c d) '(c d e f)))))
+
+(test histogram-test-and-order
+  ;; the default test was eq: equal strings or lists were not counted together
+  (is (equal '(("a" 2) ("b" 1)) (histogram '("a" "b" "a"))))
+  (is (equal '(((1 2) 2) ((3) 1)) (histogram '((1 2) (3) (1 2)))))
+  (is (equal '(("The" 2) ("cat" 1)) (histogram '("The" "cat" "the"))))
+  (is (equal '(("The" 1) ("cat" 1) ("the" 1)) (histogram '("The" "cat" "the") :test #'equal)))
+  ;; equal counts in the order of first appearance (it was arbitrary)
+  (is (equal '((b 2) (a 2) (c 1)) (histogram '(b a c a b))))
+  (is (equal '((c 1) (b 1) (a 1)) (histogram '(c b a))))
+  (is (equal '((b 1) (a 1) (c 0)) (histogram '(a b) :thes '(c b a))))
+  ;; numbers by increasing value
+  (is (equal '((1 2) (2 1) (3 3)) (histogram '(3 1 2 1 3 3))))
+  (is (null (histogram '()))))

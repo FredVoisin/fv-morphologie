@@ -1054,15 +1054,19 @@ itself, `nil` if there is no path.
 #### `histogram (data &key test thes)`
 
 Histogram of data, as `(element count)`. With numerical data, the result is
-sorted by increasing value; with arbitrary symbols, by decreasing frequency.
+sorted by increasing value; with arbitrary symbols, by decreasing frequency,
+elements of equal frequency in their order of first appearance (in `data`, or
+in `:thes`).
 
-- `:test`: identity of the elements;
+- `:test`: identity of the elements (`#'equalp` by default: strings ignore
+  case, `1` and `1.0` are the same; `#'equal` to tell them apart);
 - `:thes`: the elements to count, to the exclusion of the others.
 
 ```lisp
 (histogram '(a b a c a b))           ;=> ((A 3) (B 2) (C 1))
 (histogram '(3 1 2 1 3 3))           ;=> ((1 2) (2 1) (3 3))
 (histogram '(a b a) :thes '(a b c))  ;=> ((A 2) (B 1) (C 0))
+(histogram '("The" "cat" "the"))     ;=> (("The" 2) ("cat" 1))
 ```
 
 #### `entropy (data &optional mode samples test)`

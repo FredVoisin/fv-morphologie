@@ -376,11 +376,12 @@ the distances of the dimensions being weighted by wgth: a number (same weight fo
 ;;; 3.2 INFORMATION (DYNAMICS ?)
 
 (defgeneric histogram (data &key test thes)
-  (:documentation "HISTOGRAM: histogram of data. With optional arguments:
-test: identity test
+  (:documentation "HISTOGRAM: histogram of data, as a list of (element count): sorted by increasing value for numbers,
+else by decreasing count (elements of equal count in their order of first appearance). With optional arguments:
+test: identity test (equalp by default)
 thes: thesaurus or list of symbols to be considered."))
 
-(defmethod histogram ((data t) &key (test #'eq) (thes nil))
+(defmethod histogram ((data t) &key (test #'equalp) (thes nil))
   (fv-morphologie::histogramme data :test test :thes thes))
 
 (defgeneric entropy (data &optional mode samples test)
