@@ -870,3 +870,16 @@
   (is (equal '((0 1) (1 2) (2 3)) (motif-find '(a a) '(a a a a))))
   ;; lists unchanged
   (is (equal '((0 1) (3 4) (6 7)) (motif-find '(a b) '(a b c a b d a b)))))
+
+(test dist-structure-any-element
+  ;; strings, lists, and symbols mixed with numbers had no applicable method
+  (is (approx= 0 (dist-structure '("a" "b" "a") '("x" "y" "x"))))
+  (is (approx= 0 (dist-structure '((1 2) (3) (1 2)) '(x y x))))
+  (is (approx= 0 (dist-structure '(a 1 a) '(x y x))))
+  ;; :test is the identity of the elements (it compared the structure codes)
+  (is (approx= 0 (dist-structure '("a" "A" "b") '(x x y))))
+  (is (approx= 0.5 (dist-structure '("a" "A" "b") '(x x y) :test #'string=)))
+  ;; the documented examples
+  (is (approx= 0 (dist-structure '(a b a c a d a e a f g h) '(1 2 1 3 1 4 1 5 1 6 7 8))))
+  (is (approx= 1/3 (dist-structure '(a b a c a d a e a f g h) '(a a a a a b c d e f g h))))
+  (is (approx= 0.875 (dist-structure '(a b a c a d a e a f g h) '(x x x x y y y x x y y y)))))

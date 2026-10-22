@@ -1045,7 +1045,9 @@ distance. It is normalized from 0 (complete resemblance) to 1 (complete
 dissimilarity).
 
 - `:w-occ`: weight given to the occurrences of the elements;
-- `:w-rep`: weight given to the repetitions.
+- `:w-rep`: weight given to the repetitions;
+- `:test`: identity of the elements (`#'equalp` by default); the elements
+  may be of any kind (symbols, numbers, strings, lists...).
 
 ```lisp
 ;; same structure: distance 0

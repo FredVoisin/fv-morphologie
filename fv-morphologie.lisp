@@ -1376,39 +1376,20 @@ M itself is infinite for identical sets."
 
 ;(mountford-similarity '(1 0 1 0 0 0 0 2 3 4) '(1 0 0 1 0 1 1))
 
-(defgeneric match (a b))
-
-(defmethod match ((a symbol) (b symbol)) (if (equalp a b) 1 0))
-
-(defmethod match ((a number) (b number)) (if (= a b) 1 0))
-
-(defmethod match ((a symbol) (b list))
-  (mapcar #'(lambda (x) (match a x)) b))
-
-(defmethod match ((a list) (b symbol))
-  (mapcar #'(lambda (x) (match x b)) a))
-
-(defmethod match ((a list) (b list))
-  (mapcar #'(lambda (x) (mapcar #'(lambda (y) (match x y)) b)) a))
-
-(defun ref-position (list &optional (test #'equalp))
-  (mapcar #'(lambda (e) (position e list :test test)) list))
-
 (defgeneric struct-dist (a b &optional w-occ w-rep test)
-  (:documentation   "Resemblance value (0 to 1) between sequences a and b according to their interanl strcutures.
+  (:documentation   "Dissemblance value (0 to 1) between sequences a and b according to their internal structures:
+for each element, the number of its occurrences and the position of its first occurrence in its sequence,
+compared with the multidimensional edit distance.
 w-occ: weigth for 'occurence structure';
-w-rep: weigth for 'repetition' structure."))
+w-rep: weigth for 'repetition' structure;
+test: identity of the elements (equalp by default)."))
 
 (defmethod struct-dist ((a list) (b list) &optional (w-occ 1) (w-rep 1) (test #'equalp))
-  (let* ((ma (match a a))
-	 (mb (match b b))
-	 (occ-a (mapcar #'(lambda (x) (apply #'+ x)) ma))
-	 (occ-b (mapcar #'(lambda (x) (apply #'+ x)) mb))
-	 (ref-a (ref-position a))
-	 (ref-b (ref-position b)))
-    (multi-edit-dist (mapcar #'(lambda (x y) (list x y)) occ-a ref-a)
-                     (mapcar #'(lambda (x y) (list x y)) occ-b ref-b)
-                     (list w-occ w-rep) :inex 0 :test test)))
+  ;; the occurrences and first positions are counted with test, for any kind of element
+  ;; (match had methods for symbols and numbers only, and test compared the codes, not the elements)
+  (flet ((codes (s)
+           (mapcar #'(lambda (x) (list (count x s :test test) (position x s :test test))) s)))
+    (multi-edit-dist (codes a) (codes b) (list w-occ w-rep) :inex 0 :test #'eql)))
 
 (defmethod struct-dist ((a list) (b null) &optional (w-occ 1.) (w-rep 1.) (test #'equalp))
   (let ((r 'nil))

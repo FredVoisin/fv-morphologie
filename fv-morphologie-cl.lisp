@@ -373,7 +373,11 @@ the distances of the dimensions being weighted by wgth: a number (same weight fo
   (fv-morphologie::multi-edit-dist seq1 seq2 wgth :change sub :insert ins :delete del :inex uncom :test test))
 
 (defgeneric dist-structure  (a b &key w-occ w-rep test)
-  (:documentation "DIST-STRUCTURE: "))
+  (:documentation "DIST-STRUCTURE: dissimilarity between the sequences <a> and <b> from the point of view of their structure,
+from 0 (same structure) to 1: for each element, its number of occurrences and the position of its first occurrence
+are compared with the edit distance. Experimental.
+:w-occ, :w-rep: weights of the occurrences and of the repetitions; :test: identity of the elements (equalp by default).
+If <b> is nil, the distances between all the sequences of <a>."))
 
 (defmethod dist-structure  ((a t) (b t) &key (w-occ 1.) (w-rep 1.) (test #'equalp))
   (fv-morphologie::struct-dist a b w-occ w-rep test))
