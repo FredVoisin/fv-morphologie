@@ -90,11 +90,11 @@ réalisés en 1935 par Paul-Émile Victor et Robert Gessain (analyse : Frédéri
 L'analyse contrastive est une systématisation et une généralisation de
 l'*analyse paradigmatique* de Nicolas Ruwet (Ruwet 1972), dans la lignée de la
 sémiologie musicale de Jean-Jacques Nattiez et de Jean Molino (Nattiez 1987 ;
-Molino 2009). Elle extrait et décrit les structures de suites de symboles
-arbitraires (d'abord des mélodies) selon un critère unique : la répétition
-d'un contraste, ou *marque*. Chaque symbole d'une séquence ouvre des segments,
-et les répétitions de ces segments donnent une structure (voir
-[`mark-structure`](#mark-structure-seq-out-key-diss-rem-loc-dup-test)). Des
+Molino 2009). En ne s'appyant que sur le "niveau neutre", elle se veut agnostique.
+Elle extrait et décrit les structures de suites de symboles arbitraires (d'abord 
+des mélodies) selon un critère unique : la répétition d'un contraste, ou *marque*.
+Chaque symbole d'une séquence ouvre des segments,et les répétitions de ces segments
+donnent une structure (voir [`mark-structure`](#mark-structure-seq-out-key-diss-rem-loc-dup-test)). Des
 segments qui ne sont pas strictement identiques peuvent être comparés au moyen
 de la distance d'édition.
 
