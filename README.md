@@ -6,9 +6,19 @@ Analysis-oriented branch of the legacy library [Morphologie](https://github.com/
 and PWGL (Mikael Laurson, Sibelius Academy).
 
 
-Documentation: [doc/fv-morphologie.md](doc/fv-morphologie.md).
-Changes between versions: [CHANGELOG.md](CHANGELOG.md).
-The PWGL tutorial and bindings are kept in [pwgl-legacy/](pwgl-legacy/).
+## Documentation
+
+- Documentation: [English](doc/fv-morphologie.md),
+  [français](doc/fv-morphologie.fr.md) (reference version).
+- The 54 exported functions, with their arguments and docstrings:
+  [English](doc/fv-morphologie-functions.md),
+  [français](doc/fv-morphologie-fonctions.fr.md).
+- Changes between versions: [CHANGELOG.md](CHANGELOG.md).
+- The PWGL tutorial and bindings are kept in [pwgl-legacy/](pwgl-legacy/).
+
+In Lisp, `(doc)` lists the functions, `(doc 'dist-edit)` prints the docstring
+of a function, and `(help "distance")` looks for a keyword in the names and
+docstrings.
 
 ## Loading (Common Lisp)
 
