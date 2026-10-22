@@ -204,7 +204,7 @@ If a and b are lists with not same size (i.e points with not same dimensions),
  change: cost for changing a symbol;
  insert: cost for deleting or inserting a symbol;
  inex: cost for changig with a symbol from seq2 which doesn't exist in seq1;
- normalized: normalized output, in ratio to the length of the shortest sequence;
+ normalized: normalized output, in ratio to the length of the longest sequence;
  test: any binary function to compare symbols (default: #'equalp)."
  (if (not inex)
      (edit-dist1 seq1 seq2 :change change :insert insert :delete delete :normalized normalized :test test)
@@ -220,7 +220,7 @@ If a and b are lists with not same size (i.e points with not same dimensions),
  Argument <insert> is the cost value when inserting a symbol ;
  Argument <delete> is the cost value when deleting a symbol ;
  Argument <inex> is the cost value when changing a symbol in one of the sequence which does not exist in the other ;
- Argument <normalized> to choose (un-)normalized output. If normalized, value 1.0 in ratio to the length of the shortest sequence to be compared;
+ Argument <normalized> to choose (un-)normalized output. If normalized, value 1.0 in ratio to the length of the longest sequence to be compared;
  test: any binary function to compare symbols (default: #'equalp)."))
 
 (defmethod edit-dist ((seq1 list) (seq2 list) &optional (change 1) (insert 1) (delete 1) (inex 0) (normalized nil) (test #'equalp))

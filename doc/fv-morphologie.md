@@ -1534,9 +1534,6 @@ in [fv-morphologie-functions.md](fv-morphologie-functions.md).
 - **Entropy windows**: the legacy doc describes sliding windows with 50 %
   overlap (size 2L/n); the current code uses `samples` consecutive windows of
   size L/n without overlap.
-- **`dist-edit` docstring** (`src/api/evaluation.lisp`): says `:norm`
-  divides by the shorter sequence; the code (`edit-dist1`, and the legacy
-  doc) uses the longer one. The docstring is to be corrected.
 - **FV-examples** are still to be converted into Common Lisp examples.
 - **Contrastive analysis**: Frédéric Voisin, *L'analyse musicale contrastive*,
   cited by Aralla (2002) as published in *Prisma 01*, is still to be found and

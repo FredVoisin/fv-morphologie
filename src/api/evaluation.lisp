@@ -114,10 +114,10 @@ If <y> is null, <x> may represent a list of points, then the output is the list 
   (:documentation "DIST-EDIT: editing distance from seq1 to seq2.
 Keywords arguments are:
 :sub : cost for substituting symbols (1 by default)
-:ins : cost for inserting symbols (1 by default 
+:ins : cost for inserting symbols (1 by default)
 :del : cost for deleting symbols (1 by default)
 :uncom : cost for substituting symbols which are not common to both sequences
-:norm : result normalized to the length of the shorter sequence (T or NIL by default)
+:norm : result divided by the length of the longer sequence, from 0 to 1 with costs of 1 (T, or NIL by default)
 :test : identity function"))
 
 (defmethod dist-edit ((seq1 t) (seq2 t)

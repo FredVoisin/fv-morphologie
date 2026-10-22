@@ -1592,10 +1592,6 @@ dans
 - **Fenêtres d'entropie** : l'ancienne documentation décrit des fenêtres
   glissantes avec 50 % de recouvrement (taille 2L/n) ; le code actuel utilise
   `samples` fenêtres consécutives de taille L/n, sans recouvrement.
-- **Docstring de `dist-edit`** (`src/api/evaluation.lisp`) : elle dit que
-  `:norm` divise par la plus courte suite ; le code (`edit-dist1`, comme
-  l'ancienne documentation) utilise la plus longue. La docstring est à
-  corriger.
 - **Les FV-exemples** restent à convertir en exemples Common Lisp.
 - **Analyse contrastive** : l'article de Frédéric Voisin, *L'analyse musicale
   contrastive*, cité par Aralla (2002) comme paru dans *Prisma 01*, reste à
