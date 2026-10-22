@@ -1073,7 +1073,8 @@ in `:thes`).
 
 Estimation of the entropy of a set of data or of a sequence.
 
-`mode`:
+`mode` (a symbol of any package, a keyword or a string, such as
+`'shannon-2`, `:shannon-2` or `"shannon-2"`; another mode is an error):
 
 - `nil` or `'shannon-2` (default): Shannon entropy in base 2;
 - `'shannon-n`: Shannon entropy in base n, for n distinct symbols;
@@ -1098,6 +1099,8 @@ grow longer. For sequences made of repetitions, the gap widens.
 
 `samples` follows the evolution of the entropy along the sequence: the
 sequence is cut into `samples` windows, and the entropy of each is returned.
+`test` is the identity of the elements (`#'equalp` by default). The result is
+always a float (or a list of floats).
 
 ```lisp
 (entropy '(a a a a) 'shannon-2)              ;=> 0.0

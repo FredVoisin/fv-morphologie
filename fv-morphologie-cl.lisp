@@ -385,21 +385,24 @@ thes: thesaurus or list of symbols to be considered."))
   (fv-morphologie::histogramme data :test test :thes thes))
 
 (defgeneric entropy (data &optional mode samples test)
-  (:documentation "ENTROPY:"))
+  (:documentation "ENTROPY: entropy of the set or sequence <data>, according to <mode> (a symbol of any package, a keyword or a string):
+shannon-2 (or nil, default): Shannon entropy in base 2;
+shannon-n: Shannon entropy in base n, the number of distinct elements (from 0 to 1);
+shannon-e: Shannon entropy with the natural logarithm;
+cond-sh: conditional entropy (experimental).
+<samples>: number of consecutive windows of <data>, giving the list of their entropies.
+<test>: identity of the elements (equalp by default)."))
 
 (defmethod entropy ((data t) &optional (mode nil) (samples nil) (test #'equalp))
-  (cond ((not mode)
-	 (message "Entropy: using 'shannon-2 mode (default).")
-	 (shannon-entropy data 2 samples test))
-	((eq mode 'shannon-2)
-	 (shannon-entropy data 2 samples test))
-	((eq mode 'shannon-e)
-	 (shannon-entropy data (exp 1) samples test))
-	((eq mode 'shannon-n)
-	 (shannon-entropy data nil samples test))
-	((eq mode 'cond-sh)
-	 (entropie-conditionnelle data nil samples test))
-    (t (message "Entropy: unknown mode. Avalaible modes are: 'shannon-2, 'shannon-n, shannon-e."))))
+  ;; modes are recognized by their names: 'shannon-2 from any package, :shannon-2 or "shannon-2"
+  ;; (they were compared with eq to the symbols of fv-morphologie)
+  (let* ((name (if mode (string-upcase (string mode)) "SHANNON-2"))
+         (r (cond ((string= name "SHANNON-2") (shannon-entropy data 2 samples test))
+                  ((string= name "SHANNON-E") (shannon-entropy data (exp 1) samples test))
+                  ((string= name "SHANNON-N") (shannon-entropy data nil samples test))
+                  ((string= name "COND-SH") (entropie-conditionnelle data nil samples test))
+                  (t (error "entropy: unknown mode ~S, use shannon-2, shannon-n, shannon-e or cond-sh." mode)))))
+    (if (listp r) (mapcar #'float r) (float r))))
 
 (defgeneric elt-info (data elt &optional test)
   (:documentation "ELT-INFO:"))

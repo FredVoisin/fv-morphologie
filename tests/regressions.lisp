@@ -773,3 +773,21 @@
   ;; numbers by increasing value
   (is (equal '((1 2) (2 1) (3 3)) (histogram '(3 1 2 1 3 3))))
   (is (null (histogram '()))))
+
+(test entropy-modes
+  ;; modes were compared with eq to the symbols of fv-morphologie: from another package,
+  ;; 'shannon-2 or :shannon-2 printed "unknown mode" and returned nil
+  (let ((*package* (find-package :cl-user)))
+    (is (approx= 2 (entropy '(a b c d) (intern "SHANNON-2" :cl-user)))))
+  (is (approx= 2 (entropy '(a b c d) :shannon-2)))
+  (is (approx= 0.9463947 (entropy '(a b a c) "shannon-n")))
+  (is (approx= (log 2) (entropy '(a b) :shannon-e)))
+  (is (approx= 0.5141604 (entropy '(a b a b a b) :cond-sh)))
+  ;; the default mode printed a message at each call
+  (is (equal "" (with-output-to-string (*standard-output*) (entropy '(a b a b)))))
+  ;; an unknown mode printed a message and returned nil
+  (signals error (entropy '(a b c) :foo))
+  ;; always floats (0 and lists mixing 0 and 0.0)
+  (is (eql 0.0 (entropy '() :shannon-2)))
+  (is (every #'floatp (entropy '(a b) :shannon-2 5)))
+  (is (equal '(1.0 1.0 0.0 0.0) (entropy '(a b a b a a a a) :shannon-2 4))))
