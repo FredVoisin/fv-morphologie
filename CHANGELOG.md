@@ -1,0 +1,104 @@
+# Changelog
+
+All notable changes to fv-morphologie are listed here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
+follow [Semantic Versioning](https://semver.org/).
+
+## [0.2.0] - 2026-10-22
+
+The first release as a Common Lisp library loadable with ASDF and Quicklisp,
+with a test suite (FiveAM) run on SBCL and ECL.
+
+### Security
+
+- Text is read with `*read-eval*` false: the reader macro `#.` in a text file
+  read by `read-text` is no longer evaluated (it ran its code).
+
+### Changed
+
+These changes alter results which were documented or relied upon:
+
+- `read-text`: in lines mode, each line is a list, even a line of one word
+  (one number per line gives `((1) (2) (3))`, it gave `(1 2 3)`); a word
+  which cannot be read is kept as a string; `:rem-test` also applies in lines
+  mode; in `:charcode` mode, newlines and blanks separate the segments, and
+  letters of any alphabet are letters. The modes `:ascii-7b` and `:ascii-8b`
+  are removed; an unknown mode is an error.
+- `split-string` always returns a list (`"hello"` gives `("hello")`).
+- `filt-median`: centred window, odd windows only (an even window is
+  enlarged), edges repeated; `filt-mean` and `filt-fct`: centred windows
+  shrinking symmetrically at the edges; `filt-fct`'s default step is 1.
+- `filt-lowpass` with `gamma` (double exponential smoothing) follows Holt's
+  formulas (the signs were wrong).
+- `mountford-similarity` is normalized to `M / (1 + M)`, from 0 to 1.
+- `graph-span` uses Kruskal's algorithm: the tree is deterministic, its edges
+  sorted by length; a graph which is not connected gives a spanning forest.
+- `graph-path` and `dist-graph` give the shortest path by distance
+  (Dijkstra); `dist-graph` gives `nil` when there is no path.
+- Graph nodes are compared with `equal`: strings are case-sensitive.
+- `int-signature`: `thres` is an absolute amplitude for every method; a flat
+  extremum is given once, at its first position.
+- `class-num` with one-dimensional data gives numbers as centres; `class-sym`
+  numbers its classes in order of first appearance.
+- `histogram`: `equalp` by default (it was `eq`); equal counts in order of
+  first appearance.
+- `write-list :coll` writes a Max coll file (`index, data;`), symbols in
+  lower case.
+- Unknown modes or outputs are errors instead of silent `nil` results, in
+  `class-num`, `entropy`, `exsample`, `filt-local-rep`, `filt-noise`,
+  `graph-part`, `int-signature`, `mark-structure`, `motif-list`,
+  `read-text`; `lmin`, `lmax`, `fmax`, `fmin`, `mean` and `normalize` signal
+  explicit errors on empty lists or zero sums.
+
+### Added
+
+- `int-signature` methods `:major-extrema` (Fink & Gandhi important extrema)
+  and `:landmarks` (Perng, Parker & Leung landmarks, with an absolute,
+  relative or custom criterion); they silently gave the `:minflexmax` result.
+- `motif-structure` keywords `:lengths`, `:test`, `:diss`, `:l-var`,
+  `:criteria`, `:distance`.
+- `graph-part` optional number of parts.
+- `filt-noise` mode `:relative`, and a function mode `(lambda (x l) ...)`
+  applied to each element.
+- `motif-find` on strings.
+- `graph>matrix` is exported and documented; `help` works (it printed every
+  similarity score); `doc` and `help` know all the exported functions.
+- `graph>dot` writes any format of `neato` (svg, pdf...), and works on ECL.
+
+### Fixed
+
+- k-means (`class-num :centroids`) could return a single class (17% of the
+  runs on a simple example); `class-num :iter` frequencies summed to more
+  than 1; `class-num` with mode `nil` returned `nil`; `:1d-centroids`
+  returned 2 classes whatever the number asked.
+- `class-sym` and `graph-part` with a number of parts give exactly that
+  number of classes or parts.
+- `dist-multi-edit` with fewer weights than dimensions crashed; the weights
+  are normalized after being completed.
+- `graph>dot`: lengths were rounded on 3 characters, labels such as `1/3`
+  were invalid DOT, node names had package prefixes, `Mrecord` lost its case.
+- Edit distance `uncom` (`inex`) uses `test` to decide whether an element
+  exists in the other sequence.
+- Reading a UTF-8 file whole added NUL characters (spaces on ECL) at the end.
+- Many other functions accept any kind of element (strings, lists) where
+  they failed, and no longer divide by zero on empty data: see the commits.
+
+### Performance
+
+- Edit distance in quadratic time (it was cubic), bounded when a tolerance
+  is given: `motif-structure` on 240 elements, 352 s → 0.3 s; `motif-list`
+  on 120 elements, 32 s → 0.2 s (exact) and 34 s → 4 s (with a tolerance).
+- `graph-span` on 320 objects in 0.06 s; `graph-path` on long trees and
+  `filt-local-rep :linear` on long lists in linear time.
+
+### Removed
+
+- The modes `:important-extrema` and `:mdpp` of `signature` (broken attempts,
+  replaced by `:major-extrema` and `:landmarks`), and unused internal
+  functions.
+
+## [0.1.0]
+
+The PWGL / OpenMusic library adapted to Common Lisp, before this changelog.
+
+[0.2.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v0.2.0

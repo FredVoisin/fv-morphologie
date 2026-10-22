@@ -7,6 +7,7 @@ and PWGL (Mikael Laurson, Sibelius Academy).
 
 
 Documentation: [doc/fv-morphologie.md](doc/fv-morphologie.md).
+Changes between versions: [CHANGELOG.md](CHANGELOG.md).
 The PWGL tutorial and bindings are kept in [pwgl-legacy/](pwgl-legacy/).
 
 ## Loading (Common Lisp)
