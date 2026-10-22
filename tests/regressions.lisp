@@ -935,3 +935,19 @@
         (is (equal '(3 4.5 abc) (third r))))))
   (signals reader-error (fv-morphologie::safe-read-from-string "#.(+ 1 2)"))
   (is (= 3 (fv-morphologie::safe-read-from-string "3"))))
+
+(test explicit-errors-on-empty-lists
+  ;; lmin/lmax failed in (random 0), fmax/fmin returned nil, mean and normalize divided by zero
+  (dolist (f '(fv-morphologie::lmin fv-morphologie::lmax fv-morphologie::fmax
+               fv-morphologie::fmin fv-morphologie::mean))
+    (is (search "empty" (handler-case (progn (funcall f nil) "") (error (e) (princ-to-string e))))))
+  (signals error (fv-morphologie::normalize '(1 -1)))
+  (signals error (fv-morphologie::normalize '(0 0)))
+  (is (null (fv-morphologie::normalize '())))
+  (is (equal '(1/4 3/4) (fv-morphologie::normalize '(1 3))))
+  ;; the values are unchanged
+  (is (= 1 (fv-morphologie::lmin '(3 1 2))))
+  (is (= 3 (fv-morphologie::lmax '(3 1 2))))
+  (is (= 3 (fv-morphologie::fmax '(3 1 2))))
+  (is (= 1 (fv-morphologie::fmin '(3 1 2))))
+  (is (approx= 2 (fv-morphologie::mean '(1 2 3)))))

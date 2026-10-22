@@ -73,7 +73,10 @@
   (if (zerop x) 0 (log x b)))
 
 (defun mean (data)
-  (float (/ (apply #'+ data) (length data))))
+  "The mean of the numbers of data (an error if data is empty)."
+  (if data
+      (float (/ (apply #'+ data) (length data)))
+      (error "mean: no value (the list is empty).")))
 
 (defun xor (a b)
   (if (and a b) nil (or a b)))
@@ -99,9 +102,12 @@ If x is a graph or tree (a list of lists), change only the third element of each
       (mapcar #'(lambda (a) (a-zero a quasi-zero)) x)))
 
 (defun normalize (data)
+  "The numbers of data divided by their sum, which is then 1 (an error if the sum is 0)."
   (let ((sum (apply #'+ data)))
-    (if (= 1 sum) data
-    (mapcar #'(lambda (x) (/ x sum)) data))))
+    (cond ((null data) nil)
+          ((zerop sum) (error "normalize: the sum of ~S is 0." data))
+          ((= 1 sum) data)
+          (t (mapcar #'(lambda (x) (/ x sum)) data)))))
 
 
 ;;; then, quasi-zero should me renamed schism and be a kind of random number when 0 is a float (epsilon = eteron ?), not integer
@@ -199,18 +205,12 @@ which lengths are successive values of the list <segmentation>.
 ;;; ABOUT LISTS
 
 (defun lmin (liste)
-  (let ((a (nth (random (length liste)) liste)))
-    (loop until (null liste)
-       do (let ((e (pop liste)))
-	    (when (< e a) (setf a e))))
-    (values a)))
+  "The minimum of the numbers of liste (an error if liste is empty)."
+  (if liste (reduce #'min liste) (error "lmin: no value (the list is empty).")))
 
 (defun lmax (liste)
-  (let ((a (nth (random (length liste)) liste)))
-    (loop until (null liste)
-          do (let ((e (pop liste)))
-	       (when (> e a) (setf a e))))
-    (values a)))
+  "The maximum of the numbers of liste (an error if liste is empty)."
+  (if liste (reduce #'max liste) (error "lmax: no value (the list is empty).")))
 
 (defgeneric findpos (item seq &key test)
   (:documentation "finds all positions of items into seq."))
@@ -423,23 +423,12 @@ nil is an element like any other."
 
 ; fmax fmin because of limitations of min max in LW...
 (defun fmax (seq)
-  "max value of s"
-  (let ((s (copy-tree seq)))
-    (if (cdr s)
-        (let ((x (pop (cdr s))))
-          (if (> (car s) x)
-              (fmax (cons (car s) (cdr s)))
-            (fmax (cons x (cdr s)))))
-      (car s))))
+  "max value of s (an error if seq is empty)"
+  (if seq (reduce #'max seq) (error "fmax: no value (the list is empty).")))
 
 (defun fmin (seq)
-  (let ((s (copy-tree seq)))
-    (if (cdr s)
-        (let ((x (pop (cdr s))))
-          (if (< (car s) x)
-              (fmin (cons (car s) (cdr s)))
-            (fmin (cons x (cdr s)))))
-	(car s))))
+  "min value of s (an error if seq is empty)"
+  (if seq (reduce #'min seq) (error "fmin: no value (the list is empty).")))
 
 ; fonction generique pour appliquer une fonction arbitraire sur une liste selon une fenetre glissante de taille (plus ou moins) determinee (pouvant varier dynamiquement ?) remplace 
 
