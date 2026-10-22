@@ -1126,13 +1126,16 @@ marks and their echoes in the sequence. Rewritten from Paolo Aralla's
 
 #### `graph-length (graph)`, `graph-degree (node graph)`
 
-The total length of a tree, and the degree of a node (number of edges at
-that node; all nodes if `node` is `nil`).
+The total length of a tree, and the degree of a node: the number of edges at
+that node (0 if it is not in the graph; an edge from a node to itself counts
+once). A list of nodes gives the list of their degrees, and `nil` the
+degrees of all the nodes, in the order of `graph-nodes`.
 
 ```lisp
 (graph-length '((a b 1) (b c 2) (b d 1)))       ;=> 4
 (graph-degree 'b '((a b 1) (b c 2) (b d 1)))    ;=> 3
-(graph-degree nil '((a b 1) (b c 2) (b d 1)))   ;=> (1 3 1 1)
+(graph-degree '(b d) '((a b 1) (b c 2) (b d 1))) ;=> (3 1)
+(graph-degree nil '((a b 1) (b c 2) (b d 1)))   ;=> (1 3 1 1), for (A B C D)
 ```
 
 ## 4. Reading and writing files

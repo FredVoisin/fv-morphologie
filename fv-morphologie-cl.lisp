@@ -449,7 +449,8 @@ Without <n>, all the edges of maximum length are cut ; with <n>, the n-1 longest
   (fv-morphologie::tree-minlen graph))
 
 (defgeneric graph-degree (node graph)
-  (:documentation "GRAPH-DEGREE: degree of a node in a graph."))
+  (:documentation "GRAPH-DEGREE: degree of a node in a graph, the number of its edges (0 if it is not in the graph).
+A list of nodes gives the list of their degrees, nil the degrees of all the nodes, in the order of graph-nodes."))
 
 (defmethod graph-degree ((node t) (graph list))
   (fv-morphologie::tree-deg node graph))

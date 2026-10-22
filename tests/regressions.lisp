@@ -727,3 +727,12 @@
   (let ((g (loop for i below 2999 collect (list i (1+ i) 1))))
     (is (= 3000 (length (graph-path 0 2999 g))))
     (is (= 2999 (dist-graph 0 2999 g)))))
+
+(test graph-degree-forms
+  (let ((g '((a b 1) (b c 2) (b d 1))))
+    (is (= 3 (graph-degree 'b g)))
+    (is (= 0 (graph-degree 'z g)))
+    ;; a list of nodes, and all the nodes in the order of graph-nodes
+    (is (equal '(3 1) (graph-degree '(b d) g)))
+    (is (equal (mapcar #'(lambda (n) (graph-degree n g)) (graph-nodes g)) (graph-degree nil g)))
+    (is (equal '(1 3 1 1) (graph-degree nil g)))))
