@@ -188,8 +188,9 @@ not letters or digits, but c ..."
   (format nil "~&~G" file))
 
 (defun coll-atom (x)
-  "x as a Max coll item: integers as they are, other numbers as decimals, symbols by name (quoted
-if they contain spaces, commas or semicolons), strings quoted."
+  "x as a Max coll item: integers as they are, other numbers as decimals, symbols by name in lower
+case (Max symbols are case-sensitive), unless the name has lower-case letters (|Ab| stays Ab), and
+quoted if they contain spaces, commas or semicolons; strings quoted, as they are."
   (flet ((quoted (str) (with-output-to-string (o)
                          (write-char #\" o)
                          (loop for c across str
@@ -200,7 +201,8 @@ if they contain spaces, commas or semicolons), strings quoted."
           ((realp x) (let ((*read-default-float-format* 'double-float))
                        (format nil "~F" (if (floatp x) x (float x)))))
           ((stringp x) (quoted x))
-          ((symbolp x) (let ((name (symbol-name x)))
+          ((symbolp x) (let ((name (let ((n (symbol-name x)))
+                                     (if (string= n (string-upcase n)) (string-downcase n) n))))
                          (if (find-if #'(lambda (c) (member c '(#\Space #\Tab #\, #\; #\"))) name)
                              (quoted name)
                              name)))

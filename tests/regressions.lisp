@@ -697,10 +697,12 @@
 (test write-list-coll
   ;; :coll wrote the default format, not a Max coll file (coll-write was never called)
   (uiop:with-temporary-file (:pathname file :type "txt")
-    (write-list (list '(60 62 64) 72 '(a b c) '(1/3 2.5) '("hello world" x) '((1 2) (3 (4))))
+    (write-list (list '(60 62 64) 72 '(a b c) '(1/3 2.5) '("hello world" x) '((1 2) (3 (4)))
+                      '(|Ab| "Cd" |e f|))
                 (namestring file) :coll)
-    (is (equal '("0, 60 62 64;" "1, 72;" "2, A B C;" "3, 0.33333334 2.5;"
-                 "4, \"hello world\" X;" "5, 1 2 3 4;")
+    ;; symbols in lower case for Max, unless typed with lower-case letters; strings as they are
+    (is (equal '("0, 60 62 64;" "1, 72;" "2, a b c;" "3, 0.33333334 2.5;"
+                 "4, \"hello world\" x;" "5, 1 2 3 4;" "6, Ab \"Cd\" \"e f\";")
                (uiop:read-file-lines file))))
   ;; the default mode is unchanged
   (uiop:with-temporary-file (:pathname file :type "txt")

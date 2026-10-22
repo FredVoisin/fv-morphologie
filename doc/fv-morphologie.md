@@ -1171,13 +1171,15 @@ Writes a list to a file, one element per line. Sub-lists are written without
 parentheses, so `read-text` reads them back. Modes: `:lisp` writes the whole
 list inside parentheses; `:coll` writes a Max `coll` file, one line
 `index, data;` for each element, from index 0 (sub-lists are flattened,
-numbers other than integers are written as decimals, and strings, or symbols
-with spaces, commas or semicolons, are quoted).
+numbers other than integers are written as decimals, symbols in lower case
+for Max (unless their name has lower-case letters, such as `|Ab|`), and
+strings, or symbols with spaces, commas or semicolons, are quoted).
 
 ```lisp
 (write-list '((a b c) (1 2 3)) "out.txt")   ; out.txt: "A B C" / "1 2 3"
 (read-text "out.txt")                       ;=> ((A B C) (1 2 3))
-(write-list '((60 62 64) 72) "notes.txt" :coll)   ; notes.txt: "0, 60 62 64;" / "1, 72;"
+(write-list '((60 62 64) 72 (a b)) "notes.txt" :coll)
+;; notes.txt: "0, 60 62 64;" / "1, 72;" / "2, a b;"
 ```
 
 #### `display-list (list &optional recursive)`
