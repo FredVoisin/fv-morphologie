@@ -71,7 +71,7 @@ By default test is #'eq."))
 
 (defgeneric alpha>num (char &optional mode)
   (:documentation "Converts characters or lists of characters into numbers, i.e. 'a' into 0, 'b' into 1 etc.
-Different modes can be selected into optional menu"))
+Different modes can be selected with the optional argument mode."))
 
 (defmethod alpha>num ((char string) &optional (mode nil))
   (case mode
