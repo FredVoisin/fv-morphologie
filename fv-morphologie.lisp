@@ -1291,9 +1291,13 @@ If a is null, Jaccard distance of both lists of b ;
 if b null, as usual in fv-morphologie, matrix of Jaccard distances of lists of a."))
 
 (defmethod jaccard-dist ((a list) (b list) &key (test #'equalp) (key #'identity))
-  (let ((o (length (remove-duplicates (append a b) :test #'equalp))))
-    (float (/ (- o (intersection-card a b :test test :key key))
-              o))))
+  ;; the union counted with key and test, like the intersection (it used equalp only);
+  ;; two empty sets are identical: 0
+  (let* ((j (intersection-card a b :test test :key key))
+         (o (- (+ (length (remove-duplicates a :key key :test test))
+                  (length (remove-duplicates b :key key :test test)))
+               j)))
+    (if (zerop o) 0.0 (float (/ (- o j) o)))))
 
 (defmethod jaccard-dist ((a list) (b null) &key (test #'equalp) (key #'identity))
   (declare (ignore b))
@@ -1305,8 +1309,8 @@ if b null, as usual in fv-morphologie, matrix of Jaccard distances of lists of a
 
 (defmethod jaccard-dist ((a null) (b list) &key (test #'equalp) (key #'identity))
   (declare (ignore a))
-  (float (/ (intersection-card b nil :key key :test test)
-            (length (apply #' append b)))))
+  (let ((n (length (apply #'append b))))
+    (if (zerop n) 0.0 (float (/ (intersection-card b nil :key key :test test) n)))))
 
 ;(jaccard-dist '((a b c d e f) (a b c 1 2 3) (b x y)) nil)
 ;(jaccard-dist 'nil '((a b c d e f) (a b c 1 2 3) (b x y)))
@@ -1325,15 +1329,18 @@ if b null, as usual in fv-morphologie, matrix of Jaccard distances of lists of a
              (nn (length (remove-if-not #'(lambda (x) (equalp x '(nil nil))) e)))
              (tn (length (remove-if-not #'(lambda (x) (equalp x '(t nil))) e)))
              (nt (length (remove-if-not #'(lambda (x) (equalp x '(nil t))) e))))
-        (float (/ (+ nt tn) (+ nt tn tt))))
+        (declare (ignore nn))
+        ;; no position present in either: identical, 0
+        (if (zerop (+ nt tn tt)) 0.0 (float (/ (+ nt tn) (+ nt tn tt)))))
     (let* ((o (append a b))
            (bins (remove-duplicates (mapcar key o)))
            (b1 (length (remove (car bins) o :key key)))
            (b2 (length (remove (cadr bins) o :key key)))
            (min (if (< b2 b1) (car bins) (cadr bins))))
-      (if (not (= 2 (length bins)))
-          (message "binary-jaccard-dist requires binary identities, aborting...")
-        (binary-jaccard-dist a b :key key :test #'(lambda (x) (equalp x min)))))))
+      (cond ((< (length bins) 2) 0.0)   ; one value everywhere (or nothing): identical
+            ((> (length bins) 2)
+             (error "binary-jaccard-dist requires binary values, not ~D different values." (length bins)))
+            (t (binary-jaccard-dist a b :key key :test #'(lambda (x) (equalp x min))))))))
 
 (defmethod binary-jaccard-dist ((a list) (b null) &key (key #'identity) (test nil))
   (let (r (l (length a)))
@@ -1348,16 +1355,24 @@ if b null, as usual in fv-morphologie, matrix of Jaccard distances of lists of a
 ;(binary-jaccard-dist '(1 0 1 0 0 0 0) '(1 0 0 1 0 1 1) :test #'(lambda (x) (= 0 x)))
 
 (defun sorensen-similarity (a b &key (test #'equalp) (key #'identity))
+  "Sorensen-Dice similarity, 2 |a & b| / (|a| + |b|): 1 for identical sets (two empty sets too), 0 for disjoint sets."
   (let ((ca (length (remove-duplicates a :key key :test test)))
         (cb (length (remove-duplicates b :key key :test test))))
-    (float (/ (* 2 (intersection-card a b :test test :key key))
-              (+ ca cb)))))
+    (if (zerop (+ ca cb))
+        1.0
+        (float (/ (* 2 (intersection-card a b :test test :key key))
+                  (+ ca cb))))))
 
 (defun mountford-similarity (a b &key (key #'identity) (test #'equalp))
+  "Mountford's index M = 2j / (2ab - (a+b)j) (a, b the sizes of the sets, j of their intersection),
+normalized to M / (1 + M), from 0 (disjoint sets) to 1 (identical sets, two empty sets too):
+M itself is infinite for identical sets."
   (let ((ca (length (remove-duplicates a :key key :test test)))
         (cb (length (remove-duplicates b :key key :test test)))
         (j (intersection-card a b :test test :key key)))
-    (float (/ (* 2 j) (- (* 2 ca cb) (* (+ ca cb) j))))))
+    (cond ((and (zerop ca) (zerop cb)) 1.0)
+          ((zerop j) 0.0)
+          (t (float (/ (* 2 j) (+ (- (* 2 ca cb) (* (+ ca cb) j)) (* 2 j))))))))
 
 ;(mountford-similarity '(1 0 1 0 0 0 0 2 3 4) '(1 0 0 1 0 1 1))
 

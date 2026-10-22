@@ -736,3 +736,26 @@
     (is (equal '(3 1) (graph-degree '(b d) g)))
     (is (equal (mapcar #'(lambda (n) (graph-degree n g)) (graph-nodes g)) (graph-degree nil g)))
     (is (equal '(1 3 1 1) (graph-degree nil g)))))
+
+(test similarity-measures-no-division-by-zero
+  ;; Jaccard: two empty sets are identical (division by zero)
+  (is (approx= 0 (fv-morphologie::jaccard-dist '() '())))
+  (is (approx= 0.5 (fv-morphologie::jaccard-dist '(a b c) '(b c d))))
+  ;; the union is counted with key (it used equalp only: 0.5)
+  (is (approx= 0 (fv-morphologie::jaccard-dist '((x 1)) '((x 2)) :key #'car)))
+  (is (approx= 0 (fv-morphologie::jaccard-dist nil '(() ()))))
+  ;; binary Jaccard: nothing present, or one value only (division by zero, nil)
+  (is (approx= 0 (fv-morphologie::binary-jaccard-dist '(0 0 0) '(0 0 0) :test #'(lambda (x) (= x 1)))))
+  (is (approx= 0 (fv-morphologie::binary-jaccard-dist '(1 1 1) '(1 1 1))))
+  (is (approx= 0.8 (fv-morphologie::binary-jaccard-dist '(1 0 1 0 0 0 0) '(1 0 0 1 0 1 1))))
+  (signals error (fv-morphologie::binary-jaccard-dist '(1 2 3) '(1 2 3)))
+  ;; Sorensen: two empty sets are identical
+  (is (approx= 1 (fv-morphologie::sorensen-similarity '() '())))
+  (is (approx= 2/3 (fv-morphologie::sorensen-similarity '(a b c) '(b c d))))
+  ;; Mountford, normalized to M / (1 + M): it divided by zero for identical sets
+  (is (approx= 1 (fv-morphologie::mountford-similarity '(a b) '(a b))))
+  (is (approx= 1 (fv-morphologie::mountford-similarity '() '())))
+  (is (approx= 0 (fv-morphologie::mountford-similarity '(a) '(b))))
+  (is (approx= 0 (fv-morphologie::mountford-similarity '() '(a b))))
+  (is (approx= 2/3 (fv-morphologie::mountford-similarity '(a b c) '(a b))))
+  (is (approx= 0.2 (fv-morphologie::mountford-similarity '(a b c d) '(c d e f)))))
