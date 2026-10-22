@@ -1,6 +1,6 @@
 # fv-morphologie : fonctions et documentation
 
-Les 54 fonctions exportées du paquet `:fv-morphologie` (version 1.0.0), regroupées selon les sections du menu, avec leurs arguments, et leur docstring (en anglais, telle qu'affichée par `doc` et `help`). Le nom de chaque fonction renvoie à sa description dans la [documentation](fv-morphologie.fr.md) quand elle y figure.
+Les 54 fonctions exportées du paquet `:fv-morphologie` (version 1.0.0), regroupées selon les sections du menu, avec leurs arguments, et leur docstring (en anglais, telle qu'affichée par `doc` et `help`). Le nom de chaque fonction renvoie à sa description dans la [documentation](fv-morphologie.fr.md) quand elle y figure. Cette liste est la version de référence ; une version anglaise est disponible : [fv-morphologie-functions.md](fv-morphologie-functions.md).
 
 ![Arbre de recouvrement minimal des verbes qui nomment les opérations d'analyse](../pwgl-legacy/tutorial/pictures/morpho-processes.png)
 
