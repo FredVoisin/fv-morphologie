@@ -90,10 +90,10 @@ réalisés en 1935 par Paul-Émile Victor et Robert Gessain (analyse : Frédéri
 L'analyse contrastive est une systématisation et une généralisation de
 l'*analyse paradigmatique* de Nicolas Ruwet (Ruwet 1972), dans la lignée de la
 sémiologie musicale de Jean-Jacques Nattiez et de Jean Molino (Nattiez 1987 ;
-Molino 2009). En ne s'appyant que sur le "niveau neutre", elle se veut agnostique.
+Molino 2009). En ne s'appuyant que sur le "niveau neutre", elle se veut agnostique.
 Elle extrait et décrit les structures de suites de symboles arbitraires (d'abord 
 des mélodies) selon un critère unique : la répétition d'un contraste, ou *marque*.
-Chaque symbole d'une séquence ouvre des segments,et les répétitions de ces segments
+Chaque symbole d'une séquence ouvre des segments, et les répétitions de ces segments
 donnent une structure (voir [`mark-structure`](#mark-structure-seq-out-key-diss-rem-loc-dup-test)). Des
 segments qui ne sont pas strictement identiques peuvent être comparés au moyen
 de la distance d'édition.
@@ -1581,12 +1581,21 @@ dans
   d'elle.
 - **Pas encore dans la version Common Lisp** : `filt-extrema`, `morph-lists`
   (interpolation, ancien menu 1.4), `graph-hierarc` ; et `group` avec
-  intersection de listes adjacentes.
+  intersection de listes adjacentes. Pour `morph-lists`, la fonction interne
+  `s-interpolate` (`src/interpolation.lisp`, non exportée) interpole déjà deux
+  suites de symboles au moyen d'une distance d'édition.
+- **Comportement depuis la version PWGL** : les exemples suivent la version
+  1.0.0. Plusieurs résultats diffèrent de l'ancien tutoriel depuis la 0.2.0
+  (`read-text`, filtres, `graph-span` par Kruskal, `graph-path` par Dijkstra,
+  nœuds comparés avec `equal`, `class-num`, `class-sym`, `histogram`…) : voir
+  [CHANGELOG.md](../CHANGELOG.md).
 - **Fenêtres d'entropie** : l'ancienne documentation décrit des fenêtres
   glissantes avec 50 % de recouvrement (taille 2L/n) ; le code actuel utilise
   `samples` fenêtres consécutives de taille L/n, sans recouvrement.
-- **Docstring de `dist-edit`** : elle dit que `:norm` divise par la plus courte
-  suite ; le code (et l'ancienne documentation) utilisent la plus longue.
+- **Docstring de `dist-edit`** (`src/api/evaluation.lisp`) : elle dit que
+  `:norm` divise par la plus courte suite ; le code (`edit-dist1`, comme
+  l'ancienne documentation) utilise la plus longue. La docstring est à
+  corriger.
 - **Les FV-exemples** restent à convertir en exemples Common Lisp.
 - **Analyse contrastive** : l'article de Frédéric Voisin, *L'analyse musicale
   contrastive*, cité par Aralla (2002) comme paru dans *Prisma 01*, reste à

@@ -91,8 +91,8 @@ Victor and Robert Gessain (analysis: Frédéric Voisin).
 Contrastive analysis is a systematization and generalization of the
 *paradigmatic analysis* of Nicolas Ruwet (Ruwet 1972), in the line of the
 musical semiology of Jean-Jacques Nattiez and Jean Molino (Nattiez 1987;
-Molino 2009). It extracts and describes the structures of sequences of
-arbitrary symbols (at first, melodies) according to a single criterion: the
+Molino 2009). Relying only on the "neutral level", it aims to be agnostic.
+It extracts and describes the structures of sequences of arbitrary symbols (at first, melodies) according to a single criterion: the
 repetition of a contrast, or *mark*. Each symbol of a sequence starts segments,
 and the repetitions of these segments give a structure (see
 [`mark-structure`](#mark-structure-seq-out-key-diss-rem-loc-dup-test)).
@@ -1523,12 +1523,20 @@ in [fv-morphologie-functions.md](fv-morphologie-functions.md).
   is the reference; this English version is to be updated from it.
 - **Not yet in the Common Lisp version**: `filt-extrema`, `morph-lists`
   (interpolation, legacy menu 1.4), `graph-hierarc`; and `group` with
-  intersection of adjacent lists.
+  intersection of adjacent lists. For `morph-lists`, the internal function
+  `s-interpolate` (`src/interpolation.lisp`, not exported) already
+  interpolates two sequences of symbols with an edit distance.
+- **Behaviour since the PWGL version**: the examples follow version 1.0.0.
+  Several results differ from the legacy tutorial since 0.2.0 (`read-text`,
+  filters, `graph-span` with Kruskal, `graph-path` with Dijkstra, nodes
+  compared with `equal`, `class-num`, `class-sym`, `histogram`…): see
+  [CHANGELOG.md](../CHANGELOG.md).
 - **Entropy windows**: the legacy doc describes sliding windows with 50 %
   overlap (size 2L/n); the current code uses `samples` consecutive windows of
   size L/n without overlap.
-- **`dist-edit` docstring**: says `:norm` divides by the shortest sequence;
-  the code (and the legacy doc) use the longest.
+- **`dist-edit` docstring** (`src/api/evaluation.lisp`): says `:norm`
+  divides by the shorter sequence; the code (`edit-dist1`, and the legacy
+  doc) uses the longer one. The docstring is to be corrected.
 - **FV-examples** are still to be converted into Common Lisp examples.
 - **Contrastive analysis**: Frédéric Voisin, *L'analyse musicale contrastive*,
   cited by Aralla (2002) as published in *Prisma 01*, is still to be found and
