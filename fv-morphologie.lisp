@@ -2359,14 +2359,15 @@ IN : string or list (of symbols or lists or strings)."
       (mapcar #'(lambda (x) (normalize-class x)) classes)))
 
 (defun random-dot (data)
-  "A random point in the space defined by data"
-  (loop for j from 0 to (length (car data))
-     collect  (let* ((min (apply #'min (mapcar #'(lambda (x) (nth j x)) data)))
-		     (max (apply #'max (mapcar #'(lambda (x) (nth j x)) data)))
-		     (range (- max min)))
-		(if (minusp max)
-                        (float (+ min (* -1 (random (float range)))))
-			(float (+ min (random  (float range))))))))
+  "A random point in the space defined by data, a list of points (lists of coordinates): each coordinate
+is drawn uniformly between the minimum and the maximum of this coordinate in data."
+  ;; j below the number of coordinates (to: one too many, nth gave nil); always min + random
+  ;; (it drew below the minimum when the maximum was negative); a range of 0 gives the value
+  (loop for j below (length (car data))
+        collect (let* ((values (mapcar #'(lambda (x) (nth j x)) data))
+                       (min (reduce #'min values))
+                       (range (- (reduce #'max values) min)))
+                  (float (if (plusp range) (+ min (random (float range))) min)))))
 
 ;(random-dot '((0 0) (1 0) (0 -1) (2 -.1) (.1 -2)))
 

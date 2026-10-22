@@ -836,3 +836,15 @@
   ;; one value per element; the documented example
   (is (equal '(34 24 25 125 17 145 10 154) (inner-dynamic '(a b a c a d a e))))
   (is (null (inner-dynamic '()))))
+
+(test random-dot-in-bounds
+  (let ((*random-state* (seeded-random-state)))
+    ;; one coordinate too many: it always failed
+    (is (= 2 (length (fv-morphologie::random-dot '((0 0) (1 0) (0 -1) (2 -0.1) (0.1 -2))))))
+    ;; within the bounds, also for negative coordinates (it drew below the minimum)
+    (is (loop repeat 500
+              always (destructuring-bind (x y) (fv-morphologie::random-dot '((-5 -1) (-2 -3) (-4 -2)))
+                       (and (<= -5 x -2) (<= -3 y -1)))))
+    ;; a coordinate equal in all the points (random 0 failed)
+    (is (equal '(3.0 3.0) (fv-morphologie::random-dot '((3 3) (3 3)))))
+    (is (null (fv-morphologie::random-dot '())))))
