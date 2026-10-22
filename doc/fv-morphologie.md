@@ -748,7 +748,10 @@ dimension is numerically ordered, such as a Euclidean space. In one
 dimension, each datum is a number; in N dimensions, each datum is a list of
 its coordinates.
 
-The number of classes and the algorithm must be given. Modes:
+The number of classes and the algorithm must be given; there are at least 2
+classes (1 or 0 give 2), and no more classes than distinct points. The points
+must all be numbers, or lists of the same number of coordinates (else it is an
+error). Modes (`:centroids` or `'centroids`; another mode is an error):
 
 - `:centroids` (or `nil`): centroid method (*nuées dynamiques*, k-means).
   With `:iter nil` (default), the result is a list of: the class of each
@@ -760,7 +763,8 @@ The number of classes and the algorithm must be given. Modes:
   returns each different partition with its frequency, the most frequent
   first (the frequencies sum to 1); with `:iter t`, it runs classes² times
   and returns the most frequent partition. `:dist` sets the distance
-  (Euclidean by default).
+  (Euclidean by default). With numbers (one dimension), the centres are
+  numbers.
 - `:1d-centroids`: classification of a list of numbers in one dimension
   (e.g. a variation of intensity). The sorted data are cut at their
   `classes − 1` largest successive differences (N+1 − N), and the mean of
@@ -770,7 +774,8 @@ The number of classes and the algorithm must be given. Modes:
   function applied to the successive differences, which changes the metric of
   the differentiation: for pitches, whose differentiation decreases roughly
   logarithmically as they rise, a function such as
-  `(lambda (x) (expt x 0.5))` compensates the scale.
+  `(lambda (x) (expt x 0.5))` compensates the scale. This method is
+  deterministic: `:iter` does not apply to it.
 
 Classification can also be diverted to *quantize* a continuous flow: the
 flow is then quantized not on values fixed a priori but on centres of

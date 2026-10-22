@@ -883,3 +883,23 @@
   (is (approx= 0 (dist-structure '(a b a c a d a e a f g h) '(1 2 1 3 1 4 1 5 1 6 7 8))))
   (is (approx= 1/3 (dist-structure '(a b a c a d a e a f g h) '(a a a a a b c d e f g h))))
   (is (approx= 0.875 (dist-structure '(a b a c a d a e a f g h) '(x x x x y y y x x y y y)))))
+
+(test class-num-modes-and-points
+  (let ((*random-state* (seeded-random-state))
+        (d '((0 0) (0 1) (10 10) (10 11))))
+    ;; an unknown mode returned nil
+    (signals error (class-num d 2 :foo))
+    ;; modes by name, from any package
+    (is (equal (first (class-num d 2 :centroids))
+               (let ((*package* (find-package :cl-user)))
+                 (first (class-num d 2 (intern "CENTROIDS" :cl-user))))))
+    ;; one dimension: the centres are numbers (they were (x 0.0))
+    (is (equal '(0.5 10.5) (second (class-num '(0 1 10 11) 2 :centroids))))
+    ;; points of different dimensions
+    (signals error (class-num '((0 0) (1 1 1)) 2 :centroids))
+    ;; at least 2 classes
+    (is (= 2 (length (remove-duplicates (first (class-num d 1 :centroids))))))
+    ;; with an integer iter, two values: the partition and its frequency
+    (multiple-value-bind (partition frequency) (class-num '(0 1 10 11) 2 :centroids :iter 3)
+      (is (equal '(0 0 1 1) partition))
+      (is (approx= 1 frequency)))))

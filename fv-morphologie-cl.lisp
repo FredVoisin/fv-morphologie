@@ -278,11 +278,24 @@ Keyword argument :iter to set the maximum iterations to run for partitioning ;
 :dist to set the distance or metric to be used (by default: euclidian distance)."))
 
 (defmethod class-num ((data t) (classes integer) (mode symbol) &key (iter nil) (dist nil))
-  (setf classes (max 2 classes))
-  (case mode
-    ((nil :centroids) (fv-morphologie::n-class data classes iter dist))
-    (:1d-centroids (fv-morphologie::1d-class data classes (if dist dist #'identity))) 
-     (t nil)))
+  (setf classes (max 2 classes))   ; at least 2 classes
+  ;; modes recognized by name (:centroids, 'centroids from any package); an unknown mode was nil
+  (let ((name (if mode (string-upcase (string mode)) "CENTROIDS")))
+    (cond ((string= name "CENTROIDS")
+           (let ((numbers (every #'numberp data)))
+             (unless (or numbers
+                         (and (every #'listp data)
+                              (or (null data) (apply #'= (mapcar #'length data)))))
+               (error "class-num: the points of data must all be numbers, or lists of the same number of coordinates."))
+             (if (and numbers data (null iter))
+                 ;; the centres of numbers are numbers (they were (x 0), the points used internally)
+                 (let ((r (fv-morphologie::n-class data classes iter dist)))
+                   (list (first r) (mapcar #'car (second r)) (third r)))
+                 ;; all the values (with an integer iter: the partition and its frequency)
+                 (fv-morphologie::n-class data classes iter dist))))
+          ((string= name "1D-CENTROIDS")
+           (fv-morphologie::1d-class data classes (if dist dist #'identity)))
+          (t (error "class-num: unknown mode ~S, use :centroids (or nil) or :1d-centroids." mode)))))
 
 (defgeneric class-sym (data classes mode &key uncom ins del change excluded mst)
   (:documentation "CLASS-SYM: classify a set of segments or sequences into different classes according to their editing distance to each other and
