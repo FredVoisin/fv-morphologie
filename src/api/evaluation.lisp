@@ -190,9 +190,12 @@ cond-sh: conditional entropy (experimental).
 
 (defgeneric inner-dynamic (seq &optional test)
   (:documentation "INNER-DYNAMIC: a kind of inner dynamic of the distribution of the symbols (marks) of the sequence <seq>,
-one value for each element, computed by integrating the contrast/mark analysis: novelty of the marks and their echoes
-in the sequence (rewritten from Paolo Aralla's 'energy profile'). Experimental.
-<test>: identity of the elements (equalp by default)."))
+ one value for each element, computed by integrating the contrast/mark analysis: novelty of the marks and their echoes
+ in the sequence (rewritten from Paolo Aralla's 'energy profile'). Experimental.
+<test>: identity of the elements (equalp by default).
+Reference: Paolo Aralla, 'Analisi morfologica. Un modello matematico per descrivere la relazione fra struttura morfologica
+del messaggio, attivita' mnemonico-percettiva e risposta psichica', Prisma 01, Euresis Edizioni, 2002
+(sections 3 'New/Old-Analysis' and 5 'Energy-profile')."))
 
 (defmethod  inner-dynamic ((seq t) &optional (test #'equalp))
   (fv-morphologie::mark-dynamic seq test))
