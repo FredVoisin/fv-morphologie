@@ -2559,15 +2559,6 @@ If no key (by default), the test apply to the element itself."))
   "To make simple, the centre of a list of words is the list of words with no duplicates ;)"
   (remove-duplicates (mapcar #'append data) :test #'equalp))
 
-(defun update-c-r (c r) ;;to be optimized...
-  (let ((edge (position-if-not #'(lambda (z)
-                                (member 'nil z)) (mapcar #'(lambda (a)
-                                                             (mapcar #'(lambda (x) (member x r :key #'car)) a)) c))))
-    (if edge
-        (remove-if #'(lambda (x) (member (car (nth edge c)) x)) r) r)))
-
-;(update-c-r '((1 2) (0 4) (1 3) (5 7) (4 5)) '((2) (5) (4) (6)))
-
 (defun regroup-if-intersection (ldl)
   (loop for i from 0 to (- (length ldl) 2)
      do (when (nth i ldl)
@@ -2578,49 +2569,20 @@ If no key (by default), the test apply to the element itself."))
                           (nth j ldl) nil))))))
   (values (remove nil ldl)))
 
-(defun part-tree-dist (tree &optional (mode t)) ; mode = choix (random unique ou tous), seuil distance
-  "Split a tree into partitions by cuting edges wich have max dist."
-  (if (< (length tree) 2)
-      (if (= 1 (length (car tree))) tree (mapcar #'list (mapcar  #'list (2first (car tree)))))
-      (let* ((s (sort (copy-list tree) '> :key #'third))
-	     (u (let ((n (remove-if #'(lambda (x) (< (third x) (third (car s)))) s)))
-		  (if mode n (nth (random (length n)) n))))
-	     ;(e (mapcar #'2first tree))
-	     (r (if mode (mapcar #'list (apply #'append (mapcar #'(lambda (x) (2first x)) u)))
-		    (mapcar #'list (2first u))))
-	     (c (if mode (mapcar #'2first (remove-if #'(lambda (x) (member x u :test #'equalp)) s))
-		  (mapcar #'2first (remove u s :test #'equalp)))))
-	(when mode (setf r (update-c-r c r)))
-	(loop until (null c)
-	   do (let* ((k (pop c))
-		     (z (mapcar #'(lambda (i)
-				    (mapcar #'(lambda (x) (member i x)) r)) k))
-		     (w (remove 'nil
-			       (mapcar #'(lambda (y)
-					   (position-if-not #'null
-							    (mapcar #'(lambda (x) (position-if-not #'null x)) y))) z))))
-	       (if w (setf (nth (car w) r) (append k (nth (car w) r)))
-		   (setf c (append c (list k)))) ))
-	(setf r (regroup-if-intersection (remove-duplicates (mapcar #'remove-duplicates r) :test #'equalp)))
-	(values
-	 (loop for e in r
-	    collect (remove-duplicates (apply #'append
-					      (mapcar #'(lambda (f)
-							  (let ((w (remove-if-not #'(lambda (x) (member f (2first x)))
-										  (if mode
-										      (remove-if #'(lambda (x) (member x u :test #'equalp)) s)
-                                                                                    (remove u s :test #'equalp)))))
-							    (if w w (list (list f))))) e))
-				       :test #'equalp))
-	 r))))
+(defun part-tree-dist (tree)
+  "Split a tree into partitions by cutting all its edges of maximum distance (see part-tree-n)."
+  (if (null tree)
+      (values nil nil)
+      (let ((longest (reduce #'max (mapcar #'third tree))))
+        (part-tree-n tree (1+ (count longest tree :key #'third :test #'=))))))
 
 (defgeneric part-graph (graph mode &optional n)
   (:documentation "Does a partition of a graph <graph>, into <n> parts if <n> is given."))
 
 (defmethod part-graph ((graph list) (mode symbol) &optional (n nil))
   (case mode
-    ((nil :distance) (if n (part-tree-n graph n) (part-tree-dist graph t)))
-    (t (message "Actually one mode is avalaible, please use :distance"))))
+    ((nil :distance) (if n (part-tree-n graph n) (part-tree-dist graph)))
+    (t (error "graph-part: unknown mode ~S, use :distance." mode))))
 
 (defun tree-components (n-nodes edges)
   "Connected components of the graph of nodes 0..n-nodes-1 and edges (i j d):

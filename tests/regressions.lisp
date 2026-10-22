@@ -113,7 +113,7 @@
 (test graph-part-n-parts
   (let ((g (list '(0 1 1) '(1 2 2) '(2 3 2) '(3 4 1))))
     ;; without n, all the longest edges are cut
-    (is (equal '((0 1) (2) (4 3)) (nth-value 1 (fv-morphologie::graph-part g))))
+    (is (equal '((0 1) (2) (3 4)) (nth-value 1 (fv-morphologie::graph-part g))))
     ;; the graph given used to be sorted destructively
     (is (equal '((0 1 1) (1 2 2) (2 3 2) (3 4 1)) g))
     (is (equal '(((0 1 1)) ((2 3 2) (3 4 1))) (fv-morphologie::graph-part g :distance 2)))
@@ -679,3 +679,17 @@
     (let* ((*random-state* (seeded-random-state))
            (pts (loop repeat 320 collect (list (random 100) (random 100)))))
       (is (= 319 (length (graph-span (dist-euclid pts nil))))))))
+
+(test graph-part-longest-edges
+  ;; without n: all the edges of maximum length are cut
+  (is (equal '(((a b 1)) ((c d 1))) (graph-part '((a b 1) (b c 5) (c d 1)))))
+  ;; strings, and graphs which are not connected, looped forever
+  (is (equal '(("x" "y") ("z" "w")) (nth-value 1 (graph-part '(("x" "y" 1) ("y" "z" 5) ("z" "w" 1))))))
+  (is (equal '((a b) (c) (d)) (nth-value 1 (graph-part '((a b 1) (c d 2))))))
+  ;; nodes were repeated in a part ((e d e))
+  (is (equal '((a) (b c) (d e) (f)) (nth-value 1 (graph-part '((a b 3) (b c 1) (c d 3) (d e 1) (e f 3))))))
+  ;; a single edge gave only the first value
+  (is (equal '((a) (b)) (nth-value 1 (graph-part '((a b 1))))))
+  (is (null (graph-part '())))
+  ;; an unknown mode printed a message and returned nil
+  (signals error (graph-part '((a b 1) (b c 2)) :foo)))

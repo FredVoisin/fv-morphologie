@@ -39,7 +39,7 @@
                 #:motif-find #:motif-list #:motif-group #:class-num #:class-sym
                 ;; graphs
                 #:graph-span #:graph-path #:graph-length #:graph-degree #:graph-nodes
-                #:graph-extrem #:graph>dot
+                #:graph-extrem #:graph>dot #:graph-part
                 ;; io
                 #:read-text #:write-list #:date-string #:date+time-string))
 
