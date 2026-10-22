@@ -1,6 +1,9 @@
 # fv-morphologie : fonctions et documentation
 
-Les 54 fonctions exportées du paquet `:fv-morphologie` (version 1.0.0), regroupées selon les sections du menu, avec leurs arguments et leur docstring, traduite en français (dans le code, les docstrings, affichées par `doc` et `help`, sont en anglais). Le nom de chaque fonction renvoie à sa description dans la [documentation](fv-morphologie.fr.md) quand elle y figure. Cette liste est la version de référence ; une version anglaise est disponible : [fv-morphologie-functions.md](fv-morphologie-functions.md).
+In English, see: [fv-morphologie-functions.md](fv-morphologie-functions.md)
+
+Les 54 fonctions exportées du paquet `:fv-morphologie` (version 1.0.0), regroupées selon les sections du menu, avec leurs arguments et leur docstring, traduite en français (dans le code, les docstrings, affichées par `doc` et `help`, sont en anglais). Le nom de chaque fonction renvoie à sa description dans la [documentation](fv-morphologie.fr.md) quand elle y figure. Cette liste est la version de référence.
+
 
 ![Arbre de recouvrement minimal des verbes qui nomment les opérations d'analyse](../pwgl-legacy/tutorial/pictures/morpho-processes.png)
 
@@ -13,10 +16,10 @@ Deleuze : la pensée-musique*, CDMC, 2015).*
 
 | Fonction | Arguments | Documentation |
 |---|---|---|
-| [`transcode`](fv-morphologie.fr.md#transcode-seq-table-optional-test) | `seq table &optional test` | TRANSCODE : remplace chaque élément de &lt;seq&gt; au moyen d'une liste de changements &lt;table&gt; de la forme '((ancien nouveau) ...).<br>Par défaut, le test est #'eq. |
+| [`transcode`](fv-morphologie.fr.md#transcode-seq-table-optional-test) | `seq table &optional test` | TRANSCODE : remplace chaque élément de &lt;seq&gt; au moyen d'une liste (table) de changements &lt;table&gt; de la forme '((ancien nouveau) ...).<br>Par défaut, le test est #'eq. |
 | [`num>base`](fv-morphologie.fr.md#numbase-num-base) | `num base` | NUM&gt;BASE : convertit un nombre en sa représentation en base &lt;base&gt;. |
 | [`num>alpha`](fv-morphologie.fr.md#numalpha-num) | `num` | Convertit des listes de listes et/ou des entiers en symboles :<br>0 -&gt; A, 1 -&gt; B, 2 -&gt; C, 26 -&gt; AA, etc. |
-| [`alpha>num`](fv-morphologie.fr.md#alphanum-char-optional-mode) | `char &optional mode` | Convertit des caractères ou des listes de caractères en nombres : 'a' en 0, 'b' en 1, etc.<br>Différents modes peuvent être choisis dans le menu optionnel. |
+| [`alpha>num`](fv-morphologie.fr.md#alphanum-char-optional-mode) | `char &optional mode` | Convertit des caractères ou des listes de caractères en nombres : 'a' en 0, 'b' en 1, etc.<br>Différents modes peuvent être choisis avec l'option `mode`. |
 | [`list>sym`](fv-morphologie.fr.md#listsym-list) | `list` | LIST&gt;SYM : concatène les éléments de &lt;list&gt; en un seul élément : des nombres en un nombre,<br>des chaînes en une chaîne, les autres éléments en un symbole. |
 | [`str->symb`](fv-morphologie.fr.md#str-symb-strings) | `strings` | Convertit une chaîne ou une liste de chaînes en, respectivement, une liste ou une liste de listes de symboles. |
 | [`filt-noise`](fv-morphologie.fr.md#filt-noise-seq-optional-mode-val) | `seq &optional mode val` | FILT-NOISE : agite ou bruite la suite &lt;seq&gt; selon différentes méthodes, choisies par le premier argument optionnel &lt;mode&gt;,<br>avec la quantité &lt;val&gt; (0.1 par défaut), relative à l'étendue (max - min) de &lt;seq&gt; :<br> :nozero : remplace chaque valeur nulle de &lt;seq&gt; par une valeur aléatoire dans ]0, val * étendue[<br> :swap : échange val * longueur paires d'éléments (val entier : le nombre d'échanges)<br> :relative : ajoute à chaque valeur une quantité aléatoire dans [-val * étendue, val * étendue]<br>Les éléments d'une suite non numérique sont échangés.<br>&lt;mode&gt; peut aussi être une fonction de deux arguments (x l) : chaque élément x de &lt;seq&gt; est remplacé par son résultat, l étant toute la suite &lt;seq&gt; ; &lt;val&gt; est alors ignoré.<br>Par exemple, (lambda (x l) (declare (ignore x)) (nth (random (length l)) l)) remplace chaque élément par un élément de &lt;seq&gt; pris au hasard. |
@@ -88,6 +91,6 @@ Deleuze : la pensée-musique*, CDMC, 2015).*
 | [`help`](fv-morphologie.fr.md#menu) | `&optional keyword threshold` | HELP : cherche un mot-clé (un symbole de n'importe quel paquet, un mot-clé ou une chaîne) dans les noms et la<br>documentation des fonctions de fv-morphologie, affiche la documentation des fonctions trouvées, les plus<br>proches d'abord, et renvoie la liste de leurs noms. Un mot d'un nom ou d'une documentation correspond s'il contient<br>le mot-clé, ou si sa similarité avec le mot-clé (1 - distance d'édition normalisée, sans tenir compte de la casse) vaut au moins<br>&lt;threshold&gt; (0.75 par défaut, de 0 à 1).<br>Sans argument (mot-clé), affiche la liste de toutes les fonctions génériques. |
 | [`doc`](fv-morphologie.fr.md#menu) | `&optional fct` | DOC : affiche la documentation d'une ou de plusieurs fonctions de fv-morphologie.<br>Sans argument, affiche la liste de toutes les fonctions génériques.<br>Si l'argument est un symbole (de n'importe quel paquet, ou un mot-clé ou une chaîne) ou une liste de symboles, affiche la documentation<br>des fonctions correspondantes ; list donne la liste des fonctions, all affiche toutes leurs documentations.<br>Exemples :<br>(doc)<br>(doc 'dist-edit) |
 
-## Boîtes PWGL non reprises
+## A faire
 
-Les boîtes PWGL `filt-extrema`, `morph-lists` et `graph-hierarc` ne sont pas encore disponibles dans la version Common Lisp ; `group` avec intersection de listes adjacentes non plus.
+Les boîtes PWGL `filt-extrema`, `morph-lists` et `graph-hierarc` ne sont pas encore disponibles dans cette version ; `group` avec intersection de listes adjacentes non plus.
