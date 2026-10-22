@@ -826,3 +826,13 @@
   (is (equal '((b 2.0) (c 2.0) (a 1.0)) (elt-info '(a b a c) nil)))
   (is (equal '("The" "the" "cat") (mapcar #'first (elt-info '("The" "the" "cat") nil #'equal))))
   (is (approx= 0 (elt-info '(a a a) 'a))))
+
+(test inner-dynamic-bounds
+  ;; the bounds of the sequence were the symbols *xstart* and *xstop*: the same symbols
+  ;; in the sequence were mistaken for them
+  (is (equal '(12 7 6) (inner-dynamic '(a z a))))
+  (is (equal '(12 7 6) (inner-dynamic (list 'a 'fv-morphologie::*xstart* 'a))))
+  (is (equal '(12 7 6) (inner-dynamic (list 'a 'fv-morphologie::*xstop* 'a))))
+  ;; one value per element; the documented example
+  (is (equal '(34 24 25 125 17 145 10 154) (inner-dynamic '(a b a c a d a e))))
+  (is (null (inner-dynamic '()))))

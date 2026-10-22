@@ -1138,8 +1138,10 @@ least informative (equal amounts in their order of first appearance).
 
 A kind of inner dynamic of the distribution of the symbols (marks) in a
 sequence, computed by integrating the contrast/mark analysis: novelty of the
-marks and their echoes in the sequence. Rewritten from Paolo Aralla's
-"energy profile" (cf. also Baboni-Schilingi, Giacomo Platini). Experimental.
+marks and their echoes in the sequence, one value for each element.
+Rewritten from Paolo Aralla's "energy profile" (cf. also Baboni-Schilingi,
+Giacomo Platini). Experimental. `test` is the identity of the elements
+(`#'equalp` by default).
 
 ```lisp
 (inner-dynamic '(a b a c a d a e))   ;=> (34 24 25 125 17 145 10 154)

@@ -1658,7 +1658,9 @@ ident: test to compare resulting subsequences, for instance: #'equalp."))
 
 (defun new-old-analysis (seq &optional (test #'equalp))
   "'new-old' Paolo Aralla algorithm inspired by contrast/mark analysis, rewritten."
-  (let* ((seq+ (cons '*xstart* (append seq '(*xstop*))))
+  ;; the bounds are fresh uninterned symbols: '*xstart* and '*xstop* were mistaken for
+  ;; the same symbols in seq
+  (let* ((seq+ (cons (make-symbol "START") (append seq (list (make-symbol "STOP")))))
 	 (d (mapcar #'dx (renum-mat seq+ test)))
 	 (w (mapcar (lambda (x) (apply #'+ x)) (renum-mat seq+ test)))
 	 (c (mapcar (lambda (x y) (mapcar (lambda (z) (* x z)) y)) w d)))

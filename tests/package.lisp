@@ -33,7 +33,7 @@
                 #:dist-euclid #:dist-euclidian #:dist-citybloc #:dist-hamming
                 #:dist-edit #:dist-multi-edit #:dist-structure #:dist-graph
                 ;; information
-                #:histogram #:entropy #:elt-info
+                #:histogram #:entropy #:elt-info #:inner-dynamic
                 ;; classification
                 #:mark-position #:mark-list #:mark-structure #:motif-structure
                 #:motif-find #:motif-list #:motif-group #:class-num #:class-sym

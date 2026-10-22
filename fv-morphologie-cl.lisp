@@ -422,7 +422,10 @@ cond-sh: conditional entropy (experimental).
 ;  (fv-morphologie::redondance data))
 
 (defgeneric inner-dynamic (seq &optional test)
-  (:documentation ""))
+  (:documentation "INNER-DYNAMIC: a kind of inner dynamic of the distribution of the symbols (marks) of the sequence <seq>,
+one value for each element, computed by integrating the contrast/mark analysis: novelty of the marks and their echoes
+in the sequence (rewritten from Paolo Aralla's 'energy profile'). Experimental.
+<test>: identity of the elements (equalp by default)."))
 
 (defmethod  inner-dynamic ((seq t) &optional (test #'equalp))
   (fv-morphologie::mark-dynamic seq test))
