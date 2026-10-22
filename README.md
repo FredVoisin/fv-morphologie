@@ -3,7 +3,7 @@
 Experimental tools to analyse musical and syntagmatic sequences as symbolic expressions, in Common Lisp
 
 Analysis-oriented branch of the legacy library [Morphologie](https://github.com/openmusic-project/Morphologie) for OpenMusic (Ircam)
-and PWGL (Mikael Laurson, Siblius Academy).
+and PWGL (Mikael Laurson, Sibelius Academy).
 
 
 Documentation: [doc/fv-morphologie.md](doc/fv-morphologie.md).

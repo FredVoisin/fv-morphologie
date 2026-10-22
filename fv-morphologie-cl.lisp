@@ -67,6 +67,10 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
 (defmethod num>base ((num number) (base t))
   (fv-morphologie::num-base num base))
 
+(defgeneric list>sym (list)
+  (:documentation "LIST>SYM: concatenates the elements of <list> into one element: numbers into a number,
+strings into a string, other elements into a symbol."))
+
 (defmethod list>sym ((list t))
   (fv-morphologie::concaten list))
 
@@ -99,19 +103,30 @@ A value returned by <func> is repeated for the block; a list replaces the block 
 ;(filt-mean '(1 2 1 1 3 4 5 6 0 0 1) 3)
 
 
+(defgeneric filt-median (seq window)
+  (:documentation "FILT-MEDIAN: median filter over a window of <window> values centred on each value of <seq>
+(an even window is enlarged to the next odd size, so that the result is made of values of <seq>);
+the first and last values are repeated at the edges. The result has the same length as <seq>."))
+
 (defmethod filt-median ((seq t) (window number))
-  "FILT-MEDIAN: median filter."
   (fv-morphologie::median-filter seq window))
 
+(defgeneric filt-lowpass (seq alpha &optional gamma)
+  (:documentation "FILT-LOWPASS: exponential smoothing of <seq>: each value moves by the fraction <alpha> (0 to 1) towards
+the input, s(t) = s(t-1) + alpha (x(t) - s(t-1)). With <gamma> (0 to 1), double exponential smoothing (Holt), which also
+follows the trend of <seq>. The result has the same length as <seq>."))
+
 (defmethod filt-lowpass ((seq t) (alpha number) &optional (gamma nil))
-  "FILT-LOWPASS: exponential filter"
   (if (not gamma)
       (fv-morphologie::exponential-smoothing seq alpha)
     (fv-morphologie::double-exponential-smoothing seq alpha gamma)))
 
+(defgeneric filt-local-rep (seq &optional mode test)
+  (:documentation "FILT-LOCAL-REP: removes the consecutive identical elements of <seq> (<mode> nil or :delete), or, for
+numbers, replaces each run of identical values by a ramp towards the next different value (<mode> :linear, or :interp
+as in PWGL), keeping the length of <seq>. <test>: identity of the elements (equalp by default)."))
+
 (defmethod filt-local-rep ((seq t) &optional (mode nil) (test #'equalp))
-  "FILT-LOCAL-REP: remove consecutive identical values or symbols (mode nil or :delete),
-or, for numbers, replace them by a linear interpolation (mode :linear, or :interp as in PWGL)."
   (case mode
     ((nil :delete) (fv-morphologie::rem-local-rep seq test))
     ((:linear :interp)
@@ -545,6 +560,7 @@ Additional Keyword :rem-test defines a function to remove choosen words."))
   (:documentation "DISPLAY-LIST: prints out to the Lisp listener each element of list within a newline with indentation relative to list level."))
 
 (defmethod display-list (list &optional (recursive nil))
+  (declare (ignore recursive))
   (list-display list))
   
 (defgeneric write-list (list file &optional mode)
@@ -585,39 +601,25 @@ Additional Keyword :rem-test defines a function to remove choosen words."))
 
 ;(print (find-functions))
 
-(defparameter *fv-morphologie-menu* '(
-int-signature
-mark-position
-mark-list
-mark-structure
-motif-find
-motif-list
-motif-structure
-motif-group
-class-num
-class-sym
-dist-euclidian
-dist-citybloc
-dist-hamming
-dist-edit
-dist-multi-edit
-dist-structure
-dist-graph
-histogram
-entropy
-elt-info
-inner-dynamic
-graph-span
-graph-part
-graph-path
-graph-length
-graph-degree
-graph-nodes
-graph-extrem
-graph>dot
-exsample
-split
-))
+(defparameter *fv-morphologie-menu*
+  '(;; 1. transcription
+    transcode num>base num>alpha alpha>num list>sym str->symb filt-noise
+    filt-median filt-mean filt-lowpass filt-local-rep filt-fct
+    graph-span graph-path graph>dot graph>matrix
+    ;; 2. classification
+    int-signature exsample split graph-part
+    motif-group concaten
+    mark-structure motif-structure class-num class-sym
+    ;; 3. evaluation
+    mark-position mark-list motif-find motif-list graph-nodes graph-extrem
+    dist-euclidian dist-euclid dist-citybloc dist-hamming dist-edit dist-multi-edit
+    dist-structure dist-graph
+    histogram entropy elt-info inner-dynamic graph-length graph-degree
+    ;; 4. reading and writing files
+    read-text write-list display-list split-string date-string date+time-string
+    ;; documentation
+    help doc)
+  "The fv-morphologie functions, in the order of the documentation (all the exported functions).")
 
 
 (defun fv-function (name)
@@ -690,6 +692,5 @@ If no argument (keyword), prints out the list of all generic functions."))
 ;(doc 'all)
 ;(doc 'dist-edit)
 
-(format t "~%FV-MORPHOLOGIE loaded : for help, in package :fv-morphologie type (HELP)~%")
 ;eof
 

@@ -951,3 +951,14 @@
   (is (= 3 (fv-morphologie::fmax '(3 1 2))))
   (is (= 1 (fv-morphologie::fmin '(3 1 2))))
   (is (approx= 2 (fv-morphologie::mean '(1 2 3)))))
+
+(test menu-lists-all-functions
+  ;; 23 exported functions were missing from the menu: (doc) did not list them, help could not find them
+  (let (missing)
+    (do-external-symbols (s :fv-morphologie)
+      (unless (member s fv-morphologie::*fv-morphologie-menu*) (push s missing)))
+    (is (null missing)))
+  (is (every #'fboundp fv-morphologie::*fv-morphologie-menu*))
+  (is (every #'(lambda (f) (documentation f 'function)) fv-morphologie::*fv-morphologie-menu*))
+  (let ((*standard-output* (make-broadcast-stream)))
+    (is (member 'filt-median (help 'median)))))

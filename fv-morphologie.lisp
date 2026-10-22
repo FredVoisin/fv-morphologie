@@ -1883,6 +1883,7 @@ result without computing distances."
 
 (defun insert-all (seq i &optional test)
   "i liste (min max).  Les bornes - car et cadr - peuvent se recouvrir."
+  (declare (ignore test))
   (let ((s (sort (append seq (list i)) '< :key #'car)))
     (sort s '< :key #'cadr)))
 

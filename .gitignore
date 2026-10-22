@@ -1,4 +1,15 @@
+# editor backups and temporary files
 *~
+*.tmp
+.tmp
+# macOS
+.DS_Store
+# compiled Lisp files (ASDF usually writes them in ~/.cache/common-lisp/)
+*.fasl
+*.fas
+*.o
 *.clufasl
 *.xfasl
-
+*.lx64fsl
+*.dx64fsl
+*.64xfasl
