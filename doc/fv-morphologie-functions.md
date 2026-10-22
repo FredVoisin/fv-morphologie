@@ -1,6 +1,8 @@
 # fv-morphologie: functions and documentation
 
-The 54 functions exported by the `:fv-morphologie` package (version 1.0.0), grouped by the sections of the menu, with their arguments and their docstring (as printed by `doc` and `help`). The name of each function links to its description in the [documentation](fv-morphologie.md) when there is one. The reference version of this list is the French one: [fv-morphologie-fonctions.fr.md](fv-morphologie-fonctions.fr.md).
+The reference version of this doc is in French, see: [fv-morphologie-fonctions.fr.md](fv-morphologie-fonctions.fr.md)
+
+The 54 functions exported by the `:fv-morphologie` package (version 1.0.0), grouped by the sections of the menu, with their arguments and their docstring (as printed by `doc` and `help`). The name of each function links to its description in the [documentation](fv-morphologie.md) when there is one.
 
 ![Minimum spanning tree of the verbs naming the analysis operations](../pwgl-legacy/tutorial/pictures/morpho-processes.png)
 
