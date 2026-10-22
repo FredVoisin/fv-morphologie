@@ -12,10 +12,16 @@ version 2026.
 > adapted to Common Lisp. All examples have been run with SBCL. Points still
 > to be updated are listed at the end, in
 > [Notes for the update](#notes-for-the-update).
+> The reference version of this documentation is the French one:
+> [fv-morphologie.fr.md](fv-morphologie.fr.md); this English version is
+> translated from it.
 
 ## Contents
 
 - [Presentation](#presentation)
+  - [History: contrastive analysis and Morphologie](#history-contrastive-analysis-and-morphologie)
+  - [Theoretical framework](#theoretical-framework)
+  - [Acknowledgements](#acknowledgements)
 - [Installation and loading](#installation-and-loading)
 - [Menu](#menu)
 - [1. Transcription](#1-transcription)
@@ -32,7 +38,8 @@ version 2026.
   - [3.3 Quantify: information](#33-quantify-information)
 - [4. Reading and writing files](#4-reading-and-writing-files)
 - [5. FV-examples](#5-fv-examples)
-- [PWGL boxes and Common Lisp functions](#pwgl-boxes-and-common-lisp-functions)
+- [References](#references)
+- [List of functions](#list-of-functions)
 - [Notes for the update](#notes-for-the-update)
 
 ## Presentation
@@ -43,8 +50,8 @@ numerical representations, etc.): segmentation, search for motifs and salient
 features, recognition of musical "forms", comparison of structures, automatic
 classification…
 
-As in Lisp, an object or a musical sequence is represented or described by
-**lists**, structured or not, in a way made explicit by their context. By
+As in Lisp, an object or a musical sequence is represented or described here
+by **lists**, structured or not, in a way made explicit by their context. By
 convention, a musical sequence or a sequence of symbols is an ordered list
 that begins, on the left, with the oldest item. For example, the list
 `(60 65 70 72)` can represent, depending on the analysis, the notes C F B♭ C
@@ -56,7 +63,7 @@ Montbéliard, 2007–2012), is a rewrite of *Morphologie* for OpenMusic (Ircam) 
 a port to PWGL (Mikael Laurson, Sibelius Academy). It takes up the code devoted to 
 the analysis and classification of data (cf.  Baboni-Schilingi & Voisin, 
 *Librairie Morphologie pour OpenMusic*, Ircam Forum, 1997), within a theoretical 
-framework that we tried to make explicit "pragmatically".
+framework that we tried to make explicit, pragmatically.
 
 The analysis operations are grouped in three families, which make up the
 structure of the menu: **transcription**, **classification**, **evaluation**.
@@ -67,19 +74,104 @@ semantic field covered by these operations (cf.
 ![Minimum spanning tree of the verbs naming the analysis operations](../pwgl-legacy/tutorial/pictures/morpho-processes.png)
 
 *The operations of fv-morphologie: minimum spanning tree of the (French)
-verbs naming them, drawn with `graph-span` and `graph>dot`.*
+verbs naming them, drawn with `graph-span` and `graph>dot` (cf. Voisin, « De la
+brousse dans les synthés », in P. Criton & J.-M. Chouvel (eds.), *Gilles
+Deleuze : la pensée-musique*, CDMC, 2015).*
 
-Morphologie was first imagined and developed with Hervé Rivière at
-LACITO-CNRS (1992), using Patchwork (Ircam). Thanks to Jacopo
-Baboni-Schilingi, Giacomo Platini, Paolo Aralla, Kilian Sprotte, Julien
-Vincenot and Carlo Ciceri.
+### History: contrastive analysis and Morphologie
+
+The analytical part of fv-morphologie rests on **contrastive analysis**, a
+method of musical analysis designed and tested from about 1992 to 1997 in the
+ethnomusicology department of the LACITO-CNRS, directed by Simha Arom. It was
+developed on songs of three communities: the Wayana (with Hervé Rivière), the
+Ju|'hoansi Bushmen of Namibia (with Emmanuelle Olivier) and the Inuit of
+Ammassalik, Greenland, the latter from recordings made in 1935 by Paul-Émile
+Victor and Robert Gessain (analysis: Frédéric Voisin).
+
+Contrastive analysis is a systematization and generalization of the
+*paradigmatic analysis* of Nicolas Ruwet (Ruwet 1972), in the line of the
+musical semiology of Jean-Jacques Nattiez and Jean Molino (Nattiez 1987;
+Molino 2009). It extracts and describes the structures of sequences of
+arbitrary symbols (at first, melodies) according to a single criterion: the
+repetition of a contrast, or *mark*. Each symbol of a sequence starts segments,
+and the repetitions of these segments give a structure (see
+[`mark-structure`](#mark-structure-seq-out-key-diss-rem-loc-dup-test)).
+Segments that are not strictly identical can be compared with the edit
+distance.
+
+Its computer formalization was first done by hand, then about 1994 in the
+computer-aided composition environment Patchwork (Mikael Laurson, Ircam), then
+in Lisp. In 1997, at Ircam, it became the analytical part of *Morphologie*, a
+library for OpenMusic written with Jacopo Baboni-Schilingi, where it was
+combined with his generative processes (Baboni-Schilingi & Voisin 1997, 1999;
+Voisin 1997). Morphologie was then ported to PWGL (Sibelius Academy), and its
+original code is still maintained for OpenMusic 6 and 7
+(<https://github.com/openmusic-project/Morphologie>).
+
+The principle of contrast was extended into those of *novelty*
+(*New/Old-Analysis*) and *energy* (*Energy-profile*), an energy which results
+from the progressive accumulation of contrasts (Paolo Aralla, from the analysis
+of scores by Bach, Beethoven and Webern with Morphologie; Aralla 2002). This
+development is taken up here in the function
+[`inner-dynamic`](#inner-dynamic-seq-optional-test).
+
+See also, on fredvoisin.com:
+[« Présentation de l'analyse "contrastive" »](https://fredvoisin.com/article-50),
+[« Présentation de Morphologie »](https://fredvoisin.com/article-28),
+[« Autour d'une analyse de chants inuit »](https://fredvoisin.com/article-20),
+[« Analyse contrastive en Scheme »](https://fredvoisin.com/article-47),
+[« cntrst-strct »](https://fredvoisin.com/article-122),
+[« Analysi morfologica, de Paolo Aralla »](https://fredvoisin.com/article-264).
+
+### Theoretical framework
+
+The term *morphology* was first inspired by René Thom's idea of morphogenesis
+(Thom 1977). Musical morphology is understood here as *the study of the forms
+of transcribed musical expressions* — writings or transcriptions of sound
+phenomena, but also musical or choreographic gestures (cf.
+[LabanOnLisp](https://github.com/FredVoisin/LabanOnLisp)) — and as an
+extension of paradigmatic analysis (Ruwet 1972; Nattiez 1987; Molino 2009),
+whose main object is to make explicit the criteria
+of segmentation and resemblance of musical motifs. The tools apply to
+expressions as they are transcribed: the choice of the semiological level and
+the relevance of the transcription, i.e. the **encoding**, are left to the
+musicologist or the composer, although the tools allow it to be tested.
+
+Other concepts come from André Leroi-Gourhan (the *chaîne opératoire* of
+tool-making; Leroi-Gourhan 1964–1965) and from Gilles Deleuze (repetition,
+differentiation, machine, rhizome, signature; Deleuze 1968; Deleuze & Guattari
+1980). Other principles are borrowed from mathematical morphology, computer
+science, information theory and graph theory, and adapted to musical
+analysis. The terminology avoids strongly connoted musical terms and was
+chosen to be equivalent in French and in English.
+
+See [« Considération terminologiques »](https://fredvoisin.com/article-188),
+[« Schizo-analyse et musicologie »](https://fredvoisin.com/article-125) and
+[« Deux machines à musiquer »](https://fredvoisin.com/article-178) (colloquium *Deleuze et la musique*,
+Saint-Étienne, 2011).
 
 About:
 
-- Legacy PWGL fv-morphologie doc page : <https://www.fredvoisin.com/articles/114-fv-morphologie-documentation.html>
+- Legacy PWGL fv-morphologie doc page: [« fv-morphologie: documentation »](https://fredvoisin.com/article-114)
 - *Dissemblance et espaces compositionnels* (Frédéric Voisin, JIM 2011):
-  <https://www.fredvoisin.com/articles/185-dissemblance-et-espaces-compositionnels.html>
-- Original code (~1995) : <https://github.com/openmusic-project/Morphologie>
+  [« Dissemblance et espaces compositionnels »](https://fredvoisin.com/article-185)
+- Original code (~1995): <https://github.com/openmusic-project/Morphologie>
+
+### Acknowledgements
+
+I would like to thank [Hervé Rivière](https://lacito.cnrs.fr) and
+[Emmanuelle Olivier](http://centregeorgsimmel.ehess.fr/en/membres/membres-statutaires/emmanuelle-olivier/)
+(LACITO-CNRS), with whom contrastive analysis was designed, as well as
+[Jacopo Baboni-Schilingi](https://ressources.ircam.fr/en/composer/jacopo-baboni-schilingi),
+[Giacomo Platini](https://www.villacomposers.org/composers/platini-giacomo-1967-gattinara.php),
+[Paolo Aralla](https://www.milanomusica.org/archivio/artisti/paolo-aralla-1960/),
+[Carlo Ciceri](https://ensemblevortex.com/members/composer/carlo-ciceri),
+[Kilian Sprotte](http://kiliansprotte.de/lisp/),
+[Julien Vincenot](https://brahms.ircam.fr/en/julien-vincenot),
+[Mikael Laurson](http://www2.siba.fi/PWGL/) ("Mika"),
+[Gérard Assayag](https://www.ircam.fr/person/gerard-assayag) and
+[Carlos Agon](http://recherche.ircam.fr/equipes/repmus/Rapports/CarlosAgon98/index.html)
+for their contributions and our exchanges.
 
 ## Installation and loading
 
@@ -139,6 +231,8 @@ prints the documentation of one of them (from any package: `'dist-edit`,
 and documentations of the functions: it prints the documentation of the
 functions found, the most similar first, and returns their names; a second
 argument sets the similarity threshold (0.75 by default, from 0 to 1).
+
+The docstrings of the functions, printed by `doc` and `help`, are in English.
 
 ## 1. Transcription
 
@@ -552,7 +646,7 @@ signature does not include the first and last values (`exsample` adds them).
 
 References (as given in the PWGL tutorial):
 
-- Deleuze, *Mille plateaux*.
+- Deleuze & Guattari, *Mille plateaux*, 1980 (p. 390, the *ritournelle*).
 - Derrida, *La différance – de la philosophie*, 1972; *L'animal que donc je
   suis*, 2004.
 - Fink & Gandhi, "Important extrema in time series", *Conference on Systems,
@@ -669,7 +763,8 @@ string (see [1.1](#11-transcode)).
 
 #### `mark-structure (seq out &key diss rem-loc-dup test)`
 
-Contrastive analysis of a sequence of arbitrary symbols: each symbol (mark)
+Contrastive analysis (see [History](#history-contrastive-analysis-and-morphologie))
+of a sequence of arbitrary symbols: each symbol (mark)
 starts segments, and the repetitions of these segments give a structure. The
 structures are sorted by length. Three presentations of the result (`out`):
 
@@ -799,7 +894,8 @@ and with the number of classes.
 Classification of symbolic forms made of arbitrary symbols. It partitions the
 minimum spanning tree built on the dissimilarities between the forms, by
 default their edit distances, by cutting its `classes − 1` longest edges
-(single linkage; among equal edges, the first one in the tree is cut).
+(single linkage; among equal edges, the first one in the tree is cut). An
+original and empirical method, Frédéric Voisin.
 Returns the class number of each form, from 0, numbered by order of first
 appearance; there are never more classes than distinct forms.
 
@@ -1160,6 +1256,14 @@ Rewritten from Paolo Aralla's "energy profile" (cf. also Baboni-Schilingi,
 Giacomo Platini). Experimental. `test` is the identity of the elements
 (`#'equalp` by default).
 
+It computes Aralla's *Energy-profile* (Aralla 2002, section 5): the absolute
+value of the derivative of the absolute value of his *New/Old-Analysis*
+(section 3), which weights the order of entry of the events given by the
+contrast matrix. The results reproduce the worked examples of the paper; for
+instance `(inner-dynamic '(a b c b a))` gives `(20 13 11 10 29)`, as in its
+example 9. The values of the silences that frame the sequence are not
+returned.
+
 ```lisp
 (inner-dynamic '(a b a c a d a e))   ;=> (34 24 25 125 17 145 10 154)
 ```
@@ -1256,7 +1360,10 @@ polyrhythmic instrumental piece from the repertoire of the Aka of Central
 Africa. This part, called *diketo*, is played by two machetes struck
 together. The intensities of the recording (dB) were measured with
 [Praat](https://www.praat.org) into a two-column text file (time,
-amplitude): `data/diketo-db.txt`.
+amplitude): `data/diketo-db.txt`. The recordings were made at Mongumba
+(Central African Republic) on 5 March 1990 by Simha Arom, Vincent Dehoux,
+Susanne Fürniss, Gilles Léothaud and Frédéric Voisin; the *diketo* part was
+recorded separately, by *re-recording*.
 
 For each intensity threshold, from the minimum (18 dB) to the maximum
 (46 dB) by steps of 1 dB:
@@ -1294,7 +1401,9 @@ distances; the sum of the edit distance and of the distance between the
 word frequencies ("the sum of two distances is a distance — is the product of
 two distances a distance?"). For large graphs, prefer the svg format.
 Computing the spanning tree can take from seconds to hours depending on the
-number of elements. Data: `Difference&Repetition-*.txt`, `Alice.txt`,
+number of elements (about 12 hours for the
+[« Délinéations différentielles »](https://fredvoisin.com/article-220), 2013).
+Data: `Difference&Repetition-*.txt`, `Alice.txt`,
 `Stalker.txt`.
 
 ### Segmentation of a fundamental frequency (F0)
@@ -1328,27 +1437,90 @@ intensity.
 A second patch decomposes the process: edit distances between the spectral
 words (insertion and deletion cost 1.5, to increase the distances due to
 transpositions), minimum spanning tree (`graph-span`), drawing (`graph>dot`),
-and classification from that tree (`class-sym` with `:mst`).
+and classification from that tree (`class-sym` with `:mst`). See
+[« Dissemblance et espaces compositionnels »](https://fredvoisin.com/article-185)
+and [« Arbres de recouvrement minimal de chants d'oiseaux »](https://fredvoisin.com/article-186).
 
-## PWGL boxes and Common Lisp functions
+## References
 
-| PWGL box | Common Lisp function |
-|---|---|
-| `randomize` | `filt-noise` |
-| `filt-exponential` | `filt-lowpass` |
-| `signature` | `int-signature` |
-| `mark-cut` | `split` |
-| `group` | `list>sym` / `concaten` |
-| `motif-position` | `motif-find` |
-| `graph-nodes` (with minimum degree) | `graph-nodes` returns all nodes |
-| `filt-local-rep` mode `:interp` | `filt-local-rep` mode `:linear` |
-| `exsample` mode `:timed` | `exsample` mode `:resampled` |
-| `filt-extrema`, `morph-lists`, `graph-hierarc` | not available yet |
+### Contrastive analysis, Morphologie and fv-morphologie
+
+- Aralla, Paolo, « Analisi morfologica. Un modello matematico per descrivere
+  la relazione fra struttura morfologica del messaggio, attività
+  mnemonico-percettiva e risposta psichica », *Prisma 01*, Euresis Edizioni,
+  2002 ([« Analysi morfologica, de Paolo Aralla »](https://fredvoisin.com/article-264)).
+- Baboni-Schilingi, Jacopo & Voisin, Frédéric, *Morphologie*, Ircam Forum
+  documentation, Paris, Ircam, 1997; 3rd edition, 1999
+  ([Morphologie-2-Doc.pdf](http://support.ircam.fr/docs/om-libraries/old/Morphologie-2-Doc.pdf)).
+- Voisin, Frédéric, « Morphologie et l'analyse musicale », in *Morphologie:
+  an OpenMusic Library*, Ircam Forum documentation, Paris, 1997.
+- Voisin, Frédéric & Meier, Robin, « On Analytical vs. Schizophrenic
+  Procedures for Computing Music », *Contemporary Music Review* 28(2), 2009,
+  pp. 205–219, doi:[10.1080/07494460903322489](https://doi.org/10.1080/07494460903322489).
+- Voisin, Frédéric, « Dissemblance et espaces compositionnels », *Actes des
+  Journées d'Informatique Musicale (JIM 2011)*, Saint-Étienne, 2011,
+  pp. 191–197 (HAL [hal-01612263](https://hal.science/hal-01612263v1)).
+- Voisin, Frédéric, « De la brousse dans les synthés », in P. Criton &
+  J.-M. Chouvel (eds.), *Gilles Deleuze : la pensée-musique*, Paris, CDMC,
+  2015, pp. 231–240 (HAL [hal-01611947](https://hal.science/hal-01611947v1)).
+
+### Musicology, semiology and ethnomusicology
+
+- Arom, Simha, *Polyphonies et polyrythmies instrumentales d'Afrique
+  centrale*, Paris, Selaf, 1985 (the *Zoboko* example).
+- Dehoux, V., Fürniss, S., Le Bomin, S., Olivier, E., Rivière, H. et al.
+  (eds.), *Ndroje Balendro. Musiques, terrains et disciplines. Textes offerts
+  à Simha Arom*, Paris, Peeters-SELAF, 1995.
+- Molino, Jean, *Le singe musicien : sémiologie et anthropologie de la
+  musique*, preceded by *Introduction à l'œuvre musicologique de Jean
+  Molino*, ed. Jean-Jacques Nattiez with Jonathan Goldman, Arles, Actes Sud /
+  INA, 2009.
+- Nattiez, Jean-Jacques, *Musicologie générale et sémiologie*, Paris,
+  Christian Bourgois, coll. « Musique/Passé/Présent », 1987.
+- Olivier, Emmanuelle & Rivière, Hervé, « Reflections on Musical
+  Categorization », *Ethnomusicology* 45(3), 2001, pp. 480–488.
+- Olivier, Emmanuelle, « Musical Categorization: From Cognition to Action »,
+  in M. Mans, *Living in Worlds of Music*, Springer, 2009, pp. 63 sq.,
+  doi:[10.1007/978-90-481-2706-1_3](https://doi.org/10.1007/978-90-481-2706-1_3).
+- Ruwet, Nicolas, *Langage, musique, poésie*, Paris, Seuil, 1972.
+- Voisin, Frédéric & Arom, Simha, « Theory and Technology in African Music »,
+  in R. M. Stone (ed.), *The Garland Encyclopedia of World Music*, vol. 1,
+  *Africa*, New York, Garland, 1998, pp. 254–270.
+
+### Philosophy and theory
+
+- Deleuze, Gilles, *Différence et répétition*, Paris, PUF, 1968.
+- Deleuze, Gilles & Guattari, Félix, *Mille plateaux*, Paris, Minuit, 1980.
+- Derrida, Jacques, *La différance – de la philosophie*, 1972; *L'animal que
+  donc je suis*, 2004.
+- Leroi-Gourhan, André, *Le geste et la parole*, Paris, Albin Michel, vol. 1,
+  1964; vol. 2, 1965.
+- Thom, René, *Stabilité structurelle et morphogénèse : essai d'une théorie
+  générale des modèles*, 2nd ed., Paris, InterÉditions, 1977.
+
+### Algorithms
+
+- Diday, E. et al., *Éléments d'analyse de données*, Paris, Dunod, 1982
+  (dynamic clouds, `class-num`; earlier spanning tree).
+- Fink & Gandhi, "Important extrema in time series", *Conference on Systems,
+  Man and Cybernetics*, 2007 (`int-signature :major-extrema`).
+- Hetland, "A survey of recent methods for efficient retrieval of similar time
+  sequences", in *Data Mining in Time Series Databases*, vol. 57, 2004.
+- Kamada & Kawai, *Information Processing Letters* 31(1), 1989 (neato,
+  `graph>dot`).
+- Perng, Parker & Leung, "Representing time series by landmarks",
+  *Conference on Information and Knowledge Management*, 1999
+  (`int-signature :landmarks`).
+
+## List of functions
+
+The list of the 54 exported functions, with their arguments and docstrings, is
+in [fv-morphologie-functions.md](fv-morphologie-functions.md).
 
 ## Notes for the update
 
-- **Language**: the legacy text was translated from French; to be reviewed
-  by the author.
+- **Language**: the French version ([fv-morphologie.fr.md](fv-morphologie.fr.md))
+  is the reference; this English version is to be updated from it.
 - **Not yet in the Common Lisp version**: `filt-extrema`, `morph-lists`
   (interpolation, legacy menu 1.4), `graph-hierarc`; and `group` with
   intersection of adjacent lists.
@@ -1358,6 +1530,9 @@ and classification from that tree (`class-sym` with `:mst`).
 - **`dist-edit` docstring**: says `:norm` divides by the shortest sequence;
   the code (and the legacy doc) use the longest.
 - **FV-examples** are still to be converted into Common Lisp examples.
+- **Contrastive analysis**: Frédéric Voisin, *L'analyse musicale contrastive*,
+  cited by Aralla (2002) as published in *Prisma 01*, is still to be found and
+  added to the references.
 - **Figures**: `pictures/menu-*.png` (PWGL menus) and
   `1-Transcription/span-tree.bmp` (a spanning tree drawn with neato) are not
   used yet.
