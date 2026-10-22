@@ -1182,7 +1182,10 @@ tabulations, newlines), or `t` for the usual punctuation marks. With
 `:charcode`, it may also be a list of characters or codes, or
 `(:ignore c ...)` to separate at every character which is not a letter or a
 digit (in any alphabet), except `c ...`. `:rem-test` is a predicate for words
-to remove (e.g. words of less than four letters).
+to remove (e.g. words of less than four letters), in all the modes: it
+receives the words as they are returned (symbols or numbers in lines mode,
+where a line whose words are all removed gives `()`; strings in flat mode;
+lists of codes with `:charcode`).
 
 Some special signs, such as punctuation or parentheses (Lisp
 S-expressions), may cause errors when reading a file.

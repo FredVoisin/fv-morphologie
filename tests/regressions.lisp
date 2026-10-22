@@ -848,3 +848,15 @@
     ;; a coordinate equal in all the points (random 0 failed)
     (is (equal '(3.0 3.0) (fv-morphologie::random-dot '((3 3) (3 3)))))
     (is (null (fv-morphologie::random-dot '())))))
+
+(test read-text-rem-test-lines
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (with-open-file (out file :direction :output :if-exists :supersede)
+      (format out "the cat sat~%on a mat~%it is~%"))
+    ;; rem-test was ignored in lines mode (the default)
+    (is (equal '((the cat sat) (mat) ())
+               (read-text file :rem-test #'(lambda (w) (< (length (string w)) 3)))))
+    (is (equal '("the" "cat" "sat" "mat")
+               (read-text file :mode nil :rem-test #'(lambda (w) (< (length w) 3)))))
+    ;; without rem-test, unchanged
+    (is (equal '((the cat sat) (on a mat) (it is)) (read-text file)))))

@@ -103,7 +103,6 @@ not letters or digits, but c ..."
   (if (not file) nil
     (progn
       (when (not rem-test) (setf rem-test #'(lambda (x) (declare (ignore x)) nil)))
-      (when (not marks) (setf marks " "))
       (when (eq 'T marks) (setf marks " ,;:?./@&\"'(!)-_#*+=<>{}[]$`%^"))
       (unless (member mode '(t nil :charcode))
         (error "read-text: unknown mode ~S, use t (lines), nil (flat) or :charcode." mode))
@@ -125,7 +124,8 @@ not letters or digits, but c ..."
                                   (let ((codes (all2char-code marks)))
                                     #'(lambda (c) (or (blankp c) (member c codes)))))
                                  (t (error "read-text: :sep must be a string or a list, not ~S." marks)))))))
-	    (t (mapcar #'(lambda (x) (string2sym (split-string x marks)))
+	    ;; rem-test on the words of each line too (it was ignored in this mode)
+	    (t (mapcar #'(lambda (x) (remove-if rem-test (string2sym (split-string x marks))))
 		       (remove-if #'(lambda (x) (zerop (length x)))
 				  (read-text-lines file)))))
 	  (let ((st (slurp-file file)))
