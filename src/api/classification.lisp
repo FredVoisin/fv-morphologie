@@ -55,7 +55,7 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
   (:documentation "INT-SIGNATURE: signature of a sequence with some threshold <thres> for variation in intensity.
 The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
-:miflexnmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
+:minflexmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
 :minmax, same with only maxima and minima (without inflexions);
 :major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
  a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
@@ -121,9 +121,10 @@ Optional argument <key> defines a function to be applyed to each consecutive ele
 (defgeneric class-num (data classes mode  &key iter dist)
   (:documentation "CLASS-NUM: classify a set (list) of points <data> into different <classes> into s space with n dimensions (n integer > 0),
 where each point is represented as a list of values into each dimension.
-Argument :mode defines the algorithm used for partioning the points.
-:centroids for centroids algorithm (in french : nuees dynamiques.
-Keyword argument :iter to set the maximum iterations to run for partitioning ;
+Argument :mode defines the algorithm used for partitioning the points:
+:centroids for centroids algorithm (in French: nuees dynamiques);
+:1d-centroids, initial centres taken between the largest differences of the sorted data (one dimension, deterministic).
+Keyword argument :iter to set the number of runs of the algorithm (with :centroids);
 :dist to set the distance or metric to be used (by default: euclidian distance)."))
 
 (defmethod class-num ((data t) (classes integer) (mode symbol) &key (iter nil) (dist nil))

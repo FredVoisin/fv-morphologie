@@ -183,7 +183,7 @@ Different modes can be selected into optional menu"))
 
 (defgeneric num>alpha (num)
   (:documentation "converts list of lists and/or integers to symbols :
-0 -> A, 1 -> B, 2 -> C, 27->AA, etc."))
+0 -> A, 1 -> B, 2 -> C, 26 -> AA, etc."))
 
 (defmethod num>alpha ((num integer))
   (safe-read-from-string (concatenate 'string (numtochar26 num))))

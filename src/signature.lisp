@@ -334,7 +334,7 @@ Returns (position type value), type -1 for a minimum and 1 for a maximum."
 "Signature of a sequence with some threshold <thres> for variation in intensity.
 The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
-:miflexnmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
+:minflexmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
 :minmax, same with only maxima and minima (without inflexions);
 :major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
  a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;

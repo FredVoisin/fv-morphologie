@@ -124,7 +124,7 @@ For instance (lambda (x l) (declare (ignore x)) (nth (random (length l)) l)) rep
   (minimum-spanning-tree mat-dist verbose))
 
 (defgeneric graph-path (from to graph)
-  (:documentation "GRAPH-PATH: returns path(s) from node(s) or leave(s) to one or some other node(s) or leave(s) of a graph (the graph must have np cycles, i.e. to be a tree."))
+  (:documentation "GRAPH-PATH: returns path(s) from node(s) or leave(s) to one or some other node(s) or leave(s) of a graph; in a graph with cycles, the shortest path by distance."))
 
 (defmethod graph-path ((from t) (to t) (graph list))
   (fv-morphologie::tree-path from to graph))

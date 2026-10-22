@@ -143,7 +143,8 @@ If <b> is nil, the distances between all the sequences of <a>."))
   (fv-morphologie::struct-dist a b w-occ w-rep test))
 
 (defgeneric dist-graph (v1 v2 graph)
-  (:documentation "DIST-GRAPH: "))
+  (:documentation "DIST-GRAPH: distance between the nodes <v1> and <v2> of a graph: the length of the shortest path
+between them (Dijkstra, see graph-path), 0 from a node to itself, nil if there is no path."))
 
 (defmethod dist-graph ((v1 t) (v2 t) (graph t))
   (fv-morphologie::tree-dist v1 v2 graph))
@@ -178,7 +179,9 @@ cond-sh: conditional entropy (experimental).
     (if (listp r) (mapcar #'float r) (float r))))
 
 (defgeneric elt-info (data elt &optional test)
-  (:documentation "ELT-INFO:"))
+  (:documentation "ELT-INFO: self-information of the element <elt>: -log2 of its frequency in <data>, nil if the element
+is absent or <data> is empty. With <elt> nil, each element with its information, the most informative first
+(elements of equal information in their order of first appearance). <test>: identity of the elements (equalp by default)."))
 
 (defmethod elt-info ((data t) (elt t) &optional (test #'equalp))
   (fv-morphologie::self-info data elt test))
