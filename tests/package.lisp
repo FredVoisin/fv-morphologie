@@ -41,7 +41,8 @@
                 #:graph-span #:graph-path #:graph-length #:graph-degree #:graph-nodes
                 #:graph-extrem #:graph>dot #:graph-part
                 ;; io
-                #:read-text #:write-list #:date-string #:date+time-string))
+                #:read-text #:write-list #:date-string #:date+time-string
+                #:help #:doc))
 
 (in-package :fv-morphologie/tests)
 

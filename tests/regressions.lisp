@@ -903,3 +903,18 @@
     (multiple-value-bind (partition frequency) (class-num '(0 1 10 11) 2 :centroids :iter 3)
       (is (equal '(0 0 1 1) partition))
       (is (approx= 1 frequency)))))
+
+(test help-and-doc
+  (let ((*standard-output* (make-broadcast-stream)))
+    ;; help printed every similarity score and returned nil
+    (is (member 'graph-span (help 'graph)))
+    (is (equal '(entropy) (help :entropy)))
+    (is (null (help 'zzzzzz)))
+    (is (every #'symbolp (help "distance")))
+    ;; doc from another package: 'dist-edit was cl-user::dist-edit (nil)
+    (let ((*package* (find-package :cl-user)))
+      (is (stringp (doc (intern "DIST-EDIT" :cl-user))))
+      (is (stringp (doc "histogram"))))
+    (is (null (doc 'not-a-function))))
+  ;; help prints the documentations of the functions found, not the scores
+  (is (search "ENTROPY:" (with-output-to-string (*standard-output*) (help :entropy)))))

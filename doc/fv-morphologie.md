@@ -134,7 +134,11 @@ Common Lisp version does not.
 ```
 
 In the REPL, `(doc)` lists the documented functions and `(doc 'dist-edit)`
-prints the documentation of one of them.
+prints the documentation of one of them (from any package: `'dist-edit`,
+`:dist-edit` or `"dist-edit"`). `(help 'graph)` looks for a word in the names
+and documentations of the functions: it prints the documentation of the
+functions found, the most similar first, and returns their names; a second
+argument sets the similarity threshold (0.75 by default, from 0 to 1).
 
 ## 1. Transcription
 
@@ -1351,7 +1355,6 @@ and classification from that tree (`class-sym` with `:mst`).
   size L/n without overlap.
 - **`dist-edit` docstring**: says `:norm` divides by the shortest sequence;
   the code (and the legacy doc) use the longest.
-- **`(help 'keyword)`** is not usable yet; use `doc`.
 - **FV-examples** are still to be converted into Common Lisp examples.
 - **Figures**: `pictures/menu-*.png` (PWGL menus) and
   `1-Transcription/span-tree.bmp` (a spanning tree drawn with neato) are not

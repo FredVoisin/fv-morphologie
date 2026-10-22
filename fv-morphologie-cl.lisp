@@ -620,52 +620,67 @@ split
 ))
 
 
+(defun fv-function (name)
+  "The fv-morphologie symbol named name (a symbol of any package, a keyword or a string), or nil."
+  (find-symbol (string-upcase (string name)) :fv-morphologie))
+
 (defgeneric doc (&optional fct)
   (:documentation
   "DOC: Prints out the documentation of some fv-morphologie function(s).
 If no argument, prints out the list of all generic functions.
-If argument is a symbol or a list of symbols, prints out documentation of the corresponding functions.
+If argument is a symbol (of any package, or a keyword or a string) or a list of them, prints out documentation
+of the corresponding functions; list gives the list of the functions, all prints out all their documentations.
 Exemples: 
 (doc)
 (doc 'dist-edit)"))
 
 (defmethod doc (&optional (fct nil))
+  ;; functions found by name in fv-morphologie ('dist-edit from cl-user was cl-user::dist-edit)
   (cond
     ((not fct)
      (format t "~%fv-morphologie generic functions :")
-     (dolist (d (doc 'list) (format t "~%")) (format t "~% ~(~S~)" d)))
-    ((listp fct) (dolist (f fct) (format t "~S~%~%" (documentation f 'function))))
-    ((symbolp fct) (case fct
-		     (list *fv-morphologie-menu*)
-		     (all (dolist (d (doc 'list) (format t "~%")) (format t "~S~%~%" (documentation d 'function))))
-		     (t (documentation fct 'function))))
-    (t (doc 'all))))
+     (dolist (d *fv-morphologie-menu* (format t "~%")) (format t "~% ~(~S~)" d)))
+    ((listp fct) (dolist (f fct) (format t "~S~%~%" (documentation (fv-function f) 'function))))
+    ((string-equal (string fct) "LIST") *fv-morphologie-menu*)
+    ((string-equal (string fct) "ALL")
+     (dolist (d *fv-morphologie-menu* (format t "~%")) (format t "~S~%~%" (documentation d 'function))))
+    (t (let ((f (fv-function fct)))
+         (and f (documentation f 'function))))))
 
-(defparameter *fv-morphologie-doc-list*
-  (remove-if-not #'listp
-		 (loop for doc in (mapcar (lambda (f) (documentation f 'function)) (doc 'list))
-		    collect (remove-if #'(lambda (x) (< (length x) 4))
-				       (split-string doc "(<>) ,;.!:?'\"")))))
+(defun doc-words (f)
+  "The words of the name and of the documentation of the function f, in lower case."
+  (mapcar #'string-downcase
+          (append (split-string (symbol-name f) "->")
+                  (split-string (or (documentation f 'function) "") "(<>) ,;.!:?'\"#*[]{}|=/-"))))
+
+(defun word-similarity (word key)
+  "1 if word contains key, else 1 - the normalized edit distance between them (case ignored)."
+  (if (search key word :test #'char-equal)
+      1
+      (- 1 (edit-dist1 (coerce word 'list) (coerce key 'list) :normalized t :test #'char-equal))))
 
 (defgeneric help (&optional keyword threshold)
-  (:documentation "HELP: look for a keyword in fv-morphologie the documentation of fv-morphologie generic functions and prints out the documentation retrieved.
-If no argument (keyword), prints out documentation of all generic functions."))
+  (:documentation "HELP: looks for a keyword (a symbol of any package, a keyword or a string) in the names and the
+documentation of the fv-morphologie functions, prints out the documentation of the functions found, the most
+similar first, and returns the list of their names. A word of a name or of a documentation matches if it contains
+the keyword, or if its similarity with the keyword (1 - normalized edit distance, case ignored) is at least
+<threshold> (0.75 by default, from 0 to 1).
+If no argument (keyword), prints out the list of all generic functions."))
 
-(defmethod help (&optional (keyword nil) (threshold .5))
+(defmethod help (&optional (keyword nil) (threshold .75))
+  ;; the keyword was compared with the words of the documentations, but the matches were
+  ;; neither filtered (threshold), nor attached to their functions: help printed all the scores
   (if (not keyword)
       (doc)
-      (let ((klen (length (string keyword)))
-	    matches tmp)
-	(setf matches
-	      (dolist (fctdoc *fv-morphologie-doc-list*)
-		(let ((p))
-		  (setf tmp ;(remove-if #'(lambda (x) (< x threshold))
-				       (mapcar (lambda (d) (list (- 1 (dist-edit (read-from-string d)
-										 keyword :norm T)) d))
-					       fctdoc)
-			);	       :key #'car))
-		  (when tmp
-		    (print tmp))))))))
+      (let* ((key (string-downcase (string keyword)))
+             (found (loop for f in *fv-morphologie-menu*
+                          for score = (reduce #'max (mapcar #'(lambda (w) (word-similarity w key)) (doc-words f))
+                                              :initial-value 0)
+                          when (>= score threshold) collect (cons f score)))
+             (sorted (stable-sort found #'> :key #'cdr)))
+        (dolist (fs sorted)
+          (format t "~&~(~S~)~%~A~%~%" (car fs) (or (documentation (car fs) 'function) "")))
+        (mapcar #'car sorted))))
 
 ;(help)
 ;(help 'graph)
