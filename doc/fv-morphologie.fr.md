@@ -116,12 +116,12 @@ développement est repris ici dans la fonction
 [`inner-dynamic`](#inner-dynamic-seq-optional-test).
 
 Voir aussi, sur fredvoisin.com :
-[« Présentation de l'analyse "contrastive" »](https://fredvoisin.com/article-50),
-[« Présentation de Morphologie »](https://fredvoisin.com/article-28),
-[« Autour d'une analyse de chants inuit »](https://fredvoisin.com/article-20),
-[« Analyse contrastive en Scheme »](https://fredvoisin.com/article-47),
-[« cntrst-strct »](https://fredvoisin.com/article-122),
-[« Analysi morfologica, de Paolo Aralla »](https://fredvoisin.com/article-264).
+[« Présentation de l'analyse "contrastive" »](https://fredvoisin.com/articles/50-presentation-de-l-analyse-contrastive.html),
+[« Présentation de Morphologie »](https://fredvoisin.com/articles/28-presentation-de-morphologie.html),
+[« Autour d'une analyse de chants inuit »](https://fredvoisin.com/articles/20-autour-d-une-analyse-de-chants-inuit.html),
+[« Analyse contrastive en Scheme »](https://fredvoisin.com/articles/47-analyse-contrastive-en-scheme.html),
+[« cntrst-strct »](https://fredvoisin.com/articles/122-cntrst-strct.html),
+[« Analysi morfologica, de Paolo Aralla »](https://fredvoisin.com/articles/264-analysi-morfologica-de-paolo-aralla.html).
 
 ### Cadre théorique
 
@@ -146,16 +146,16 @@ des graphes, et adaptés à l'analyse musicale. La terminologie évite les terme
 musicaux fortement connotés et a été choisie pour être équivalente en français
 et en anglais.
 
-Voir [« Considération terminologiques »](https://fredvoisin.com/article-188),
-[« Schizo-analyse et musicologie »](https://fredvoisin.com/article-125) et
-[« Deux machines à musiquer »](https://fredvoisin.com/article-178) (colloque
+Voir [« Considération terminologiques »](https://fredvoisin.com/articles/188-consideration-terminologiques.html),
+[« Schizo-analyse et musicologie »](https://fredvoisin.com/articles/125-schizo-analyse-et-musicologie.html) et
+[« Deux machines à musiquer »](https://fredvoisin.com/articles/178-deux-machines-a-musiquer.html) (colloque
 *Deleuze et la musique*, Saint-Étienne, 2011).
 
 À propos :
 
-- Ancienne page de documentation de fv-morphologie (PWGL) : [« fv-morphologie: documentation »](https://fredvoisin.com/article-114)
+- Ancienne page de documentation de fv-morphologie (PWGL) : [« fv-morphologie: documentation »](https://fredvoisin.com/articles/114-fv-morphologie-documentation.html)
 - *Dissemblance et espaces compositionnels* (Frédéric Voisin, JIM 2011) :
-  [« Dissemblance et espaces compositionnels »](https://fredvoisin.com/article-185)
+  [« Dissemblance et espaces compositionnels »](https://fredvoisin.com/articles/185-dissemblance-et-espaces-compositionnels.html)
 - Code original (~1995) : <https://github.com/openmusic-project/Morphologie>
 
 ### Remerciements
@@ -1456,7 +1456,7 @@ distance — le produit de deux distances est-il une distance ? »). Pour les
 grands graphes, préférez le format svg. Le calcul de l'arbre de recouvrement
 peut prendre de quelques secondes à plusieurs heures selon le nombre
 d'éléments (environ 12 heures pour les
-[« Délinéations différentielles »](https://fredvoisin.com/article-220), 2013).
+[« Délinéations différentielles »](https://fredvoisin.com/articles/220-delineations-differentielles.html), 2013).
 Données : `Difference&Repetition-*.txt`, `Alice.txt`, `Stalker.txt`.
 
 ### Segmentation d'une fréquence fondamentale (F0)
@@ -1494,8 +1494,8 @@ spectraux (coût d'insertion et de suppression de 1.5, pour augmenter les
 distances dues aux transpositions), arbre de recouvrement minimal
 (`graph-span`), tracé (`graph>dot`), et classification à partir de cet arbre
 (`class-sym` avec `:mst`). Voir
-[« Dissemblance et espaces compositionnels »](https://fredvoisin.com/article-185)
-et [« Arbres de recouvrement minimal de chants d'oiseaux »](https://fredvoisin.com/article-186).
+[« Dissemblance et espaces compositionnels »](https://fredvoisin.com/articles/185-dissemblance-et-espaces-compositionnels.html)
+et [« Arbres de recouvrement minimal de chants d'oiseaux »](https://fredvoisin.com/articles/186-arbres-de-recouvrement-minimal-de-chants-d-oiseaux.html).
 
 ## Références
 
@@ -1504,7 +1504,7 @@ et [« Arbres de recouvrement minimal de chants d'oiseaux »](https://fredvoisin
 - Aralla, Paolo, « Analisi morfologica. Un modello matematico per descrivere
   la relazione fra struttura morfologica del messaggio, attività
   mnemonico-percettiva e risposta psichica », *Prisma 01*, Euresis Edizioni,
-  2002 ([« Analysi morfologica, de Paolo Aralla »](https://fredvoisin.com/article-264)).
+  2002 ([« Analysi morfologica, de Paolo Aralla »](https://fredvoisin.com/articles/264-analysi-morfologica-de-paolo-aralla.html)).
 - Baboni-Schilingi, Jacopo & Voisin, Frédéric, *Morphologie*, documentation
   Ircam Forum, Paris, Ircam, 1997 ; 3e édition, 1999
   ([Morphologie-2-Doc.pdf](http://support.ircam.fr/docs/om-libraries/old/Morphologie-2-Doc.pdf)).
