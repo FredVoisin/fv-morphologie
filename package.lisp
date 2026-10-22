@@ -31,7 +31,7 @@
    #:transcode #:num>base #:num>alpha #:alpha>num #:list>sym #:str->symb
    #:filt-noise #:filt-median #:filt-mean #:filt-lowpass #:filt-local-rep
    #:filt-fct
-   #:graph-span #:graph-path #:graph>dot
+   #:graph-span #:graph-path #:graph>dot #:graph>matrix
    ;; 2. classification
    #:int-signature #:exsample #:split #:graph-part
    #:motif-group #:concaten

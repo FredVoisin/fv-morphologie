@@ -915,6 +915,17 @@ the tolerance), which takes longer: a few seconds for 120 elements.
 ;=> (((A B C) (0 2) (3 5) (7 9)))
 ```
 
+#### `graph>matrix (graph)`
+
+The symmetric adjacency matrix of a graph, as a list of rows: rows and
+columns are in the order of `graph-nodes`, each cell is the distance of the
+edge between the two nodes, 0 when there is none (so an edge of length 0
+cannot be told from no edge).
+
+```lisp
+(graph>matrix '((a b 1) (b c 2)))   ;=> ((0 1 0) (1 0 2) (0 2 0))   ; nodes (A B C)
+```
+
 #### `graph-nodes (graph)`, `graph-extrem (graph)`
 
 All the nodes of a graph (each once, compared with `equal`; sorted: numbers

@@ -2265,13 +2265,16 @@ In a tree there is only one path; in other graphs, Dijkstra's algorithm gives th
 ;; graphs - suite
 
 (defun adj-matrix (l-graph)
+  "The symmetric adjacency matrix of l-graph, a list of edges (v1 v2 distance), as a list of rows:
+rows and columns in the order of all-vertices (graph-nodes), the distance of each edge, 0 elsewhere.
+Vertices are compared with equal (eq failed on strings, which are not eq when equal)."
   (let* ((v (all-vertices l-graph))
          (m (make-list (length v))))
     (dotimes (i (length m))
       (setf (nth i m) (make-list (length v) :initial-element 0)))
     (dolist (g l-graph m)
-      (let ((i (position (car g) v :test #'eq))
-            (j (position (cadr g) v :test #'eq))
+      (let ((i (position (car g) v :test #'equal))
+            (j (position (cadr g) v :test #'equal))
             (d (caddr g)))
         (setf (nth j (nth i m)) d
               (nth i (nth j m)) d)))))

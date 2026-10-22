@@ -69,6 +69,10 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
 (defmethod list>sym ((list t))
   (fv-morphologie::concaten list))
 
+(defgeneric graph>matrix (graph)
+  (:documentation "GRAPH>MATRIX: the symmetric adjacency matrix of <graph>, a list of edges (node-a node-b distance),
+as a list of rows: rows and columns in the order of graph-nodes, the distance of each edge, 0 elsewhere."))
+
 (defmethod graph>matrix ((list t))
   (fv-morphologie::graph2matrix list))
 

@@ -791,3 +791,14 @@
   (is (eql 0.0 (entropy '() :shannon-2)))
   (is (every #'floatp (entropy '(a b) :shannon-2 5)))
   (is (equal '(1.0 1.0 0.0 0.0) (entropy '(a b a b a a a a) :shannon-2 4))))
+
+(test graph>matrix-vertices
+  ;; vertices were looked up with eq: string vertices (and bignums) failed
+  (is (equal '((0 1 0) (1 0 2) (0 2 0))
+             (fv-morphologie:graph>matrix (list (list (copy-seq "x") (copy-seq "y") 1)
+                                                (list (copy-seq "y") (copy-seq "z") 2)))))
+  (is (equal '((0 5) (5 0)) (fv-morphologie:graph>matrix (list (list (expt 10 30) 1 5)))))
+  ;; rows and columns in the order of graph-nodes
+  (is (equal '((0 1 4) (1 0 2) (4 2 0)) (fv-morphologie:graph>matrix '((0 1 1) (1 2 2) (0 2 4)))))
+  (is (equal '((0 1 0) (1 0 2) (0 2 0)) (fv-morphologie:graph>matrix '((a b 1) (b c 2)))))
+  (is (null (fv-morphologie:graph>matrix '()))))
