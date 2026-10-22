@@ -1123,8 +1123,11 @@ always a float (or a list of floats).
 
 #### `elt-info (data elt &optional test)`
 
-Self-information of an element: −log₂ of its frequency in `data`. With `elt`
-= `nil`, gives every element, from the most to the least informative.
+Self-information of an element: −log₂ of its frequency in `data`, `nil` if
+the element is absent (its information is infinite) or `data` is empty. The
+element may be of any kind; `test` is the identity of elements (`#'equalp`
+by default). With `elt` = `nil`, gives every element, from the most to the
+least informative (equal amounts in their order of first appearance).
 
 ```lisp
 (elt-info '(a b a c) 'a)    ;=> 1.0

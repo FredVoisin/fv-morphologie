@@ -812,3 +812,17 @@
     (is (equal (exsample s :minmax :values 0) (exsample s :minmax :values nil)))
     (is (equal (fv-morphologie::primitives s 0 nil) (fv-morphologie::primitives s nil nil)))
     (is (equal (fv-morphologie::primitives-raw s 0) (fv-morphologie::primitives-raw s nil)))))
+
+(test elt-info-any-element
+  ;; an absent element, or empty data, divided by zero: nil (the information is infinite)
+  (is (null (elt-info '(a b c) 'z)))
+  (is (null (elt-info '() 'a)))
+  (is (null (elt-info '() nil)))
+  ;; strings, decimal numbers and lists had no applicable method
+  (is (approx= (- (log 2/3 2)) (elt-info '("x" "y" "x") "x")))
+  (is (approx= 1 (elt-info '(1.5 2.5 1.5 3.5) 1.5)))
+  (is (approx= (- (log 2/3 2)) (elt-info '((1 2) (3) (1 2)) '(1 2))))
+  ;; nil: every element, with test, equal amounts in the order of first appearance
+  (is (equal '((b 2.0) (c 2.0) (a 1.0)) (elt-info '(a b a c) nil)))
+  (is (equal '("The" "the" "cat") (mapcar #'first (elt-info '("The" "the" "cat") nil #'equal))))
+  (is (approx= 0 (elt-info '(a a a) 'a))))

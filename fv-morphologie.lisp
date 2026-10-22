@@ -2902,22 +2902,23 @@ Shannon entropy value may be between 0 and (log n base)."
 
 
 (defgeneric self-info (data elt &optional test)
-  (:documentation "Amount of information of each element <elt> in data.
-Element <elt> is a symbol or a numeric value in a discrete space (for instance: binary).
+  (:documentation "Amount of information of each element <elt> in data: -log2 of its frequency, nil if
+it is absent from data (the information is infinite) or if data is empty.
+Element <elt> may be of any kind (symbol, number, string, list...).
 If <elt> is null, self-info returns the amount of information for each element in data,
-sorted in decreasing order of amount of information in data."))
+sorted in decreasing order of amount of information in data (equal amounts in the order of first appearance)."))
 
-(defmethod self-info ((data list) (elt symbol) &optional (test #'equalp))
+(defmethod self-info ((data list) (elt t) &optional (test #'equalp))
   (when (not test) (setf test #'equalp))
-  (- 0 (log (/ (length (remove-if-not #'(lambda (x) (funcall test x elt)) data)) (length data)) 2)))
-
-(defmethod self-info ((data list) (elt integer) &optional (test #'equalp))
-  (when (not test) (setf test #'equalp))
-  (- 0 (log (/ (length (remove-if-not #'(lambda (x) (funcall test x elt)) data)) (length data)) 2)))
+  (let ((n (count-if #'(lambda (x) (funcall test x elt)) data)))
+    (if (zerop n)
+        nil
+        (- 0 (log (/ n (length data)) 2)))))
 
 (defmethod self-info ((data list) (elt null) &optional (test #'equalp))
-  (let ((elts (remove-duplicates data :test #'equalp)))
-    (sort (mapcar #'(lambda (x) (list x (self-info data x test))) elts) '> :key #'second)))
+  (when (not test) (setf test #'equalp))
+  (let ((elts (remove-duplicates data :test test :from-end t)))
+    (stable-sort (mapcar #'(lambda (x) (list x (self-info data x test))) elts) '> :key #'second)))
 
 ;;; series
 ;; some tools for series
