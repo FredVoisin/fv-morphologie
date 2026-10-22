@@ -707,7 +707,7 @@ from s(0) = x(0) and b(0) = x(1) - x(0)."
     (values lm)))
 
 (defun primitives-raw (seq thres)
-  (if (or (zerop thres) (not thres))
+  (if (or (not thres) (zerop thres))
       (primitives-nothres seq)
     (let ((lm (primitives-nothres seq)))
       (loop for i from 0 to (- (length lm) 2) do
@@ -725,7 +725,7 @@ from s(0) = x(0) and b(0) = x(1) - x(0)."
   (let ((lm (primitives-raw seq thres))
         (ft (max flex-thres 2))
         cime r)
-    (if (or (zerop thres) (not thres)) lm
+    (if (or (not thres) (zerop thres)) lm
       (progn
         (loop until (null lm) do
               (let ((k (pop lm)))

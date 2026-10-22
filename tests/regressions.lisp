@@ -802,3 +802,13 @@
   (is (equal '((0 1 4) (1 0 2) (4 2 0)) (fv-morphologie:graph>matrix '((0 1 1) (1 2 2) (0 2 4)))))
   (is (equal '((0 1 0) (1 0 2) (0 2 0)) (fv-morphologie:graph>matrix '((a b 1) (b c 2)))))
   (is (null (fv-morphologie:graph>matrix '()))))
+
+(test signature-thres-nil
+  ;; thres nil (documented: no threshold) found no applicable method in int-signature and exsample,
+  ;; and (zerop nil) failed in primitives-raw and primitives-thres
+  (let ((s '(0 2 4 3 1 2 6 5 0)))
+    (dolist (m '(:minmax :minflexmax :major-extrema :landmarks))
+      (is (equal (int-signature s m 0) (int-signature s m nil))))
+    (is (equal (exsample s :minmax :values 0) (exsample s :minmax :values nil)))
+    (is (equal (fv-morphologie::primitives s 0 nil) (fv-morphologie::primitives s nil nil)))
+    (is (equal (fv-morphologie::primitives-raw s 0) (fv-morphologie::primitives-raw s nil)))))

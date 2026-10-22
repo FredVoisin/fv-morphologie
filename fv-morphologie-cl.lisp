@@ -44,9 +44,10 @@ Available methods are (see int-signature for documentation):
 - :landmarks
 Modes may be :values (default, or nil), :positions, :all or :resampled"))
 
-(defmethod exsample ((seq list) (method symbol) (mode symbol) (thres number) &optional (option nil))
+(defmethod exsample ((seq list) (method symbol) (mode symbol) (thres t) &optional (option nil))
+  ;; thres nil: no threshold, as 0 (no method applied to nil)
   (if seq
-      (echantillonage seq (or method :minflexmax) (or mode :values) thres option)
+      (echantillonage seq (or method :minflexmax) (or mode :values) (or thres 0) option)
       nil))
 
 (defgeneric split (seq &optional marks)
@@ -154,9 +155,10 @@ with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks
 difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
 (2 |a - b| / (|a| + |b|), as in Perng et al.) or a function."))
 
-(defmethod int-signature ((seq t) (mode t) (thres number) &optional (option nil))
+(defmethod int-signature ((seq t) (mode t) (thres t) &optional (option nil))
+  ;; thres nil: no threshold, as 0 (no method applied to nil)
   (when (not mode) (setf mode :minflexmax))
-  (signature seq mode thres option))
+  (signature seq mode (or thres 0) option))
 
 ;;; 2.2 USING MARKS
 
