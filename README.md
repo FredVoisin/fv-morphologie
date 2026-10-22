@@ -57,6 +57,17 @@ Put (or symlink) the project directory in a place ASDF looks into, such as
 
 `graph>dot` needs Graphviz (`neato`) to produce `.png`/`.gif` output.
 
+## Source layout
+
+- `src/`: the implementation, one file per domain: `utils`, `encoding`,
+  `filters`, `signature`, `distances`, `marks`, `motifs`, `graphs`, `dot`
+  (Graphviz output), `classification`, `information`, `interpolation`, `io`.
+- `src/api/`: the public functions, by section of the menu:
+  `transcription`, `classification`, `evaluation`, `files`, and `help`
+  (the menu, `doc` and `help`).
+- `tests/`: one test file per domain.
+- `pwgl-legacy/`: the PWGL / OpenMusic library and tutorial.
+
 ## Testing
 
 The tests live in `tests/` and use [FiveAM](https://github.com/lispci/fiveam).

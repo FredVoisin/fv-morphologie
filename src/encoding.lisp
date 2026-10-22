@@ -18,16 +18,11 @@
 ;;;;
 ;;;; SPDX-License-Identifier: GPL-3.0-only
 
-;; fv-morphologie-encoding.lisp
-;; encoding tools for fv-morphologie
+;;;; encoding.lisp
+;;;;
+;;;; encoding tools for fv-morphologie
 
 (in-package :fv-morphologie)
-
-(defun safe-read-from-string (string &rest args)
-  "read-from-string with *read-eval* nil: the reader macro #. in string (for instance a word of a text file)
-signals an error instead of evaluating its code."
-  (let ((*read-eval* nil))
-    (apply #'read-from-string string args)))
 
 ;;; ABOUT STRINGS AND CHARACTERS
 
@@ -333,10 +328,3 @@ Empty words are removed: an empty or blank string gives nil."
 
 (defmethod num-base ((x list) (base t))
   (mapcar #'(lambda (a) (num-base a base)) x))
-
-(defgeneric graph2matrix (graph)
-  (:documentation "represents a graph (list of (v1 v2 edge)) as a standart adjacent matrix"))
-
-(defmethod graph2matrix ((graph list))
-  (adj-matrix graph))
-

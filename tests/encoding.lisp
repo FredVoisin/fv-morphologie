@@ -20,9 +20,9 @@
 
 (in-package :fv-morphologie/tests)
 
-(def-suite encodage :in fv-morphologie
-  :description "1. Transcription: encoding and preprocessing.")
-(in-suite encodage)
+(def-suite encoding :in fv-morphologie
+  :description "1. Transcription: encoding.")
+(in-suite encoding)
 
 (test transcode
   (is (equal '(x b z x) (transcode '(a b c a) '((a x) (c z)))))
@@ -51,10 +51,31 @@
   (is (equal '(a b c) (str->symb "a b c")))
   (is (equal '((a b) (c)) (str->symb '("a b" "c")))))
 
-(test split
-  (is (equal '("hello" "big" "world") (split "hello big world")))
-  (is (equal '((a b) (c d) (e)) (split '(a b x c d x e) '(x)))))
+(test no-self-recursive-wrappers
+  ;; used to loop forever
+  (signals error (num>alpha 2.5))
+  (signals error (alpha>num #\a)))
 
-(test filters
-  (is (equal '(1 1 1 1 1 1 1) (filt-median '(1 9 1 1 1 9 1) 3)))
-  (is (equal '(a b c a) (filt-local-rep '(a a b b b c a a)))))
+(test alphanump-list
+  ;; the list method returned a list of booleans, always true
+  (is-true (fv-morphologie::alphanump '(#\a #\B #\1)))
+  (is-false (fv-morphologie::alphanump '(#\! #\?)))
+  (is-true (fv-morphologie::alphanump '(#\! #\a) '(#\!))))
+
+(test split-string-always-a-list
+  ;; a string without marks used to be returned as is, not as a list
+  (is (equal '("hello") (split-string "hello" ",")))
+  (is (null (split-string "" ",")))
+  (is (null (split-string "  " ",")))
+  (is (equal '("a,b" "c") (split-string "a,b c" nil)))
+  (is (equal '("12" "345" "6789") (split-string "12   345-6789" "- ")))
+  ;; read-text: each line is a list, even of one word (as documented)
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (with-open-file (out file :direction :output :if-exists :supersede)
+      (format out "1~%2 3~%~%4~%"))
+    (is (equal '((1) (2 3) (4)) (read-text (namestring file))))
+    (is (equal '("1" "2" "3" "4") (read-text (namestring file) :mode nil))))
+  (uiop:with-temporary-file (:pathname file :type "txt")
+    (with-open-file (out file :direction :output :if-exists :supersede)
+      (format out "single"))
+    (is (equal '("single") (read-text (namestring file) :mode nil)))))

@@ -24,6 +24,19 @@
 ;;;; only when it is already loaded, so the system also loads in a plain
 ;;;; LispWorks image.
 
+;;;; Lisp tools to analyse sequences of symbols or signs wich represent music,
+;;;; for PWGL and OpenMusic (and Lisp).
+;;;;
+;;;; Frederic Voisin, Paris - Montbeliard, 1994-2010
+;;;; rewriting of morphologie for Common-Lisp, OpenMusic and PWGL
+;;;;
+;;;; Thank's to Jacopo Baboni-Schilingi, Giacomo Platini, Paolo Aralla, Killian Sprotte, Julien Vincenot, Carlo Ciceri...
+
+;;;; TODO
+;;;; struct ---> pourcentage de completion !!!!
+;;;; adding a som somewhere in classification - with save weigths then analysing weigth (> tutorial) ?
+;;;; ...
+
 (defpackage :fv-morphologie
   (:use :cl . #.(if (find-package :ompw) '(:ompw) '()))
   (:export

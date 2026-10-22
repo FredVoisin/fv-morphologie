@@ -39,12 +39,29 @@
   :source-control (:git "https://github.com/FredVoisin/fv-morphologie.git")
   :depends-on (:uiop)
   :serial t
-  :components ((:file "package")
-               (:file "fv-morphologie-encodage")
-               (:file "fv-morphologie")
-               (:file "fv-morphologie-graphs")
-               (:file "fv-morphologie-io")
-               (:file "fv-morphologie-cl"))
+  :components ((:module "src"
+                :serial t
+                :components ((:file "package")
+                             (:file "utils")
+                             (:file "encoding")
+                             (:file "filters")
+                             (:file "signature")
+                             (:file "distances")
+                             (:file "marks")
+                             (:file "motifs")
+                             (:file "graphs")
+                             (:file "dot")
+                             (:file "classification")
+                             (:file "information")
+                             (:file "interpolation")
+                             (:file "io")
+                             (:module "api"
+                              :serial t
+                              :components ((:file "transcription")
+                                           (:file "classification")
+                                           (:file "evaluation")
+                                           (:file "files")
+                                           (:file "help"))))))
   :in-order-to ((test-op (test-op :fv-morphologie/tests))))
 
 (asdf:defsystem :fv-morphologie/tests
@@ -53,13 +70,19 @@
   :pathname "tests/"
   :serial t
   :components ((:file "package")
-               (:file "encodage")
+               (:file "utils")
+               (:file "encoding")
+               (:file "filters")
+               (:file "signature")
                (:file "distances")
-               (:file "information")
-               (:file "classification")
+               (:file "marks")
+               (:file "motifs")
                (:file "graphs")
+               (:file "dot")
+               (:file "classification")
+               (:file "information")
                (:file "io")
-               (:file "regressions"))
+               (:file "help"))
   :perform (test-op (op c)
              (unless (uiop:symbol-call :fiveam :run!
                                        (uiop:find-symbol* :fv-morphologie :fv-morphologie/tests))

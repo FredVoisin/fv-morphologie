@@ -18,10 +18,12 @@
 ;;;;
 ;;;; SPDX-License-Identifier: GPL-3.0-only
 
-;; graphs to dot format for drawing (with neato)
+;;;; dot.lisp
+;;;;
+;;;; graphs to dot format for drawing (with neato)
 
-;;; at first, to update morphologie 'draw-tree', which was representing undirected graphs from
-;;; Thanks to neato program, the job is to convert list of (node-A node-B dist) into dot format
+;;;; at first, to update morphologie 'draw-tree', which was representing undirected graphs from
+;;;; Thanks to neato program, the job is to convert list of (node-A node-B dist) into dot format
 
 (in-package :fv-morphologie)
 
@@ -178,4 +180,3 @@ if a string, it defines the pathname of the output. Type of file define output.
 
 (defmethod graphtodot  ((graph list) (dis number) (min number)  (out t) &key shape legend)
   (graph2dot graph dis min shape out legend))
-
