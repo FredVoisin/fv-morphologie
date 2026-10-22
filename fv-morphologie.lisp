@@ -257,7 +257,7 @@ a predicate, or a single mark. Empty segments are removed."
 	      ((stringp a)
 	       (eval `(concatenate 'string .,liste)))
 	      (t
-	       (read-from-string (concat (mapcar #'(lambda (x) (format nil "~S" x))
+	       (safe-read-from-string (concat (mapcar #'(lambda (x) (format nil "~S" x))
 						 liste))))))))
 
 (defun 2first (liste)
@@ -2691,7 +2691,7 @@ Returns the class of each datum, numbered by order of first appearance, and the 
  (let ((r nil))
     (dotimes (n (length string) (nreverse r))
       (when (not (eql #\ (elt string n)))
-	(push (read-from-string (string (elt string n))) r)))))
+	(push (safe-read-from-string (string (elt string n))) r)))))
 
 (defun m-levenshtein (s1 s2 &key (test #'eql))
  (let* ((width (1+ (length s1)))

@@ -1204,8 +1204,10 @@ receives the words as they are returned (symbols or numbers in lines mode,
 where a line whose words are all removed gives `()`; strings in flat mode;
 lists of codes with `:charcode`).
 
-Some special signs, such as punctuation or parentheses (Lisp
-S-expressions), may cause errors when reading a file.
+In lines mode, the words are read as Lisp symbols or numbers, with
+`*read-eval*` false: the reader macro `#.` of a text file is never evaluated.
+A word which cannot be read in this way (`#.(...)`, or signs such as `)` or
+`#`) is kept as a string.
 
 ```lisp
 ;; alist.txt contains lines such as "0, 1 2;"

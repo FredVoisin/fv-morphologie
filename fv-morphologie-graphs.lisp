@@ -138,7 +138,7 @@
                (2dot graph min dis shape1 shape2 stream legend :name out))
              (when (not (equalp type "dot"))
                (system::run-shell-command
-                (list neato (format nil "-T~(~S~)" (if type (read-from-string type) (read-from-string "gif"))))
+                (list neato (format nil "-T~(~S~)" (if type (safe-read-from-string type) (safe-read-from-string "gif"))))
                 :input dot
                 :output (namestring (make-pathname :directory dir
                                            :name file

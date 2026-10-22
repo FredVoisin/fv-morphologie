@@ -23,6 +23,12 @@
 
 (in-package :fv-morphologie)
 
+(defun safe-read-from-string (string &rest args)
+  "read-from-string with *read-eval* nil: the reader macro #. in string (for instance a word of a text file)
+signals an error instead of evaluating its code."
+  (let ((*read-eval* nil))
+    (apply #'read-from-string string args)))
+
 ;;; ABOUT STRINGS AND CHARACTERS
 
 (defvar *very-minimalist-midi-notes*
@@ -133,7 +139,7 @@ Different modes can be selected into optional menu"))
   (if list
       (concalpha (cdr list) (if res (concatenate 'string res (format nil "~S" (car list)))
                               (format nil "~S" (car list))))
-    (read-from-string res)))
+    (safe-read-from-string res)))
 
 (defgeneric concaten (list)
   (:documentation "Concatenate elements in list into a number, string or symbol according to the type of elements: The list to be flat (one level only)."))
@@ -185,7 +191,7 @@ Different modes can be selected into optional menu"))
 0 -> A, 1 -> B, 2 -> C, 27->AA, etc."))
 
 (defmethod num>alpha ((num integer))
-  (read-from-string (concatenate 'string (numtochar26 num))))
+  (safe-read-from-string (concatenate 'string (numtochar26 num))))
 
 (defmethod num>alpha ((num list))
   (mapcar #'num>alpha num))
@@ -196,18 +202,18 @@ Different modes can be selected into optional menu"))
   (let ((r nil))
     (dotimes (n (length st) (nreverse r))
       (when (not (eql #\  (elt st n)))
-	(push (read-from-string (string (elt st n))) r)))))
+	(push (safe-read-from-string (string (elt st n))) r)))))
 
 (defun string-to-symbol (string)
   (if (listp string)
       (cond ((equal 'nil (member 'nil (mapcar #'stringp string)))
 	     (mapcar #'(lambda (st)
-			 (read-from-string st)) ; t nil :start 0 :end (length st)))
+			 (safe-read-from-string st)) ; t nil :start 0 :end (length st)))
 		     string))
 	    ((equal 'nil (member 'nil (mapcar #'listp string)))
 	     (let ((r nil))
 	       (dolist (st string (nreverse r))
-		 (push (mapcar #'(lambda (s) (read-from-string s)) st) r)))))
+		 (push (mapcar #'(lambda (s) (safe-read-from-string s)) st) r)))))
       (when (stringp string) (readst string))))
 
 (defgeneric str->symb (strings)
@@ -241,8 +247,10 @@ Empty words are removed: an empty or blank string gives nil."
   (:documentation "Converts string to symbol and list of strings to list of symbols"))
 
 (defmethod string2sym ((s string))
+  ;; a word which cannot be read (#. with *read-eval* nil, or signs such as ")" or "#") is kept as a string
   (if (> (length s) 0)
-      (read-from-string s t nil :preserve-whitespace t) ;:end (length s))
+      (handler-case (safe-read-from-string s t nil :preserve-whitespace t)
+        ((or reader-error end-of-file) () s))
     nil))
 
 (defmethod string2sym ((s list))
@@ -298,8 +306,8 @@ Empty words are removed: an empty or blank string gives nil."
 (defun dec2base (x &optional base)
   ; converti x exprime en decimal en base, ou en toute lettre sinon 
   (if base
-      (read-from-string (format nil (concatenate 'string "\~" (format nil "~S" base) "r") x))
-      (read-from-string (format nil "~r" x))))
+      (safe-read-from-string (format nil (concatenate 'string "\~" (format nil "~S" base) "r") x))
+      (safe-read-from-string (format nil "~r" x))))
 
 (defun bin2dec (v)
   (let ((l (length v))

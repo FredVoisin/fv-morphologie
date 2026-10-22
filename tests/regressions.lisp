@@ -918,3 +918,20 @@
     (is (null (doc 'not-a-function))))
   ;; help prints the documentations of the functions found, not the scores
   (is (search "ENTROPY:" (with-output-to-string (*standard-output*) (help :entropy)))))
+
+(test read-without-eval
+  ;; read-from-string evaluated #. : a word #.(...) of a text file ran its code (read-text, lines mode)
+  (let ((ran nil))
+    (declare (special ran))
+    (setf (symbol-function 'read-without-eval-marker) #'(lambda () (setf ran t) 'injected))
+    (uiop:with-temporary-file (:pathname file :type "txt")
+      (with-open-file (out file :direction :output :if-exists :supersede)
+        (format out "hello #.(fv-morphologie/tests::read-without-eval-marker) world~%a ) # (~%3 4.5 abc~%"))
+      (let ((r (read-text file)))
+        (is (not ran))
+        ;; unreadable words are kept as strings
+        (is (equal '(hello "#.(fv-morphologie/tests::read-without-eval-marker)" world) (first r)))
+        (is (equal '(a ")" "#" "(") (second r)))
+        (is (equal '(3 4.5 abc) (third r))))))
+  (signals reader-error (fv-morphologie::safe-read-from-string "#.(+ 1 2)"))
+  (is (= 3 (fv-morphologie::safe-read-from-string "3"))))
