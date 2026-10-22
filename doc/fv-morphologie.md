@@ -373,14 +373,22 @@ distance functions (see [3.2](#32-compare-distances-and-dissimilarities)),
 #### `graph-span (mat-dist &optional verbose)`
 
 Minimum spanning tree of a set of objects, deduced from the semi-matrix of
-their distances (Prim's algorithm, after Diday et al., *Éléments d'analyse de
-données*, Dunod, 1982). The result is the minimal set of edges
-`(obj-A obj-B distance)` needed to draw the tree. The order of the edges may
-vary between calls.
+their distances: the minimal set of edges `(obj-A obj-B distance)` needed to
+draw the tree, with the smallest total length. It is computed with Kruskal's
+algorithm: the edges are taken by increasing distance, and kept when they join
+two parts not yet joined. The result is deterministic: the edges are given by
+increasing distance, and among equal distances the first edges of `mat-dist`
+are preferred. The objects may be of any kind (compared with `equalp`). If the
+objects are not all connected, the result is a minimum spanning forest, one
+tree for each connected part, and a message says so.
+
+(Earlier versions used Prim's algorithm, after Diday et al., *Éléments
+d'analyse de données*, Dunod, 1982, from a random starting object: with equal
+distances, the tree could change from one call to the next.)
 
 ```lisp
 (graph-span '((0 1 1) (0 2 4) (1 2 2) (2 3 1)))
-;=> ((2 3 1) (1 2 2) (0 1 1))     ; edge (0 2 4) is not needed
+;=> ((0 1 1) (2 3 1) (1 2 2))     ; edge (0 2 4) is not needed
 ```
 
 In the PWGL tutorial (`1.3.1_graph-span`), random melodic profiles are

@@ -2007,66 +2007,42 @@ result without computing distances."
 	   (mapcar #'(lambda (point) (mapcar #'(lambda (x) (when (not (equalp 'nil (member point x))) x)) tree))
 		   points))))
 
-(defun remove-arete (arete set)
-  (remove-if #'(lambda (x) (equalp arete x)) set))
-
-(defun add-sommet (arete set)
-  (if (not (member (car arete) set))
-      (push (car arete) set)
-    (when (not (member (cadr arete) set)) (push (cadr arete) set)))
-  (values set))
-
-(defun lookformin-if-set (i dist set)
-  "Returns a list with i and its nearest point and the distance separating them,
-given the semi-matrix of distances dist."
-  (let (d-min arete)
-    (dolist (n dist)
-        (when (member i (butlast n))
-          (when (and (or (null d-min) (< (caddr n) d-min))
-                     (not (member (car (remove i (butlast n))) set)))
-            (setf d-min (caddr n)
-                  arete n))))
-    arete))
-
-(defun zeroize (x e)
-  (if (> (third x) e) x (list (car x) (cadr x) 0)))
-
-(defun prim-tree (dist-mat &optional verbose)
-  (let* ((min (float (/ (car (sort (remove-if #'zerop (mapcar #'third (copy-tree dist-mat))) '<)) 100)))
-         (distances (mapcar #'(lambda (x)
-				(list (car x) (cadr x) (a-zero (third x) min)))
-			    dist-mat))
-         (omega (remove-duplicates (append (mapcar #'car distances)
-					   (mapcar #'cadr distances)) :test #'equalp))
-         (te (list (nth (random (length omega)) omega)))
-         (te-1 nil)
-	 (aretes nil)
-         (aretes-temp nil)
-         (arete-min nil))
-    (loop for n from 0
-       until (or (= (length te) (length omega)) (equal te te-1))
-       do (setf aretes-temp 'nil)
-	 (when verbose (message aretes))
-	 (dolist (p te)
-	   (let ((m (lookformin-if-set p distances te)))
-	     (when m (push m  aretes-temp))))
-	 (setf arete-min (car (sort (remove 'nil aretes-temp) '< :key 'caddr))
-	       distances (remove-arete arete-min distances))
-	 (push arete-min aretes)
-	 (setf te-1 te
-	       te (remove 'nil (add-sommet arete-min te))))
-    (when (not (= (length te) (length omega)))
-      (message "Prim-tree - Warning : not complete tree !"))
-      (mapcar #'(lambda (x) (zeroize x min))
-	      (remove 'nil aretes))))
+(defun spanning-tree (graph &optional verbose)
+  "Minimum spanning tree of graph, a list of edges (vertex-a vertex-b distance), by Kruskal's algorithm:
+the edges are taken by increasing distance (in their order in graph for equal distances), and kept if
+they join two parts not yet joined. Vertices are compared with equalp. The result is deterministic;
+if graph is not connected, it is a minimum spanning forest (one tree for each connected part)."
+  (let ((parent (make-hash-table :test #'equalp))
+        (tree nil)
+        (vertices 0))
+    (labels ((root (x)
+               (let ((p (gethash x parent x)))
+                 (if (equalp p x) x (setf (gethash x parent) (root p))))))
+      (dolist (e graph)
+        (dolist (v (list (first e) (second e)))
+          (unless (nth-value 1 (gethash v parent))
+            (setf (gethash v parent) v)
+            (incf vertices))))
+      (dolist (e (stable-sort (copy-list graph) #'< :key #'third))
+        (let ((ra (root (first e))) (rb (root (second e))))
+          (unless (equalp ra rb)
+            (setf (gethash ra parent) rb)
+            (when verbose (message e))
+            (push e tree))))
+      (when (and graph (< (length tree) (1- vertices)))
+        (message (format nil "graph-span: the graph is not connected: minimum spanning forest of ~D trees."
+                         (- vertices (length tree)))))
+      (nreverse tree))))
 
 (defgeneric minimum-spanning-tree (graph &optional verbose)
   (:documentation "Returns the span tree for a list of points according to the list of their distance.
-The list of distances must have the form: ((xi yi) di) etc.).
-Algorithm from: E. Diday & all, 1982 : Elements d'analyse de donnees, Dunod, Paris. pp. 110-111."))
+The list of distances must have the form: ((xi yi di) ...), for instance a semi-matrix of distances.
+The edges of the tree are given by increasing distance. See spanning-tree (Kruskal's algorithm;
+the former version used Prim's algorithm, after E. Diday & all, 1982 : Elements d'analyse de donnees,
+Dunod, Paris. pp. 110-111)."))
 
 (defmethod minimum-spanning-tree ((graph list) &optional (verbose nil))
-  (prim-tree graph verbose)) ;; sort '< :key #'car - string-lessp))
+  (spanning-tree graph verbose))
 
 (defun find-path (tree start end)
   "The nodes of the path from start to end in tree, a list of edges (node-a node-b distance),

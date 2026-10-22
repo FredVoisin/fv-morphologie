@@ -657,3 +657,25 @@
           (is (search "<svg" (uiop:read-file-string svg)))
           (ignore-errors (delete-file dot))))
       (skip "neato (Graphviz) is not installed")))
+
+(test graph-span-kruskal
+  (flet ((total (tree) (reduce #'+ (mapcar #'third tree))))
+    ;; deterministic, edges by increasing distance (Prim started from a random vertex)
+    (is (equal '((0 1 1) (2 3 1) (1 2 2)) (graph-span '((0 1 1) (0 2 4) (1 2 2) (2 3 1)))))
+    (let ((square '((a b 1) (b c 1) (c d 1) (d a 1) (a c 2) (b d 2))))
+      (is (equal '((a b 1) (b c 1) (c d 1)) (graph-span square)))
+      (is (loop repeat 20 always (equal (graph-span square) (graph-span square)))))
+    ;; distances 0, or no edge, used to fail
+    (is (equal '((a b 0) (b c 0)) (graph-span '((a b 0) (b c 0)))))
+    (is (null (graph-span '())))
+    ;; vertices compared with equalp (strings gave an incomplete tree)
+    (is (equal '(("x" "y" 1) ("y" "z" 2)) (graph-span '(("x" "y" 1) ("y" "z" 2) ("x" "z" 3)))))
+    ;; a graph which is not connected: a spanning forest (an edge was lost)
+    (let ((*standard-output* (make-broadcast-stream)))
+      (is (equal '((a b 1) (c d 2)) (graph-span '((a b 1) (c d 2))))))
+    ;; minimal: the total length of the tree of 6 points on a line
+    (is (= 5 (total (graph-span (dist-euclid '((0) (1) (2) (3) (4) (5)) nil)))))
+    ;; 320 points (51040 distances) took minutes
+    (let* ((*random-state* (seeded-random-state))
+           (pts (loop repeat 320 collect (list (random 100) (random 100)))))
+      (is (= 319 (length (graph-span (dist-euclid pts nil))))))))
