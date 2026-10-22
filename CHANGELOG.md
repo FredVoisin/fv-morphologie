@@ -4,6 +4,22 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] - 2026-10-22
+
+The first stable release: from this version on, the public interface (the
+54 functions exported by the package `fv-morphologie`, their arguments and
+their documented results) changes only with a new major version.
+
+### Changed
+
+- The sources are organized in `src/`, one file per domain (`utils`,
+  `encoding`, `filters`, `signature`, `distances`, `marks`, `motifs`,
+  `graphs`, `dot`, `classification`, `information`, `interpolation`, `io`),
+  and `src/api/`, the public functions by section of the menu
+  (`transcription`, `classification`, `evaluation`, `files`, `help`). The
+  tests are organized the same way. The code itself is unchanged: the
+  functions give the same results as in 0.2.0.
+
 ## [0.2.0] - 2026-10-22
 
 The first release as a Common Lisp library loadable with ASDF and Quicklisp,
@@ -101,4 +117,5 @@ These changes alter results which were documented or relied upon:
 
 The PWGL / OpenMusic library adapted to Common Lisp, before this changelog.
 
+[1.0.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v1.0.0
 [0.2.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v0.2.0
