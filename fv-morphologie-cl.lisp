@@ -513,9 +513,9 @@ Additional Keyword :rem-test defines a function to remove choosen words."))
   
 (defgeneric write-list (list file &optional mode)
   (:documentation "WRITE-LIST: write list to a file using following optional argument <mode> format:
-:lisp : list is written as a list defined as a variable (by default)
-:flat : each element of list is written in a new line
-:coll : each element of list is written in a new line in Max coll text file."))
+:flat (by default) : each element of list is written in a new line, sub-lists without parentheses (as read by read-text)
+:lisp : list is written as a Lisp list
+:coll : a Max coll file, one line index, data; for each element, from index 0."))
 
 (defmethod write-list ((list list) (file t) &optional (mode :supersede))
   (list-write list file mode))

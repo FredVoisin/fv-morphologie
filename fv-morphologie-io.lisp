@@ -174,6 +174,7 @@ not letters or digits, but c ..."
                               :if-exists :supersede
                               :if-does-not-exist :create)
     (case mode
+      (:coll (coll-entries liste out-stream))
       (:lisp
        (format out-stream "(~&")
        (dolist (l liste (format out-stream "~&)"))
@@ -186,6 +187,33 @@ not letters or digits, but c ..."
              (format out-stream "~&~G" (2flatstring l "")))))))
   (format nil "~&~G" file))
 
+(defun coll-atom (x)
+  "x as a Max coll item: integers as they are, other numbers as decimals, symbols by name (quoted
+if they contain spaces, commas or semicolons), strings quoted."
+  (flet ((quoted (str) (with-output-to-string (o)
+                         (write-char #\" o)
+                         (loop for c across str
+                               do (when (member c '(#\" #\\)) (write-char #\\ o))
+                                  (write-char c o))
+                         (write-char #\" o))))
+    (cond ((integerp x) (format nil "~D" x))
+          ((realp x) (let ((*read-default-float-format* 'double-float))
+                       (format nil "~F" (if (floatp x) x (float x)))))
+          ((stringp x) (quoted x))
+          ((symbolp x) (let ((name (symbol-name x)))
+                         (if (find-if #'(lambda (c) (member c '(#\Space #\Tab #\, #\; #\"))) name)
+                             (quoted name)
+                             name)))
+          (t (quoted (princ-to-string x))))))
+
+(defun coll-entries (liste stream)
+  "Writes liste to stream as the entries of a Max coll: one line index, data; for each element,
+from index 0; an element which is a list is flattened."
+  (loop for e in liste
+        for i from 0
+        do (format stream "~D,~{ ~A~};~%" i
+                   (mapcar #'coll-atom (if (listp e) (flat e) (list e))))))
+
 (defun coll-write (liste file)
   "Writes a list to a Max coll file."
   (with-open-file (out-stream (if file file "coll")
@@ -193,11 +221,7 @@ not letters or digits, but c ..."
                               :element-type 'character
                               :if-exists :supersede
                               :if-does-not-exist :create)
-    (dotimes (i (length liste))
-      (format out-stream "~&~S," i)
-      (dolist (e (nth i liste))
-        (format out-stream " ~S" e))
-      (format out-stream ";")))
+    (coll-entries liste out-stream))
   (format nil "~&~G" file))
 
 ;;; eof
