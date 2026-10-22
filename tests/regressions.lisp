@@ -860,3 +860,13 @@
                (read-text file :mode nil :rem-test #'(lambda (w) (< (length w) 3)))))
     ;; without rem-test, unchanged
     (is (equal '((the cat sat) (on a mat) (it is)) (read-text file)))))
+
+(test motif-find-strings-and-overlaps
+  ;; strings had no applicable method
+  (is (equal '((1 2) (4 5)) (motif-find "ab" "xabyAB")))
+  (is (equal '((1 2)) (motif-find "ab" "xabyAB" :test #'char=)))
+  (is (equal '((1 2) (4 5)) (motif-find "ab" "xacyab" :diss 0.5)))
+  ;; occurrences may overlap (documented)
+  (is (equal '((0 1) (1 2) (2 3)) (motif-find '(a a) '(a a a a))))
+  ;; lists unchanged
+  (is (equal '((0 1) (3 4) (6 7)) (motif-find '(a b) '(a b c a b d a b)))))

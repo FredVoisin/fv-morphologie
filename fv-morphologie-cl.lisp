@@ -209,6 +209,11 @@ arguments :change :ins/sup :uncom and :test for tuning the editing distance (see
   (find-pos motif seq diss l-var
             #'(lambda (a b) (edit-dist a b change ins del uncom t test))))
 
+(defmethod motif-find ((motif string) (seq string) &key (diss 0) (l-var 0) (change 1) (ins 1) (del 1) (uncom 0) (test #'equalp))
+  ;; a string is searched as a list of characters (there was no method for strings)
+  (motif-find (coerce motif 'list) (coerce seq 'list) :diss diss :l-var l-var
+              :change change :ins ins :del del :uncom uncom :test test))
+
 (defgeneric motif-list (seq out &key diss l-var n change insert delete uncom test)
   (:documentation "MOTIF-LIST: returns the list of all motifs found into <seq> where a motif is any segment repeted at least one time according to editing distance.
 Output can be sorted according to the length of segment (:length, or nil) or to their frequency (:freq); another output is an error.

@@ -855,10 +855,12 @@ The segments depend on equivalence classes that can be defined freely:
 #### `motif-find (motif seq &key diss l-var change ins del uncom test)`
 
 *PWGL box: `motif-position`.* All positions of a motif in a sequence of
-symbols, as `(start end)` pairs.
+symbols, or of a string in a string, as `(start end)` pairs. The occurrences
+may overlap: `(a a)` is found at 0, 1 and 2 in `(a a a a)`.
 
-- `:diss`: maximum dissimilarity accepted, as a fraction of the length of the
-  motif, measured with the edit distance. 0: only identical motifs; 0.5:
+- `:diss`: maximum dissimilarity accepted, measured with the edit distance
+  divided by the length of the longer of the motif and the segment compared
+  (with `:l-var` 0, the length of the motif). 0: only identical motifs; 0.5:
   motifs differing by at most half of their elements.
 - `:l-var`: maximum variation of the length of the motifs found, as a
   fraction of the length of the motif (0, the default: same length only).
@@ -879,6 +881,10 @@ lists, e.g. `((a 1) (b 1) (c 1))`.
 ;=> ((0 1) (6 7))
 (motif-find '(a b) '(a b c a c d a b) :diss 0.5)
 ;=> ((0 1) (3 4) (6 7))
+(motif-find "ab" "xabyAB")                   ; strings: case ignored (equalp)
+;=> ((1 2) (4 5))
+(motif-find "ab" "xabyAB" :test #'char=)
+;=> ((1 2))
 ```
 
 #### `motif-list (seq out &key diss l-var n change insert delete uncom test)`
