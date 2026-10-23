@@ -190,6 +190,18 @@ which lengths are successive values of the list <segmentation>.
 ; (dx '(1 2 3 3 5 6 5 3  8 9))
 ; (dx '((1 2) (3 3) (5 6) (5 3) (8 9)) :key 'cadr)
 
+(defun derivee (seq)
+  "The signs of the successive differences of the numbers of seq: 1 when the next value is greater,
+-1 when it is smaller, 0 when it is equal (one element less than seq)."
+  (loop for (a . rest) on seq
+        while rest
+        collect (let ((b (car rest)))
+                  (cond ((> b a) 1)
+                        ((< b a) -1)
+                        (t 0)))))
+
+; (derivee '(1 2 3 3 5 6 5 3 8 9)) => (1 1 0 1 1 -1 -1 1 1)
+
 
 ;;; ABOUT LISTS
 

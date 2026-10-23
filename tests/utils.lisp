@@ -39,3 +39,19 @@
   (is (= 3 (fv-morphologie::fmax '(3 1 2))))
   (is (= 1 (fv-morphologie::fmin '(3 1 2))))
   (is (approx= 2 (fv-morphologie::mean '(1 2 3)))))
+
+(test derivee
+  ;; signs of the successive differences, as the reference loop on nth
+  (flet ((reference (seq)
+           (loop for i from 0 below (1- (length seq))
+                 for a = (nth i seq)
+                 for b = (nth (1+ i) seq)
+                 collect (cond ((> b a) 1) ((< b a) -1) (t 0)))))
+    (is (equal '(1 1 0 1 1 -1 -1 1 1) (fv-morphologie::derivee '(1 2 3 3 5 6 5 3 8 9))))
+    (is (null (fv-morphologie::derivee '())))
+    (is (null (fv-morphologie::derivee '(4))))
+    (is (equal '(-1 0 1) (fv-morphologie::derivee '(2.5 1 1 3/2))))
+    (let ((*random-state* (seeded-random-state)))
+      (dotimes (k 50)
+        (let ((seq (loop repeat (random 30) collect (- (random 7) 3))))
+          (is (equal (reference seq) (fv-morphologie::derivee seq))))))))
