@@ -621,9 +621,9 @@ Dans fv-morphologie, chaque point saillant (pli) est une liste formée de :
 variations inférieures à `thres` sont ignorées (`nil` ou 0 : pas de seuil).
 Modes :
 
-- `:minflexmax` : minima, maxima et inflexions (`option` : seuil de distance,
-  en rangs, pour la détection des inflexions) ;
-- `:minmax` : minima et maxima seulement ;
+- `:minflexmax` : minima, maxima et inflexions (`option` : voir plus bas) ;
+- `:minmax` : minima et maxima seulement (la même méthode sans les
+  inflexions ; `option` comme pour `:minflexmax`) ;
 - `:major-extrema` : les *important extrema* de Fink & Gandhi. Un minimum
   `a_m` est important si, sur un intervalle `a_i … a_j` qui l'entoure, il est
   la valeur la plus basse et la séquence remonte d'au moins `thres` de part et
@@ -653,6 +653,34 @@ un maximum) est donné une seule fois, à sa première position ; avec
 première position. La signature ne comprend pas la première ni la dernière
 valeur (`exsample` les ajoute). (Jusqu'à cette version, `:major-extrema` et
 `:landmarks` donnaient silencieusement le résultat de `:minflexmax`.)
+
+Avec `:minflexmax` et `:minmax`, `option` ne sert que si `thres` est
+supérieur à 0 (avec `thres` 0, seuls les plateaux exacts, suites de valeurs
+égales, donnent des inflexions). Les extrema locaux qui diffèrent du
+précédent de `thres` ou moins sont les *tournants* d'un plateau qui varie
+légèrement. `option` est le nombre de tournants qu'un plateau doit dépasser
+pour être gardé (`nil`, 0, 1 et 2 comptent pour 2) :
+
+- un plateau gardé donne deux inflexions, à son premier et à son dernier
+  tournant, dont la valeur est la moyenne des valeurs de ses tournants (et
+  non la valeur de la séquence à cette position) ;
+- un plateau plus court est absorbé dans l'extremum qui le précède.
+
+Un plateau de k petites oscillations dans une montée a 2k − 1 tournants. Une
+`option` non entière est convertie en floor((max − min) × `option` ×
+longueur de `seq`).
+
+```lisp
+(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1)    ; 3 tournants
+;=> ((4 1 5.2) (5 0 5.0666666) (7 0 5.0666666))
+(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 3)  ; 3 n'est pas dépassé
+;=> ((4 1 5.2))
+```
+
+Limites connues de cette méthode : le premier tournant d'un plateau peut
+rester un minimum ou un maximum (`(4 1 5.2)` ci-dessus, dans une montée), et
+dans une dérive lente (chaque pas inférieur à `thres`, l'ensemble supérieur)
+un petit pas peut encore donner un extremum.
 
 `mode` `nil` signifie `:minflexmax` ; tout autre mode est une erreur.
 

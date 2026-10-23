@@ -600,9 +600,9 @@ In fv-morphologie, each salient point (fold) is a list of:
 variations smaller than `thres` are ignored (`nil` or 0: no threshold).
 Modes:
 
-- `:minflexmax`: minima, maxima and inflexions (`option`: distance threshold,
-  in ranks, for detecting inflexions);
-- `:minmax`: minima and maxima only;
+- `:minflexmax`: minima, maxima and inflexions (`option`: see below);
+- `:minmax`: minima and maxima only (the same method without the inflexions;
+  `option` as for `:minflexmax`);
 - `:major-extrema`: the *important extrema* of Fink & Gandhi. A minimum
   `a_m` is important if, on some interval `a_i … a_j` around it, it is the
   lowest value and the sequence rises by at least `thres` on both sides:
@@ -630,6 +630,33 @@ which is not an extremum gives one inflexion, at its first position. The
 signature does not include the first and last values (`exsample` adds them).
 (Until this version, `:major-extrema` and `:landmarks` silently gave the
 `:minflexmax` result.)
+
+With `:minflexmax` and `:minmax`, `option` is used only when `thres` is
+above 0 (with `thres` 0, only exact plateaus, runs of equal values, give
+inflexions). The local extrema which differ from the previous one by `thres`
+or less are the *turns* of a slightly varying plateau. `option` is the number
+of turns a plateau must exceed to be kept (`nil`, 0, 1 and 2 count as 2):
+
+- a kept plateau gives two inflexions, at its first and last turns, whose
+  value is the mean of the values of its turns (not the value of the
+  sequence at that position);
+- a shorter plateau is absorbed in the extremum which precedes it.
+
+A plateau of k small up-and-down wiggles in a rise has 2k − 1 turns. A
+non-integer `option` is converted to floor((max − min) × `option` × length
+of `seq`).
+
+```lisp
+(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1)    ; 3 turns
+;=> ((4 1 5.2) (5 0 5.0666666) (7 0 5.0666666))
+(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 3)  ; 3 is not exceeded
+;=> ((4 1 5.2))
+```
+
+Known limits of this method: the first turn of a plateau may remain a
+minimum or a maximum (`(4 1 5.2)` above, in a rise), and in a slow drift
+(each step smaller than `thres`, the whole larger) a small step may still
+give an extremum.
 
 `mode` `nil` means `:minflexmax`; any other mode is an error.
 

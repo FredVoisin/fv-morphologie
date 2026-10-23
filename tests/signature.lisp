@@ -140,3 +140,15 @@
   (is (equal '("a" "b") (split "a b" nil)))
   (is (equal '("a" "b" "c") (split "a,b;c" ",;")))
   (is (equal '("été" "à") (split "été,à" ","))))
+
+(test signature-minflexmax-option
+  ;; the documented behaviour of option: the number of turns a slightly varying plateau must exceed
+  (let ((s '(0 2 4 5 5.2 5 5.2 5 7 9)))  ; a plateau of 3 turns in a rise
+    (dolist (o '(nil 0 1 2))
+      (let ((r (int-signature s :minflexmax 1 o)))
+        (is (equal '((4 1) (5 0) (7 0)) (mapcar #'(lambda (p) (subseq p 0 2)) r)))
+        ;; the inflexions are valued at the mean of the turns
+        (is (approx= (/ (+ 5 5.2 5) 3) (third (second r)) 1e-5))))
+    (is (equal '((4 1 5.2)) (int-signature s :minflexmax 1 3)))
+    ;; option has no effect without a threshold
+    (is (equal (int-signature s :minflexmax 0) (int-signature s :minflexmax 0 5)))))

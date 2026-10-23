@@ -276,7 +276,10 @@ The argument <thres> may be nil or 0 (no threshold for variations in intensity),
 Any other method is an error.
 Argument <thres> is the treshold value (delta) in amplitude.
 Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax method, <option> is the time (rank) distance threshold for detecting inflexions (a nul or positive number);
+with :minflexmax and :minmax, <option> is used only when thres > 0: the local extrema which differ from the previous one
+by thres or less are the turns of a slightly varying plateau, and <option> is the number of turns a plateau must exceed to be kept
+(nil, 0, 1 and 2 count as 2); a kept plateau gives two inflexions, at its first and last turns, valued at the mean of its turns;
+a shorter plateau is absorbed in the preceding extremum. A non-integer <option> becomes floor((max - min) * option * length);
 with :major-extrema, <option> may be a distance function (a b) for comparing values (|a - b| by default);
 with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks may be removed), a function (a b) giving the
 difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
