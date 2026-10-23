@@ -4,7 +4,7 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0] - 2026-10-23
 
 ### Changed
 
@@ -143,5 +143,6 @@ These changes alter results which were documented or relied upon:
 
 The PWGL / OpenMusic library adapted to Common Lisp, before this changelog.
 
+[1.1.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v1.1.0
 [1.0.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v1.0.0
 [0.2.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v0.2.0
