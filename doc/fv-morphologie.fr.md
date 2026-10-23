@@ -1296,14 +1296,14 @@ première apparition).
 
 #### `inner-dynamic (seq &optional test)`
 
-Une sorte de dynamique interne de la distribution des symboles (marques) dans
-une séquence, calculée en intégrant l'analyse des contrastes et des marques :
-nouveauté des marques et leurs échos dans la séquence, une valeur par élément.
-Réécrit à partir du « profil d'énergie » de Paolo Aralla (cf. aussi
+Dynamique de la distribution des symboles, dans
+une séquence, calculée en intégrant l'analyse des contrastes et des marques, 
+selon leur nouveauté (première apparition) et leurs échos (répétitions) dans la séquence.
+Ecrit ici à partir du « profil d'énergie » décrit par Paolo Aralla (cf. aussi
 Baboni-Schilingi, Giacomo Platini). Expérimental. `test` est l'identité des
 éléments (`#'equalp` par défaut).
 
-Elle calcule l'*Energy-profile* d'Aralla (Aralla 2002, section 5) : la valeur
+Elle calcule l'*Energy-profile* de Paolo Aralla (Aralla 2002, section 5) : la valeur
 absolue de la dérivée de la valeur absolue de sa *New/Old-Analysis*
 (section 3), qui pondère l'ordre d'entrée des événements donné par la matrice
 des contrastes. Les résultats reproduisent les exemples chiffrés de
