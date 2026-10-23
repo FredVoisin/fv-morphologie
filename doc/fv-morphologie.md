@@ -600,9 +600,10 @@ In fv-morphologie, each salient point (fold) is a list of:
 variations smaller than `thres` are ignored (`nil` or 0: no threshold).
 Modes:
 
-- `:minflexmax`: minima, maxima and inflexions (`option`: see below);
-- `:minmax`: minima and maxima only (the same method without the inflexions;
-  `option` as for `:minflexmax`);
+- `:minflexmax`: the minima and maxima of `:minmax`, and inflexions where a
+  plateau begins and where it ends (`option`: see below);
+- `:minmax`: minima and maxima only, the important extrema of
+  `:major-extrema` (with |a − b|); `option` is not used;
 - `:major-extrema`: the *important extrema* of Fink & Gandhi. A minimum
   `a_m` is important if, on some interval `a_i … a_j` around it, it is the
   lowest value and the sequence rises by at least `thres` on both sides:
@@ -626,37 +627,31 @@ Modes:
 
 With all the methods, a flat extremum (a plateau which is a minimum or a
 maximum) is given once, at its first position; with `:minflexmax`, a plateau
-which is not an extremum gives one inflexion, at its first position. The
+which is not an extremum gives an inflexion where it begins and where it
+ends. The
 signature does not include the first and last values (`exsample` adds them).
 (Until this version, `:major-extrema` and `:landmarks` silently gave the
 `:minflexmax` result.)
 
-With `:minflexmax` and `:minmax`, `option` is used only when `thres` is
-above 0 (with `thres` 0, only exact plateaus, runs of equal values, give
-inflexions). The local extrema which differ from the previous one by `thres`
-or less are the *turns* of a slightly varying plateau. `option` is the number
-of turns a plateau must exceed to be kept (`nil`, 0, 1 and 2 count as 2):
-
-- a kept plateau gives two inflexions, at its first and last turns, whose
-  value is the mean of the values of its turns (not the value of the
-  sequence at that position);
-- a shorter plateau is absorbed in the extremum which precedes it.
-
-A plateau of k small up-and-down wiggles in a rise has 2k − 1 turns. A
-non-integer `option` is converted to floor((max − min) × `option` × length
-of `seq`).
+With `:minflexmax`, a *plateau* is a stretch of at least `option` positions
+(`nil`, 0, 1 and 2 mean 2) where the sequence varies by less than `thres`
+(where it is constant when `thres` is 0); the plateaus are found from left to
+right, each as long as possible. A plateau which contains a minimum or a
+maximum is a flat extremum, given once; any other plateau gives two
+inflexions (type 0), at its first and last positions, with the values of the
+sequence there. A plateau is defined by its whole range: a slow drift whose
+variation reaches `thres` is not one plateau. A regular rise of less than
+`thres` over `option` positions is cut into a staircase of plateaus; a longer
+`option` avoids it.
 
 ```lisp
-(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1)    ; 3 turns
-;=> ((4 1 5.2) (5 0 5.0666666) (7 0 5.0666666))
-(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 3)  ; 3 is not exceeded
-;=> ((4 1 5.2))
+(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1)    ; a plateau from 3 to 7
+;=> ((3 0 5) (7 0 5))
+(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 6)  ; shorter than 6 positions
+;=> nil
+(int-signature '(0 6 3 3.2 3 3.2 3 6 0) :minflexmax 1)      ; a flat minimum
+;=> ((1 1 6) (2 -1 3) (7 1 6))
 ```
-
-Known limits of this method: the first turn of a plateau may remain a
-minimum or a maximum (`(4 1 5.2)` above, in a rise), and in a slow drift
-(each step smaller than `thres`, the whole larger) a small step may still
-give an extremum.
 
 `mode` `nil` means `:minflexmax`; any other mode is an error.
 

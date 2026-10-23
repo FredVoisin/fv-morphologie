@@ -4,6 +4,32 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- `int-signature` and `exsample`, methods `:minmax` and `:minflexmax`,
+  rewritten. With a threshold, a variation smaller than `thres` no longer
+  gives a minimum and a maximum (each small dip of a slow drift did, and the
+  first wiggle of a plateau stayed an extremum): the minima and maxima are
+  the important extrema of `:major-extrema`. The results with `thres` 0 are
+  unchanged for `:minmax`.
+- `:minflexmax`: a plateau is a stretch of at least `option` positions where
+  the sequence varies by less than `thres`; it gives an inflexion where it
+  begins and where it ends (one inflexion at its first position before),
+  valued as in the sequence (the mean of its turns before). `option` is this
+  duration, a number of positions (it was a number of turns, and a
+  non-integer was scaled by the range and the length); `:minmax` does not
+  use it.
+
+### Removed
+
+- The internal functions of the old method (`primitives`,
+  `flat-primitives`, `primitives-thres`, `primitives-raw`,
+  `primitives-nothres`, `primitive-value`, `primitive-sign`, `mfm`,
+  `notzerop`, `sign`), and `next-sign`; `derivee` gives the signs of the
+  successive differences.
+
 ## [1.0.0] - 2026-10-22
 
 The first stable release: from this version on, the public interface (the

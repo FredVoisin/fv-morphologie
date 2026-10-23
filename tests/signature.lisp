@@ -106,9 +106,9 @@
     (is (equal '((1 1 5)) (int-signature '(0 5 5 5 5 0) m 0)))
     ;; extrema alternate (:minmax gave two minima in a row)
     (is (equal '((1 1 4) (2 -1 0) (3 1 4) (5 -1 0)) (int-signature '(0 4 0 4 4 0 4) m 0))))
-  ;; :minflexmax: a plateau which is not an extremum is one inflexion, at its first position
-  (is (equal '((3 0 5)) (int-signature '(0 0 0 5 5 5) :minflexmax 0)))
-  (is (equal '((1 0 3) (3 1 6)) (int-signature '(0 3 3 6 6 0) :minflexmax 0)))
+  ;; :minflexmax: a plateau which is not an extremum gives an inflexion where it begins and where it ends
+  (is (equal '((2 0 0) (3 0 5)) (int-signature '(0 0 0 5 5 5) :minflexmax 0)))
+  (is (equal '((1 0 3) (2 0 3) (3 1 6)) (int-signature '(0 3 3 6 6 0) :minflexmax 0)))
   (is (null (int-signature '(0 0 0 5 5 5) :minmax 0)))
   ;; sequences without plateaus are unchanged
   (is (equal '((2 1 4) (4 -1 1) (6 1 6)) (int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0))))
@@ -119,9 +119,7 @@
   (let ((s '(0 2 4 3 1 2 6 5 0)))
     (dolist (m '(:minmax :minflexmax :major-extrema :landmarks))
       (is (equal (int-signature s m 0) (int-signature s m nil))))
-    (is (equal (exsample s :minmax :values 0) (exsample s :minmax :values nil)))
-    (is (equal (fv-morphologie::primitives s 0 nil) (fv-morphologie::primitives s nil nil)))
-    (is (equal (fv-morphologie::primitives-raw s 0) (fv-morphologie::primitives-raw s nil)))))
+    (is (equal (exsample s :minmax :values 0) (exsample s :minmax :values nil)))))
 
 (test split-fixes
   ;; lists: marks used to be compared with eql (string or list marks never matched)
@@ -141,14 +139,22 @@
   (is (equal '("a" "b" "c") (split "a,b;c" ",;")))
   (is (equal '("été" "à") (split "été,à" ","))))
 
-(test signature-minflexmax-option
-  ;; the documented behaviour of option: the number of turns a slightly varying plateau must exceed
-  (let ((s '(0 2 4 5 5.2 5 5.2 5 7 9)))  ; a plateau of 3 turns in a rise
-    (dolist (o '(nil 0 1 2))
-      (let ((r (int-signature s :minflexmax 1 o)))
-        (is (equal '((4 1) (5 0) (7 0)) (mapcar #'(lambda (p) (subseq p 0 2)) r)))
-        ;; the inflexions are valued at the mean of the turns
-        (is (approx= (/ (+ 5 5.2 5) 3) (third (second r)) 1e-5))))
-    (is (equal '((4 1 5.2)) (int-signature s :minflexmax 1 3)))
-    ;; option has no effect without a threshold
-    (is (equal (int-signature s :minflexmax 0) (int-signature s :minflexmax 0 5)))))
+(test signature-minflexmax-plateaus
+  ;; a plateau is a stretch of at least option positions (2 by default) where the sequence varies by
+  ;; less than thres; it gives an inflexion where it begins and where it ends, valued as in the sequence
+  (let ((s '(0 2 4 5 5.2 5 5.2 5 7 9)))  ; a plateau of 5 positions (3 to 7) in a rise
+    (dolist (o '(nil 0 2 5))
+      (is (equal '((3 0 5) (7 0 5)) (int-signature s :minflexmax 1 o))))
+    (is (null (int-signature s :minflexmax 1 6)))
+    ;; the small variations of the plateau give no extremum (the first one gave a maximum)
+    (is (null (int-signature s :minmax 1)))
+    ;; a variation of thres or more is not a plateau
+    (is (null (int-signature '(0 2 4 5 6 7 9) :minflexmax 1))))
+  ;; a plateau which contains an extremum is a flat extremum, given once
+  (is (equal '((1 1 6) (2 -1 3) (7 1 6)) (int-signature '(0 6 3 3.2 3 3.2 3 6 0) :minflexmax 1)))
+  (is (equal '((4 1 8.6)) (int-signature '(0 8 8.5 8.2 8.6 0) :minflexmax 1)))
+  ;; a slow drift is not a succession of small extrema (each dip of 0.2 gave a maximum and a minimum)
+  (is (equal '((13 1 8)) (int-signature '(0 3 3.5 3.3 3.8 3.6 4.1 3.9 4.4 4.2 4.7 4.5 5 8 0) :minmax 1)))
+  ;; option is a number of positions
+  (signals error (int-signature '(0 1 0) :minflexmax 1 0.5))
+  (signals error (int-signature '(0 1 0) :minflexmax 1 -1)))

@@ -55,18 +55,17 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
   (:documentation "INT-SIGNATURE: signature of a sequence with some threshold <thres> for variation in intensity.
 The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
-:minflexmax, returns minima, maxima and inflexions using Fred Voisin pragmatic method.
-:minmax, same with only maxima and minima (without inflexions);
+:minflexmax, returns minima, maxima and inflexions: the minima and maxima of :minmax, and an inflexion where a plateau
+ which is not an extremum begins and where it ends (a plateau is a stretch where the sequence varies by less than thres);
+:minmax, minima and maxima only: the important extrema of :major-extrema, with |a - b|;
 :major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
  a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
 :landmarks, first-order landmarks smoothed by MDPP(D, P) (Perng, Parker & Leung, Conference on Information
  and Knowledge Management, 1999): pairs of close landmarks whose difference is below thres are removed.
 Argument <thres> is the treshold value (delta) in amplitude.
 Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax and :minmax, <option> is used only when thres > 0: the local extrema which differ from the previous one
-by thres or less are the turns of a slightly varying plateau, and <option> is the number of turns a plateau must exceed to be kept
-(nil, 0, 1 and 2 count as 2); a kept plateau gives two inflexions, at its first and last turns, valued at the mean of its turns;
-a shorter plateau is absorbed in the preceding extremum. A non-integer <option> becomes floor((max - min) * option * length);
+with :minflexmax, <option> is the minimal duration of a plateau, a number of positions (nil, 0, 1 and 2 mean 2);
+with :minmax, <option> is not used;
 with :major-extrema, <option> may be a distance function (a b) for comparing values (|a - b| by default);
 with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks may be removed), a function (a b) giving the
 difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
