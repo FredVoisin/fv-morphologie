@@ -209,7 +209,7 @@ Common Lisp, non.
        graph-span, graph-path, graph>dot
 ;;; 2. CLASSIFICATION
 ;;  2.1 SEGMENTER : couper, scinder
-       int-signature, exsample, split, graph-part
+       exsample, split, graph-part
 ;;  2.2 CONCATÉNER : grouper, assembler
        motif-group, list>sym
 ;;  2.3 DIFFÉRENCIER : classer, identifier
@@ -593,7 +593,15 @@ séquence selon divers critères ou procédés :
 
 ### 2.1 Segmenter
 
-#### `int-signature (seq mode thres &optional option)`
+#### `exsample (seq method thres &key diff duration out)`
+
+*Exsample* : variante de la racine étymologique d'« exemple »,
+d'« échantillonner » et de l'anglais *sample*. Résume une variation
+d'intensité par ses valeurs les plus significatives, c'est-à-dire les points
+de sa signature (plus la première et la dernière valeur). Le taux de
+compression obtenu ne peut pas être prévu : il dépend à la fois de la forme
+générale de la variation et de la méthode employée pour en extraire la
+signature.
 
 La *signature* d'une variation d'intensité est l'ensemble de ses variations
 les plus caractéristiques — minima, maxima et éventuellement inflexions —,
@@ -620,54 +628,55 @@ Dans fv-morphologie, chaque point saillant (pli) est une liste formée de :
 `thres` est une amplitude absolue, dans l'unité des valeurs de `seq` : les
 variations inférieures à `thres` sont ignorées (`nil` ou 0 : pas de seuil ;
 un `thres` négatif est une erreur).
-Modes :
+Méthodes :
 
-- `:minflexmax` : les minima et maxima de `:minmax`, et des inflexions là où
-  un plateau commence et là où il finit (`option` : voir plus bas) ;
+- `:minflexmax` (par défaut, ou `nil`) : les minima et maxima de `:minmax`,
+  et des inflexions là où un plateau commence et là où il finit
+  (`:duration` : voir plus bas) ;
 - `:minmax` : minima et maxima seulement, les extrema importants de
-  `:major-extrema` (avec |a − b|) ; `option` ne sert pas ;
+  `:major-extrema` (avec |a − b|) ;
 - `:major-extrema` : les *important extrema* de Fink & Gandhi. Un minimum
   `a_m` est important si, sur un intervalle `a_i … a_j` qui l'entoure, il est
   la valeur la plus basse et la séquence remonte d'au moins `thres` de part et
-  d'autre : dist(`a_m`, `a_i`) ≥ `thres` et dist(`a_m`, `a_j`) ≥ `thres` ;
+  d'autre : diff(`a_m`, `a_i`) ≥ `thres` et diff(`a_m`, `a_j`) ≥ `thres` ;
   les maxima importants sont définis de même, à l'envers. Avec `thres` 0, tout
-  extremum local strict est important. `option` peut être une fonction de
-  distance `(a b)` (|a − b| par défaut ; la distance entre deux valeurs
-  égales doit être 0). L'algorithme linéaire de Fink & Gandhi est utilisé ;
-  il assouplit la définition aux extrémités de la séquence : un extremum
-  situé entre une extrémité et une variation d'au moins `thres` n'a pas
-  besoin d'une variation de `thres` du côté de cette extrémité
-  (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et le minimum 0). D'extrema
-  importants égaux, sans extremum de l'autre sorte entre eux, le premier est
-  donné, et un extremum égal à la première valeur de la séquence est cette
-  valeur (il n'est pas donné).
+  extremum local strict est important. `:diff` donne la différence (voir plus
+  bas ; la différence entre deux valeurs égales doit être 0). L'algorithme
+  linéaire de Fink & Gandhi est utilisé ; il assouplit la définition aux
+  extrémités de la séquence : un extremum situé entre une extrémité et une
+  variation d'au moins `thres` n'a pas besoin d'une variation de `thres` du
+  côté de cette extrémité (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et
+  le minimum 0). D'extrema importants égaux, sans extremum de l'autre sorte
+  entre eux, le premier est donné, et un extremum égal à la première valeur
+  de la séquence est cette valeur (il n'est pas donné).
 - `:landmarks` : les *landmarks* de Perng, Parker & Leung. Les landmarks du
   premier ordre sont les extrema locaux ; ils sont ensuite lissés par MDPP :
   une paire de landmarks consécutifs (x₁, y₁), (x₂, y₂) est supprimée tant que
-  x₂ − x₁ < D et que leur différence est inférieure à `thres`. `option` donne
-  D et la différence :
-  - `nil` (par défaut) : pas de D, différence |y₂ − y₁| ;
-  - un nombre : D, différence |y₂ − y₁| ;
-  - une fonction `(a b)` : pas de D, différence donnée par la fonction ;
-  - une liste `(D critère)` : D (`nil` pour aucune limite) et le critère,
-    `:absolute` (|y₂ − y₁|), `:relative` (2|y₂ − y₁| / (|y₁| + |y₂|), le
-    pourcentage de Perng et al.) ou une fonction `(a b)`.
+  x₂ − x₁ < D et que leur différence, donnée par `:diff`, est inférieure à
+  `thres`. D est `:duration`, un nombre de positions, non négatif (`nil` :
+  aucune limite). La paire de plus petite différence est supprimée la
+  première (la plus à gauche à différences égales) ; après une suppression,
+  les landmarks d'avant et d'après la paire deviennent consécutifs et peuvent
+  former une nouvelle paire. `(0 6 4 5 0)` avec `thres` 3 donne `((1 1 6))` :
+  la paire 4, 5 (différence 1) est supprimée, et non 6, 4 (différence 2).
 
-  D est un nombre de positions, non négatif. La paire de plus petite
-  différence est supprimée la première (la plus à gauche à différences
-  égales) ; après une suppression, les landmarks d'avant et d'après la paire
-  deviennent consécutifs et peuvent former une nouvelle paire.
-  `(0 6 4 5 0)` avec `thres` 3 donne `((1 1 6))` : la paire 4, 5
-  (différence 1) est supprimée, et non 6, 4 (différence 2).
+`:diff`, avec `:major-extrema` et `:landmarks`, est la différence entre deux
+valeurs a et b :
+
+- `:absolute` (par défaut, ou `nil`) : |a − b| ;
+- `:relative` : 2|a − b| / (|a| + |b|), le pourcentage de Perng et al. ;
+- une fonction `(a b)`.
+
+Une clé dont la méthode ne se sert pas (`:diff` avec `:minmax` ou
+`:minflexmax`, `:duration` avec `:minmax` ou `:major-extrema`) est une
+erreur, de même qu'une autre méthode.
 
 Avec toutes les méthodes, un extremum plat (un plateau qui est un minimum ou
 un maximum) est donné une seule fois, à sa première position ; avec
 `:minflexmax`, un plateau qui n'est pas un extremum donne une inflexion là où
-il commence et là où il finit. La signature ne comprend pas la première ni la dernière
-valeur (`exsample` les ajoute). (Jusqu'à cette version, `:major-extrema` et
-`:landmarks` donnaient silencieusement le résultat de `:minflexmax`.)
+il commence et là où il finit.
 
-Avec `:minflexmax`, un *plateau* est une portion d'au moins `option`
+Avec `:minflexmax`, un *plateau* est une portion d'au moins `:duration`
 positions (`nil`, 0, 1 et 2 valent 2) où la séquence varie de moins de
 `thres` (où elle est constante quand `thres` vaut 0) ; les plateaux sont
 cherchés de gauche à droite, chacun aussi long que possible. Un plateau qui
@@ -676,29 +685,44 @@ tout autre plateau donne deux inflexions (type 0), à sa première et à sa
 dernière position, avec les valeurs de la séquence à ces positions. Un
 plateau est défini par toute son étendue : une dérive lente dont la variation
 atteint `thres` n'est pas un seul plateau. Une montée régulière de moins de
-`thres` sur `option` positions est découpée en escalier de plateaux ; une
-`option` plus longue l'évite.
+`thres` sur `:duration` positions est découpée en escalier de plateaux ; une
+`:duration` plus longue l'évite.
+
+`:out` donne le résultat :
+
+- `:values` (par défaut, ou `nil`) : les valeurs des points, avec la première
+  et la dernière valeur de `seq` ;
+- `:positions` : leurs positions ;
+- `:all` : les paires `(position valeur)` ;
+- `:resampled` : les proportions temporelles entre les points sont
+  conservées, avec une interpolation linéaire entre eux ; le résultat a le
+  même nombre de valeurs que la séquence d'origine ;
+- `:signature` : les points `(position type valeur)`, sans la première ni la
+  dernière valeur.
+
+Une autre sortie est une erreur.
 
 ```lisp
-(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1)    ; un plateau de 3 à 7
-;=> ((3 0 5) (7 0 5))
-(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 6)  ; moins de 6 positions
-;=> nil
-(int-signature '(0 6 3 3.2 3 3.2 3 6 0) :minflexmax 1)      ; un minimum plat
-;=> ((1 1 6) (2 -1 3) (7 1 6))
-```
-
-`mode` `nil` signifie `:minflexmax` ; tout autre mode est une erreur.
-
-```lisp
-(int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0)                   ;=> (0 4 1 6 0)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :positions)   ;=> (0 2 4 6 8)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :all)
+;=> ((0 0) (2 4) (4 1) (6 6) (8 0))
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :resampled)
+;=> (0 2 4 5/2 1 7/2 6 3 0)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :signature)
 ;=> ((2 1 4) (4 -1 1) (6 1 6))
-(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :major-extrema 2.4)
+(exsample '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :major-extrema 2.4 :out :signature)
 ;=> ((7 1 8) (11 -1 2) (12 1 5))
-(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6)
+(exsample '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6 :out :signature)
 ;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
-(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 '(nil :relative))
+(exsample '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 :diff :relative :out :signature)
 ;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
+(exsample '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 :out :signature)  ; un plateau de 3 à 7
+;=> ((3 0 5) (7 0 5))
+(exsample '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 :duration 6 :out :signature)
+;=> nil                                                              ; moins de 6 positions
+(exsample '(0 6 3 3.2 3 3.2 3 6 0) :minflexmax 1 :out :signature)    ; un minimum plat
+;=> ((1 1 6) (2 -1 3) (7 1 6))
 ```
 
 Références (telles que données dans le tutoriel PWGL) :
@@ -713,37 +737,6 @@ Références (telles que données dans le tutoriel PWGL) :
   Machine Perception and Artificial Intelligence, vol. 57, 2004.
 - Perng, Parker & Leung, « Representing time series by landmarks »,
   *Conference on Information and Knowledge Management*, 1999.
-
-#### `exsample (seq method mode thres &optional option)`
-
-*Exsample* : variante de la racine étymologique d'« exemple »,
-d'« échantillonner » et de l'anglais *sample*. Résume une variation
-d'intensité par ses valeurs les plus significatives, c'est-à-dire les points
-de sa signature (plus la première et la dernière valeur). Le taux de
-compression obtenu ne peut pas être prévu : il dépend à la fois de la forme
-générale de la variation et de la méthode employée pour en extraire la
-signature.
-
-`method` est l'un des modes de `int-signature` (`nil` signifie
-`:minflexmax`). `mode` vaut :
-
-- `:values` (par défaut, ou `nil`) : les valeurs ;
-- `:positions` : leurs positions ;
-- `:all` : les paires `(position valeur)` ;
-- `:resampled` : les proportions temporelles entre les points sont
-  conservées, avec une interpolation linéaire entre eux ; le résultat a le
-  même nombre de valeurs que la séquence d'origine.
-
-Un autre mode ou une autre méthode est une erreur.
-
-```lisp
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :values 0)     ;=> (0 4 1 6 0)
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :positions 0)  ;=> (0 2 4 6 8)
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :all 0)
-;=> ((0 0) (2 4) (4 1) (6 6) (8 0))
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :resampled 0)
-;=> (0 2 4 5/2 1 7/2 6 3 0)
-```
 
 #### `split (seq &optional marks)`
 
@@ -1593,14 +1586,14 @@ et [« Arbres de recouvrement minimal de chants d'oiseaux »](https://fredvoisin
 - Diday, E. et al., *Éléments d'analyse de données*, Paris, Dunod, 1982
   (nuées dynamiques, `class-num` ; ancien arbre de recouvrement).
 - Fink & Gandhi, « Important extrema in time series », *Conference on
-  Systems, Man and Cybernetics*, 2007 (`int-signature :major-extrema`).
+  Systems, Man and Cybernetics*, 2007 (`exsample :major-extrema`).
 - Hetland, « A survey of recent methods for efficient retrieval of similar
   time sequences », in *Data Mining in Time Series Databases*, vol. 57, 2004.
 - Kamada & Kawai, *Information Processing Letters* 31(1), 1989 (neato,
   `graph>dot`).
 - Perng, Parker & Leung, « Representing time series by landmarks »,
   *Conference on Information and Knowledge Management*, 1999
-  (`int-signature :landmarks`).
+  (`exsample :landmarks`).
 
 ## Liste des fonctions
 

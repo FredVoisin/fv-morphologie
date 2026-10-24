@@ -208,7 +208,7 @@ Common Lisp version does not.
        graph-span, graph-path, graph>dot
 ;;; 2. CLASSIFICATION
 ;;  2.1 SEGMENT : cut, split
-       int-signature, exsample, split, graph-part
+       exsample, split, graph-part
 ;;  2.2 CONCATENATE : group, assemble
        motif-group, list>sym
 ;;  2.3 DIFFERENTIATE : classify, identify
@@ -574,7 +574,14 @@ sequence according to various criteria or processes:
 
 ### 2.1 Segment
 
-#### `int-signature (seq mode thres &optional option)`
+#### `exsample (seq method thres &key diff duration out)`
+
+*Exsample*: a variant of the etymological root of "example", French
+"échantillonner" and English "sample". It summarizes a variation of intensity
+by its most significant values, i.e. the points of its signature (plus the
+first and last values). The resulting compression rate cannot be predicted:
+it depends both on the overall shape of the variation and on the method used
+to extract its signature.
 
 The *signature* of a variation of intensity is the set of its most
 characteristic variations — minima, maxima and possibly inflexions — in other
@@ -599,19 +606,20 @@ In fv-morphologie, each salient point (fold) is a list of:
 `thres` is an absolute amplitude, in the unit of the values of `seq`:
 variations smaller than `thres` are ignored (`nil` or 0: no threshold; a
 negative `thres` is an error).
-Modes:
+Methods:
 
-- `:minflexmax`: the minima and maxima of `:minmax`, and inflexions where a
-  plateau begins and where it ends (`option`: see below);
+- `:minflexmax` (default, or `nil`): the minima and maxima of `:minmax`, and
+  inflexions where a plateau begins and where it ends (`:duration`: see
+  below);
 - `:minmax`: minima and maxima only, the important extrema of
-  `:major-extrema` (with |a − b|); `option` is not used;
+  `:major-extrema` (with |a − b|);
 - `:major-extrema`: the *important extrema* of Fink & Gandhi. A minimum
   `a_m` is important if, on some interval `a_i … a_j` around it, it is the
   lowest value and the sequence rises by at least `thres` on both sides:
-  dist(`a_m`, `a_i`) ≥ `thres` and dist(`a_m`, `a_j`) ≥ `thres`; important
+  diff(`a_m`, `a_i`) ≥ `thres` and diff(`a_m`, `a_j`) ≥ `thres`; important
   maxima are the same upside down. With `thres` 0, every strict local
-  extremum is important. `option` may be a distance function `(a b)`
-  (|a − b| by default; the distance between two equal values must be 0).
+  extremum is important. `:diff` gives the difference (see below; the
+  difference between two equal values must be 0).
   Fink & Gandhi's linear algorithm is used, which relaxes the definition at
   the ends of the sequence: an extremum between an end and a variation of at
   least `thres` needs no variation of `thres` on the side of that end
@@ -622,59 +630,75 @@ Modes:
 - `:landmarks`: the *landmarks* of Perng, Parker & Leung. The first-order
   landmarks are the local extrema; they are then smoothed by MDPP: a pair of
   consecutive landmarks (x₁, y₁), (x₂, y₂) is removed while x₂ − x₁ < D and
-  their difference is below `thres`. `option` gives D and the difference:
-  - `nil` (default): no D, difference |y₂ − y₁|;
-  - a number: D, difference |y₂ − y₁|;
-  - a function `(a b)`: no D, difference given by the function;
-  - a list `(D criterion)`: D (`nil` for no limit) and the criterion,
-    `:absolute` (|y₂ − y₁|), `:relative` (2|y₂ − y₁| / (|y₁| + |y₂|), the
-    percentage of Perng et al.) or a function `(a b)`.
+  their difference, given by `:diff`, is below `thres`. D is `:duration`, a
+  number of positions, not negative (`nil`: no limit). The pair of smallest
+  difference is removed first (the left-most of equal differences); after a
+  removal, the landmarks before and after the pair become consecutive and may
+  form a new pair. `(0 6 4 5 0)` with `thres` 3 gives `((1 1 6))`: the pair
+  4, 5 (difference 1) is removed, not 6, 4 (difference 2).
 
-  D is a number of positions, not negative. The pair of smallest difference
-  is removed first (the left-most of equal differences); after a removal, the
-  landmarks before and after the pair become consecutive and may form a new
-  pair. `(0 6 4 5 0)` with `thres` 3 gives `((1 1 6))`: the pair 4, 5
-  (difference 1) is removed, not 6, 4 (difference 2).
+`:diff`, with `:major-extrema` and `:landmarks`, is the difference between
+two values a and b:
+
+- `:absolute` (default, or `nil`): |a − b|;
+- `:relative`: 2|a − b| / (|a| + |b|), the percentage of Perng et al.;
+- a function `(a b)`.
+
+A key that the method does not use (`:diff` with `:minmax` or `:minflexmax`,
+`:duration` with `:minmax` or `:major-extrema`) is an error, as is another
+method.
 
 With all the methods, a flat extremum (a plateau which is a minimum or a
 maximum) is given once, at its first position; with `:minflexmax`, a plateau
 which is not an extremum gives an inflexion where it begins and where it
-ends. The
-signature does not include the first and last values (`exsample` adds them).
-(Until this version, `:major-extrema` and `:landmarks` silently gave the
-`:minflexmax` result.)
+ends.
 
-With `:minflexmax`, a *plateau* is a stretch of at least `option` positions
-(`nil`, 0, 1 and 2 mean 2) where the sequence varies by less than `thres`
-(where it is constant when `thres` is 0); the plateaus are found from left to
-right, each as long as possible. A plateau which contains a minimum or a
-maximum is a flat extremum, given once; any other plateau gives two
+With `:minflexmax`, a *plateau* is a stretch of at least `:duration`
+positions (`nil`, 0, 1 and 2 mean 2) where the sequence varies by less than
+`thres` (where it is constant when `thres` is 0); the plateaus are found from
+left to right, each as long as possible. A plateau which contains a minimum or
+a maximum is a flat extremum, given once; any other plateau gives two
 inflexions (type 0), at its first and last positions, with the values of the
 sequence there. A plateau is defined by its whole range: a slow drift whose
 variation reaches `thres` is not one plateau. A regular rise of less than
-`thres` over `option` positions is cut into a staircase of plateaus; a longer
-`option` avoids it.
+`thres` over `:duration` positions is cut into a staircase of plateaus; a
+longer `:duration` avoids it.
+
+`:out` gives the result:
+
+- `:values` (default, or `nil`): the values of the points, with the first and
+  last values of `seq`;
+- `:positions`: their positions;
+- `:all`: `(position value)` pairs;
+- `:resampled`: the time proportions between the points are kept, with a
+  linear interpolation between them; the result has the same number of values
+  as the original sequence;
+- `:signature`: the points `(position type value)`, without the first and
+  last values.
+
+Another output is an error.
 
 ```lisp
-(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1)    ; a plateau from 3 to 7
-;=> ((3 0 5) (7 0 5))
-(int-signature '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 6)  ; shorter than 6 positions
-;=> nil
-(int-signature '(0 6 3 3.2 3 3.2 3 6 0) :minflexmax 1)      ; a flat minimum
-;=> ((1 1 6) (2 -1 3) (7 1 6))
-```
-
-`mode` `nil` means `:minflexmax`; any other mode is an error.
-
-```lisp
-(int-signature '(0 2 4 3 1 2 6 5 0) :minmax 0)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0)                   ;=> (0 4 1 6 0)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :positions)   ;=> (0 2 4 6 8)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :all)
+;=> ((0 0) (2 4) (4 1) (6 6) (8 0))
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :resampled)
+;=> (0 2 4 5/2 1 7/2 6 3 0)
+(exsample '(0 2 4 3 1 2 6 5 0) :minmax 0 :out :signature)
 ;=> ((2 1 4) (4 -1 1) (6 1 6))
-(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :major-extrema 2.4)
+(exsample '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :major-extrema 2.4 :out :signature)
 ;=> ((7 1 8) (11 -1 2) (12 1 5))
-(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6)
+(exsample '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6 :out :signature)
 ;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
-(int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 '(nil :relative))
+(exsample '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 :diff :relative :out :signature)
 ;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
+(exsample '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 :out :signature)  ; a plateau from 3 to 7
+;=> ((3 0 5) (7 0 5))
+(exsample '(0 2 4 5 5.2 5 5.2 5 7 9) :minflexmax 1 :duration 6 :out :signature)
+;=> nil                                                              ; shorter than 6 positions
+(exsample '(0 6 3 3.2 3 3.2 3 6 0) :minflexmax 1 :out :signature)    ; a flat minimum
+;=> ((1 1 6) (2 -1 3) (7 1 6))
 ```
 
 References (as given in the PWGL tutorial):
@@ -689,36 +713,6 @@ References (as given in the PWGL tutorial):
   Machine Perception and Artificial Intelligence, vol. 57, 2004.
 - Perng, Parker & Leung, "Representing time series by landmarks",
   *Conference on Information and Knowledge Management*, 1999.
-
-#### `exsample (seq method mode thres &optional option)`
-
-*Exsample*: a variant of the etymological root of "example", French
-"échantillonner" and English "sample". It summarizes a variation of intensity
-by its most significant values, i.e. the points of its signature (plus the
-first and last values). The resulting compression rate cannot be predicted:
-it depends both on the overall shape of the variation and on the method used
-to extract its signature.
-
-`method` is one of the `int-signature` modes (`nil` means `:minflexmax`).
-`mode` is:
-
-- `:values` (default, or `nil`): the values;
-- `:positions`: their positions;
-- `:all`: `(position value)` pairs;
-- `:resampled`: the time proportions between the points are kept, with a
-  linear interpolation between them; the result has the same number of values
-  as the original sequence.
-
-Another mode or method is an error.
-
-```lisp
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :values 0)     ;=> (0 4 1 6 0)
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :positions 0)  ;=> (0 2 4 6 8)
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :all 0)
-;=> ((0 0) (2 4) (4 1) (6 6) (8 0))
-(exsample '(0 2 4 3 1 2 6 5 0) :minmax :resampled 0)
-;=> (0 2 4 5/2 1 7/2 6 3 0)
-```
 
 #### `split (seq &optional marks)`
 
@@ -1536,14 +1530,14 @@ and [« Arbres de recouvrement minimal de chants d'oiseaux »](https://fredvoisi
 - Diday, E. et al., *Éléments d'analyse de données*, Paris, Dunod, 1982
   (dynamic clouds, `class-num`; earlier spanning tree).
 - Fink & Gandhi, "Important extrema in time series", *Conference on Systems,
-  Man and Cybernetics*, 2007 (`int-signature :major-extrema`).
+  Man and Cybernetics*, 2007 (`exsample :major-extrema`).
 - Hetland, "A survey of recent methods for efficient retrieval of similar time
   sequences", in *Data Mining in Time Series Databases*, vol. 57, 2004.
 - Kamada & Kawai, *Information Processing Letters* 31(1), 1989 (neato,
   `graph>dot`).
 - Perng, Parker & Leung, "Representing time series by landmarks",
   *Conference on Information and Knowledge Management*, 1999
-  (`int-signature :landmarks`).
+  (`exsample :landmarks`).
 
 ## List of functions
 

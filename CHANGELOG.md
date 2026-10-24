@@ -4,6 +4,32 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- `exsample` merges `int-signature` and the former `exsample`:
+  `(exsample seq method thres &key diff duration out)`. The option becomes
+  two keys: `:diff`, the difference (`:absolute`, `:relative` or a
+  function) with `:major-extrema` and `:landmarks`; `:duration`, a number of
+  positions, the minimal plateau with `:minflexmax` and D with `:landmarks`.
+  `:out` gives the output: `:values` (default), `:positions`, `:all`,
+  `:resampled`, or `:signature`, the points that `int-signature` returned.
+  `(int-signature seq mode thres)` is `(exsample seq mode thres :out
+  :signature)`, and `(exsample seq method mode thres)` is
+  `(exsample seq method thres :out mode)`. A key that the method does not use
+  is an error.
+- `:major-extrema` takes `:relative` and `:absolute` as `:landmarks` does.
+
+### Removed
+
+- `int-signature`: use `exsample` with `:out :signature`.
+
+### Fixed
+
+- `exsample` looked the points up in the list one by one, in quadratic time
+  (2.1 s for 50,000 values with `:resampled`): it is linear (12 ms).
+
 ## [1.2.0] - 2026-10-24
 
 ### Fixed

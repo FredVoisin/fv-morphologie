@@ -25,20 +25,30 @@
 
 (in-package :fv-morphologie)
 
-(defgeneric exsample (seq method mode thres &optional option)
-  (:documentation "EXSAMPLE: samples a sequence of numerical values according to its signature (with its first and last values).
-Available methods are (see int-signature for documentation):
-- :minmax
-- :minflexmax (default, or nil)
-- :major-extrema
-- :landmarks
-Modes may be :values (default, or nil), :positions, :all or :resampled"))
+(defgeneric exsample (seq method thres &key diff duration out)
+  (:documentation "EXSAMPLE: samples a sequence of numerical values <seq> according to its signature, its salient points with some threshold <thres> for variation in intensity.
+The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>, not negative): variations smaller than <thres> are ignored.
+Argument <method> defines the algorithm to compute the signature:
+:minflexmax (default, or nil), returns minima, maxima and inflexions: the minima and maxima of :minmax, and an inflexion where a plateau
+ which is not an extremum begins and where it ends (a plateau is a stretch of at least :duration positions where the sequence varies by less than thres);
+:minmax, minima and maxima only: the important extrema of :major-extrema, with |a - b|;
+:major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
+ a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
+:landmarks, first-order landmarks smoothed by MDPP(D, P) (Perng, Parker & Leung, Conference on Information
+ and Knowledge Management, 1999): pairs of close landmarks whose difference is below thres are removed.
+Keyword :diff, with :major-extrema and :landmarks, the difference between two values: :absolute (|a - b|, default),
+:relative (2 |a - b| / (|a| + |b|), as in Perng et al.) or a function (a b).
+Keyword :duration, a number of positions: with :minflexmax, the minimal duration of a plateau (nil, 0, 1 and 2 mean 2);
+with :landmarks, D (only landmarks closer than D positions may be removed; nil: no limit).
+A keyword not used by the method is an error.
+Keyword :out defines the output: :values (default, or nil), :positions, :all (position value) or :resampled
+(the straight lines between the points, at every position), all with the first and last values of <seq>;
+or :signature, the points (position type value), type -1 for a minimum, 1 for a maximum and 0 for an inflexion,
+without the first and last values."))
 
-(defmethod exsample ((seq list) (method symbol) (mode symbol) (thres t) &optional (option nil))
-  ;; thres nil: no threshold, as 0 (no method applied to nil)
-  (if seq
-      (echantillonage seq (or method :minflexmax) (or mode :values) (or thres 0) option)
-      nil))
+(defmethod exsample ((seq list) (method symbol) (thres t) &key (diff nil) (duration nil) (out nil))
+  ;; nil: the defaults (thres nil: no threshold, as 0)
+  (signature seq (or method :minflexmax) (or thres 0) :diff diff :duration duration :out (or out :values)))
 
 (defgeneric split (seq &optional marks)
   (:documentation "SPLIT: splits <seq> according to marks, which are not kept, and returns the list of its segments.
@@ -50,31 +60,6 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
 
 (defmethod split ((seq string) &optional (marks " "))
   (split-string seq marks))
-
-(defgeneric int-signature (seq mode thres &optional option)
-  (:documentation "INT-SIGNATURE: signature of a sequence with some threshold <thres> for variation in intensity.
-The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>, not negative): variations smaller than <thres> are ignored.
- Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
-:minflexmax, returns minima, maxima and inflexions: the minima and maxima of :minmax, and an inflexion where a plateau
- which is not an extremum begins and where it ends (a plateau is a stretch where the sequence varies by less than thres);
-:minmax, minima and maxima only: the important extrema of :major-extrema, with |a - b|;
-:major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
- a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
-:landmarks, first-order landmarks smoothed by MDPP(D, P) (Perng, Parker & Leung, Conference on Information
- and Knowledge Management, 1999): pairs of close landmarks whose difference is below thres are removed.
-Argument <thres> is the treshold value (delta) in amplitude.
-Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax, <option> is the minimal duration of a plateau, a number of positions (nil, 0, 1 and 2 mean 2);
-with :minmax, <option> is not used;
-with :major-extrema, <option> may be a distance function (a b) for comparing values (|a - b| by default);
-with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks may be removed), a function (a b) giving the
-difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
-(2 |a - b| / (|a| + |b|), as in Perng et al.) or a function."))
-
-(defmethod int-signature ((seq t) (mode t) (thres t) &optional (option nil))
-  ;; thres nil: no threshold, as 0 (no method applied to nil)
-  (when (not mode) (setf mode :minflexmax))
-  (signature seq mode (or thres 0) option))
 
 (defgeneric mark-structure  (seq out &key diss rem-loc-dup test)
   (:documentation "MARK-STRUCTURE: returns possible structures of input <seq> based on marks retrieved from <seq>.

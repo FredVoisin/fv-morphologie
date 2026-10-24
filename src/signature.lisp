@@ -20,8 +20,8 @@
 
 ;;;; signature.lisp
 ;;;;
-;;;; Signatures of numeric sequences: primitives (contour features), major
-;;;; extrema, landmarks, sampling.
+;;;; Signatures of numeric sequences: major extrema, local extrema, landmarks,
+;;;; plateaus and inflexions, and their output (exsample).
 
 (in-package :fv-morphologie)
 
@@ -95,84 +95,80 @@ type -1 for a minimum, 1 for a maximum. A flat extremum is given at its first po
                        start i))))
     (nreverse out)))
 
-(defun landmarks (seq thres &optional option)
+(defun difference-function (diff)
+  "The difference between two values a and b given by diff: nil or :absolute (|b - a|), :relative
+(2 |b - a| / (|a| + |b|), the percentage of Perng et al.) or a function (a b)."
+  (cond ((member diff '(nil :absolute)) #'(lambda (a b) (abs (- b a))))
+        ((eq diff :relative)
+         #'(lambda (a b)
+             (let ((m (+ (abs a) (abs b))))
+               (if (zerop m) 0 (/ (* 2 (abs (- b a))) m)))))
+        ((functionp diff) diff)
+        (t (error "exsample: :diff must be :absolute, :relative or a function (a b), not ~S." diff))))
+
+(defun landmarks (seq thres &optional d (diff #'(lambda (a b) (abs (- b a)))))
   "Landmarks of seq (Perng, Parker & Leung, 1999): the first-order landmarks (local extrema), smoothed
-by MDPP: a pair of consecutive landmarks (x1 y1) (x2 y2) is removed while x2 - x1 < D and their
-difference is below thres, the pair of smallest difference first (the left-most of equal differences;
-after a removal, the landmarks before and after the pair become consecutive). D is nil or a non-negative
-number of positions. option is nil (no D, difference |y2 - y1|), a number (D), a function (a b)
-giving the difference, or a list (D criterion), criterion being :absolute (|y2 - y1|), :relative
-(2 |y2 - y1| / (|y1| + |y2|), as in Perng et al.) or a function.
+by MDPP: a pair of consecutive landmarks (x1 y1) (x2 y2) is removed while x2 - x1 < d and their
+difference (diff y1 y2) is below thres, the pair of smallest difference first (the left-most of equal
+differences; after a removal, the landmarks before and after the pair become consecutive). d is nil
+(no limit) or a non-negative number of positions.
 Returns (position type value), type -1 for a minimum and 1 for a maximum."
-  (multiple-value-bind (d criterion)
-      (cond ((null option) (values nil :absolute))
-            ((realp option) (values option :absolute))
-            ((functionp option) (values nil option))
-            ((listp option) (values (first option) (or (second option) :absolute)))
-            (t (error "landmarks: option must be nil, a distance, a function or a list (distance criterion), not ~S." option)))
-    (unless (or (null d) (and (realp d) (>= d 0)))
-      (error "landmarks: the distance D must be nil or a non-negative number, not ~S." d))
-    (let ((diff (cond ((eq criterion :absolute) #'(lambda (a b) (abs (- b a))))
-                      ((eq criterion :relative)
-                       #'(lambda (a b)
-                           (let ((m (+ (abs a) (abs b))))
-                             (if (zerop m) 0 (/ (* 2 (abs (- b a))) m)))))
-                      ((functionp criterion) criterion)
-                      (t (error "landmarks: criterion must be :absolute, :relative or a function, not ~S." criterion))))
-          (lm (coerce (local-extrema seq) 'vector)))
-      (let* ((n (length lm))
-             (prev (make-array n))
-             (next (make-array n))
-             (alive (make-array n :initial-element t))
-             (heap (make-array 16 :adjustable t :fill-pointer 0)))
-        (dotimes (i n)
-          (setf (aref prev i) (if (> i 0) (1- i) nil)
-                (aref next i) (if (< i (1- n)) (1+ i) nil)))
-        ;; heap of the removable pairs (difference i j), j following i when the pair was made;
-        ;; the smallest difference first, then the left-most pair
-        (labels ((before-p (e f)
-                   (or (< (first e) (first f))
-                       (and (= (first e) (first f)) (< (second e) (second f)))))
-                 (heap-push (e)
-                   (vector-push-extend e heap)
-                   (loop with k = (1- (fill-pointer heap))
-                         while (> k 0)
-                         do (let ((up (floor (1- k) 2)))
-                              (if (before-p (aref heap k) (aref heap up))
-                                  (progn (rotatef (aref heap k) (aref heap up)) (setf k up))
-                                  (return)))))
-                 (heap-pop ()
-                   (let ((top (aref heap 0))
-                         (last (vector-pop heap)))
-                     (when (plusp (fill-pointer heap))
-                       (setf (aref heap 0) last)
-                       (loop with k = 0
-                             with m = (fill-pointer heap)
-                             do (let* ((l (1+ (* 2 k))) (r (1+ l)) (best k))
-                                  (when (and (< l m) (before-p (aref heap l) (aref heap best))) (setf best l))
-                                  (when (and (< r m) (before-p (aref heap r) (aref heap best))) (setf best r))
-                                  (if (= best k)
-                                      (return)
-                                      (progn (rotatef (aref heap k) (aref heap best)) (setf k best))))))
-                     top))
-                 (consider (i j)
-                   (when (and i j)
-                     (let ((a (aref lm i)) (b (aref lm j)))
-                       (when (or (null d) (< (- (first b) (first a)) d))
-                         (let ((dv (funcall diff (third a) (third b))))
-                           (when (< dv thres) (heap-push (list dv i j)))))))))
-          (dotimes (i (1- n)) (consider i (1+ i)))
-          (loop while (plusp (fill-pointer heap))
-                do (destructuring-bind (dv i j) (heap-pop)
-                     (declare (ignore dv))
-                     ;; a pair is still there when both landmarks are, and still consecutive
-                     (when (and (aref alive i) (aref alive j) (eql (aref next i) j))
-                       (let ((p (aref prev i)) (q (aref next j)))
-                         (setf (aref alive i) nil (aref alive j) nil)
-                         (when p (setf (aref next p) q))
-                         (when q (setf (aref prev q) p))
-                         (consider p q)))))
-          (loop for i below n when (aref alive i) collect (aref lm i)))))))
+  (unless (or (null d) (and (realp d) (>= d 0)))
+    (error "landmarks: the distance D must be nil or a non-negative number, not ~S." d))
+  (let* ((lm (coerce (local-extrema seq) 'vector))
+         (n (length lm))
+         (prev (make-array n))
+         (next (make-array n))
+         (alive (make-array n :initial-element t))
+         (heap (make-array 16 :adjustable t :fill-pointer 0)))
+    (dotimes (i n)
+      (setf (aref prev i) (if (> i 0) (1- i) nil)
+            (aref next i) (if (< i (1- n)) (1+ i) nil)))
+    ;; heap of the removable pairs (difference i j), j following i when the pair was made;
+    ;; the smallest difference first, then the left-most pair
+    (labels ((before-p (e f)
+               (or (< (first e) (first f))
+                   (and (= (first e) (first f)) (< (second e) (second f)))))
+             (heap-push (e)
+               (vector-push-extend e heap)
+               (loop with k = (1- (fill-pointer heap))
+                     while (> k 0)
+                     do (let ((up (floor (1- k) 2)))
+                          (if (before-p (aref heap k) (aref heap up))
+                              (progn (rotatef (aref heap k) (aref heap up)) (setf k up))
+                              (return)))))
+             (heap-pop ()
+               (let ((top (aref heap 0))
+                     (last (vector-pop heap)))
+                 (when (plusp (fill-pointer heap))
+                   (setf (aref heap 0) last)
+                   (loop with k = 0
+                         with m = (fill-pointer heap)
+                         do (let* ((l (1+ (* 2 k))) (r (1+ l)) (best k))
+                              (when (and (< l m) (before-p (aref heap l) (aref heap best))) (setf best l))
+                              (when (and (< r m) (before-p (aref heap r) (aref heap best))) (setf best r))
+                              (if (= best k)
+                                  (return)
+                                  (progn (rotatef (aref heap k) (aref heap best)) (setf k best))))))
+                 top))
+             (consider (i j)
+               (when (and i j)
+                 (let ((a (aref lm i)) (b (aref lm j)))
+                   (when (or (null d) (< (- (first b) (first a)) d))
+                     (let ((dv (funcall diff (third a) (third b))))
+                       (when (< dv thres) (heap-push (list dv i j)))))))))
+      (dotimes (i (1- n)) (consider i (1+ i)))
+      (loop while (plusp (fill-pointer heap))
+            do (destructuring-bind (dv i j) (heap-pop)
+                 (declare (ignore dv))
+                 ;; a pair is still there when both landmarks are, and still consecutive
+                 (when (and (aref alive i) (aref alive j) (eql (aref next i) j))
+                   (let ((p (aref prev i)) (q (aref next j)))
+                     (setf (aref alive i) nil (aref alive j) nil)
+                     (when p (setf (aref next p) q))
+                     (when q (setf (aref prev q) p))
+                     (consider p q)))))
+      (loop for i below n when (aref alive i) collect (aref lm i)))))
 
 (defun plateaus (seq thres duration)
   "The plateaus of seq: the stretches of at least duration positions where seq varies by less than thres
@@ -215,42 +211,7 @@ extremum is a flat extremum and gives no inflexion. Returns (position type value
               (push (list i 0 (aref v i)) points))))))
     (sort (copy-list points) #'< :key #'first)))
 
-(defgeneric signature (seq mode thres &optional option)
-  (:documentation
-"Signature of a sequence with some threshold <thres> for variation in intensity.
-The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>, not negative): variations smaller than <thres> are ignored.
- Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
-:minflexmax, returns minima, maxima and inflexions: the minima and maxima of :minmax, and an inflexion where a plateau
- which is not an extremum begins and where it ends (a plateau is a stretch where the sequence varies by less than thres);
-:minmax, minima and maxima only: the important extrema of :major-extrema, with |a - b|;
-:major-extrema, important extrema (Fink & Gandhi, Conference on Systems, Man and Cybernetics, 2007):
- a minimum (maximum) such that the sequence rises (falls) by at least thres on both sides;
-:landmarks, first-order landmarks smoothed by MDPP(D, P) (Perng, Parker & Leung, Conference on Information
- and Knowledge Management, 1999): pairs of close landmarks whose difference is below thres are removed.
-Any other method is an error.
-Argument <thres> is the treshold value (delta) in amplitude.
-Argument <option> is an optional parameter depending to the choosen method :
-with :minflexmax, <option> is the minimal duration of a plateau, a number of positions (nil, 0, 1 and 2 mean 2);
-with :minmax, <option> is not used;
-with :major-extrema, <option> may be a distance function (a b) for comparing values (|a - b| by default);
-with :landmarks, <option> is nil, a number D (only landmarks closer than D ranks may be removed), a function (a b) giving the
-difference between two values (|a - b| by default), or a list (D criterion), criterion being :absolute, :relative
-(2 |a - b| / (|a| + |b|), as in Perng et al.) or a function."))
-
-(defmethod signature ((seq null) (mode t) (thres t) &optional (option nil))
-  (declare (ignore option))
-  nil)
-
-(defmethod signature ((seq list) (mode t) (thres number) &optional (option nil))
-  (when (minusp thres)
-    (error "signature: the threshold must not be negative, not ~S." thres))
-  (case mode
-    (:minmax (major-extrema seq thres))
-    (:minflexmax (minflexmax seq thres option))
-    (:major-extrema (major-extrema seq thres
-                                   (if (functionp option) option #'(lambda (a b) (abs (- a b))))))
-    (:landmarks (landmarks seq thres option))
-    (t (error "signature: unknown method ~S, use :minmax, :minflexmax, :major-extrema or :landmarks." mode))))
+;; the signature of seq and its output (exsample)
 
 (defun droite (a b)
   (if (= (cadr a) (cadr b))
@@ -258,32 +219,44 @@ difference between two values (|a - b| by default), or a list (D criterion), cri
     (let ((pente (/ (- (cadr a) (cadr b)) (- (car a) (car b)))))
       (list pente (- (cadr a) (* pente (car a)))))))
 
-(defun echantillonage (seq method mode thres option)
-  "The points of the signature of seq, with its first and last values, according to mode
-(:values, :positions, :all or :resampled)."
-  (unless (member mode '(:values :positions :all :resampled))
-    (error "exsample: unknown mode ~S, use :values, :positions, :all or :resampled." mode))
-  (let ((pos (remove-duplicates
-              (append (list 0)
-                      (mapcar #'car (signature seq method thres option))
-                      (list (1- (length seq)))))))
-    (case mode
-      (:values
-       (mapcar #'(lambda (x) (nth x seq)) pos))
-      (:positions pos)
-      (:all
-       (mapcar #'(lambda (x) (list x (nth x seq))) pos))
-      (:resampled
-       (let ((r (list)))
-         (loop for i from 0 to (- (length pos) 2) do
-               (let* ((xa (nth i pos))
-                      (xb (nth (1+ i) pos))
-                      (steps (- xb xa 1))
-                      (ya (nth xa seq))
-                      (yb (nth xb seq))
-                      (d (droite (list xa ya) (list xb yb))))
-                 (push ya r)
-                 (when (> steps 0)
-                   (loop for j from 1 to steps do
-                         (push (+ (* (car d) (+ xa j)) (cadr d)) r)))))
-         (append (nreverse r) (last seq)))))))
+(defun signature (seq method thres &key diff duration out)
+  "The signature of seq by method (:minmax, :minflexmax, :major-extrema or :landmarks), with the
+threshold thres, the difference diff (:major-extrema and :landmarks) and the duration (:minflexmax and
+:landmarks), given according to out: :signature (the points (position type value)), or with the first
+and last values of seq, :values, :positions, :all ((position value)) or :resampled."
+  (unless (member method '(:minmax :minflexmax :major-extrema :landmarks))
+    (error "exsample: unknown method ~S, use :minmax, :minflexmax, :major-extrema or :landmarks." method))
+  (unless (member out '(:signature :values :positions :all :resampled))
+    (error "exsample: unknown output ~S, use :values, :positions, :all, :resampled or :signature." out))
+  (unless (and (realp thres) (>= thres 0))
+    (error "exsample: the threshold must be a non-negative number, not ~S." thres))
+  (when (and diff (member method '(:minmax :minflexmax)))
+    (error "exsample: :diff is not used by ~S." method))
+  (when (and duration (member method '(:minmax :major-extrema)))
+    (error "exsample: :duration is not used by ~S." method))
+  (let ((points (when seq
+                  (ecase method
+                    (:minmax (major-extrema seq thres))
+                    (:minflexmax (minflexmax seq thres duration))
+                    (:major-extrema (major-extrema seq thres (difference-function diff)))
+                    (:landmarks (landmarks seq thres duration (difference-function diff)))))))
+    (if (or (eq out :signature) (null seq))
+        points
+        (let* ((v (coerce seq 'vector))
+               (pos (remove-duplicates (append (list 0) (mapcar #'car points) (list (1- (length v)))))))
+          (ecase out
+            (:values (mapcar #'(lambda (x) (aref v x)) pos))
+            (:positions pos)
+            (:all (mapcar #'(lambda (x) (list x (aref v x))) pos))
+            (:resampled
+             ;; the straight lines between the points, at every position
+             (let ((r nil))
+               (loop for (xa xb) on pos
+                     while xb
+                     do (let* ((ya (aref v xa))
+                               (d (droite (list xa ya) (list xb (aref v xb)))))
+                          (push ya r)
+                          (loop for j from (1+ xa) below xb
+                                do (push (+ (* (car d) j) (cadr d)) r))))
+               (push (aref v (1- (length v))) r)
+               (nreverse r))))))))

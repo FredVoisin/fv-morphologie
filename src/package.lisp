@@ -46,7 +46,7 @@
    #:filt-fct
    #:graph-span #:graph-path #:graph>dot #:graph>matrix
    ;; 2. classification
-   #:int-signature #:exsample #:split #:graph-part
+   #:exsample #:split #:graph-part
    #:motif-group #:concaten
    #:mark-structure #:motif-structure #:class-num #:class-sym
    ;; 3. evaluation
