@@ -6,12 +6,11 @@ Version Common Lisp.
 Frédéric Voisin, 1994–2013 (tutoriel PWGL, version 20131111), version Common
 Lisp 2026.
 
-> Ce document est la version de référence de la documentation. Il reprend le
-> tutoriel PWGL conservé dans
-> [`pwgl-legacy/tutorial/`](../pwgl-legacy/tutorial/) (sa présentation, son
-> menu et la documentation de chaque patch), adapté à Common Lisp. Tous les
+> Ce document est la version de référence de la documentation. , adapté à Common Lisp. Tous les
 > exemples ont été exécutés avec SBCL. Les points restant à mettre à jour sont
 > listés à la fin, dans les [Notes pour la mise à jour](#notes-pour-la-mise-à-jour).
+> Il reprend et développe le tutoriel intial de PWGL conservé dans
+> [`pwgl-legacy/tutorial/`](../pwgl-legacy/tutorial/). 
 > Une version anglaise est disponible : [fv-morphologie.md](fv-morphologie.md).
 
 ## Sommaire
@@ -740,15 +739,14 @@ Références :
 
 #### `separate (seq &key marks keep)`
 
-*Boîte PWGL : `mark-cut`.* Sépare une chaîne à chacun des caractères de
-`:marks` (et aux blancs), ou une liste à ses marques : les éléments de la
-liste `:marks` (comparés avec `equalp`, si bien que des chaînes ou des listes
-peuvent être des marques), une marque unique, ou les éléments pour lesquels
-le prédicat `:marks` est vrai. Avec `:keep` `nil` (par défaut), les marques
-sont supprimées ; avec `:keep` `t`, chaque marque commence le segment qui la
-suit, comme dans `mark-structure` (les blancs d'une chaîne sont toujours
-supprimés). Les segments vides sont supprimés. Le résultat est toujours une
-liste de segments (`nil` pour une chaîne vide).
+Sépare une chaîne à chacun des caractères de `:marks` (et aux blancs), ou une 
+liste à ses marques : en ce cas, les éléments de la liste `:marks` (comparés 
+avec `equalp`, si bien que des chaînes ou des listes peuvent être des marques),
+une marque unique, ou les éléments pour lesquels le prédicat `:marks` est vrai.
+Avec `:keep` `nil` (par défaut), les marques sont supprimées ; avec `:keep` `t`,
+chaque marque commence le segment qui la suit, comme dans `mark-structure` (les 
+blancs d'une chaîne étant toujours supprimés). Les segments vides sont supprimés.
+Le résultat est une liste de segments (`nil` pour une chaîne vide).
 
 ```lisp
 (separate "hello big world")                     ;=> ("hello" "big" "world")
