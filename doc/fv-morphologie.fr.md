@@ -595,13 +595,18 @@ séquence selon divers critères ou procédés :
 
 #### `exsample (seq method thres &key diff duration out)`
 
-*Exsample* : variante de la racine étymologique d'« exemple »,
-d'« échantillonner » et de l'anglais *sample*. Résume une variation
-d'intensité par ses valeurs les plus significatives, c'est-à-dire les points
-de sa signature (plus la première et la dernière valeur). Le taux de
-compression obtenu ne peut pas être prévu : il dépend à la fois de la forme
-générale de la variation et de la méthode employée pour en extraire la
-signature.
+*Exsample* : variante des racines étymologiques d'« exemple »,
+d'« échantillon » et de l'anglais *sample* et *example*. Décrit une variation
+plus ou moins continue d'intensité par ses valeurs les plus significatives.
+Le taux de compression obtenu ne peut pas être prévu : il dépend à la fois de
+la forme générale de la variation et de la méthode employée pour définir ce qu'est
+une variation significative.
+
+La littérature scientifique sur les séries temporelles emploie les termes de
+« signature » (Hetland), de « landmarks » (Perng, Parker & Leung) ou
+d'« important extrema » (Fink & Gandhi). Ils recouvrent le même sens mais
+relèvent de méthodes différentes : une variation d'intensité n'a pas
+nécessairement une seule signature.
 
 La *signature* d'une variation d'intensité est l'ensemble de ses variations
 les plus caractéristiques — minima, maxima et éventuellement inflexions —,
@@ -613,42 +618,36 @@ auto-posée, marque, signature » (*Mille plateaux*, p. 390). Elle peut aussi
 être vue comme une trace, et résulter ainsi de processus d'effacement
 (cf. Derrida).
 
-La littérature scientifique sur les séries temporelles emploie les termes de
-« signature » (Hetland), de « landmarks » (Perng, Parker & Leung) ou
-d'« important extrema » (Fink & Gandhi). Ils recouvrent le même sens mais
-relèvent de méthodes différentes : une variation d'intensité n'a pas
-nécessairement une seule signature.
-
-Dans fv-morphologie, chaque point saillant (pli) est une liste formée de :
+Dans fv-morphologie, chaque point saillant (pli) est décrit par une liste
+formée de :
 
 - sa position dans la séquence d'origine ;
-- son type : minimum (`-1`), maximum (`1`) ou inflexion (`0`) ;
-- par commodité, la valeur de la séquence à cette position.
+- son type : minimum (`-1`), maximum (`1`) ou inflexion - ou plateau (`0`) ;
+- la valeur de la séquence à cette position.
 
 `thres` est une amplitude absolue, dans l'unité des valeurs de `seq` : les
 variations inférieures à `thres` sont ignorées (`nil` ou 0 : pas de seuil ;
 un `thres` négatif est une erreur).
 Méthodes :
 
-- `:minflexmax` (par défaut, ou `nil`) : les minima et maxima de `:minmax`,
-  et des inflexions là où un plateau commence et là où il finit
-  (`:duration` : voir plus bas) ;
+- `:minflexmax` (par défaut, ou `nil`) : les minima, maxima et inflexions (là
+  où un plateau commence et là où il finit (cf. `:duration` infra) ;
 - `:minmax` : minima et maxima seulement, les extrema importants de
   `:major-extrema` (avec |a − b|) ;
 - `:major-extrema` : les *important extrema* de Fink & Gandhi. Un minimum
   `a_m` est important si, sur un intervalle `a_i … a_j` qui l'entoure, il est
   la valeur la plus basse et la séquence remonte d'au moins `thres` de part et
   d'autre : diff(`a_m`, `a_i`) ≥ `thres` et diff(`a_m`, `a_j`) ≥ `thres` ;
-  les maxima importants sont définis de même, à l'envers. Avec `thres` 0, tout
-  extremum local strict est important. `:diff` donne la différence (voir plus
-  bas ; la différence entre deux valeurs égales doit être 0). L'algorithme
-  linéaire de Fink & Gandhi est utilisé ; il assouplit la définition aux
-  extrémités de la séquence : un extremum situé entre une extrémité et une
-  variation d'au moins `thres` n'a pas besoin d'une variation de `thres` du
-  côté de cette extrémité (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et
-  le minimum 0). D'extrema importants égaux, sans extremum de l'autre sorte
-  entre eux, le premier est donné, et un extremum égal à la première valeur
-  de la séquence est cette valeur (il n'est pas donné).
+  De même les maxima importants, inversement. Avec `thres` 0, tout
+  extremum local strict est important. `:diff` donne la différence (cf. infra) ;
+  la différence entre deux valeurs égales doit être 0). L'algorithme linéaire 
+  de Fink & Gandhi est utilisé ; il assouplit la définition aux extrémités de la
+  séquence : un extremum situé entre une extrémité et une variation d'au moins
+  `thres` n'a pas besoin d'une variation de `thres` du côté de cette extrémité
+  (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et  le minimum 0).
+  D'extrema importants égaux, sans extremum de l'autre sorte entre eux, le premier
+  est donné, et un extremum égal à la première valeur  de la séquence est cette
+  valeur (il n'est pas donné).
 - `:landmarks` : les *landmarks* de Perng, Parker & Leung. Les landmarks du
   premier ordre sont les extrema locaux ; ils sont ensuite lissés par MDPP :
   une paire de landmarks consécutifs (x₁, y₁), (x₂, y₂) est supprimée tant que
@@ -665,7 +664,7 @@ valeurs a et b :
 
 - `:absolute` (par défaut, ou `nil`) : |a − b| ;
 - `:relative` : 2|a − b| / (|a| + |b|), le pourcentage de Perng et al. ;
-- une fonction `(a b)`.
+- une fonction lambda sur `(a b)`.
 
 Une clé dont la méthode ne se sert pas (`:diff` avec `:minmax` ou
 `:minflexmax`, `:duration` avec `:minmax` ou `:major-extrema`) est une
@@ -683,12 +682,12 @@ cherchés de gauche à droite, chacun aussi long que possible. Un plateau qui
 contient un minimum ou un maximum est un extremum plat, donné une seule fois ;
 tout autre plateau donne deux inflexions (type 0), à sa première et à sa
 dernière position, avec les valeurs de la séquence à ces positions. Un
-plateau est défini par toute son étendue : une dérive lente dont la variation
+plateau est défini par toute son étendue : ainnsi une dérive lente dont la variation
 atteint `thres` n'est pas un seul plateau. Une montée régulière de moins de
-`thres` sur `:duration` positions est découpée en escalier de plateaux ; une
-`:duration` plus longue l'évite.
+`thres` sur `:duration` positions est découpée en escalier de plateaux 
+(discrétisation) ; une `:duration` plus longue l'évite.
 
-`:out` donne le résultat :
+`:out` forme du résultat :
 
 - `:values` (par défaut, ou `nil`) : les valeurs des points, avec la première
   et la dernière valeur de `seq` ;
@@ -696,11 +695,12 @@ atteint `thres` n'est pas un seul plateau. Une montée régulière de moins de
 - `:all` : les paires `(position valeur)` ;
 - `:resampled` : les proportions temporelles entre les points sont
   conservées, avec une interpolation linéaire entre eux ; le résultat a le
-  même nombre de valeurs que la séquence d'origine ;
+  même nombre de valeurs que la séquence d'origine. Il s'agit d'un ré-échantillonage
+  de la séquence fondé sur ses valeurs extrèmes et plateaux (ses caractéristiques) ou,
+  autrement dir, sa caricature.
 - `:signature` : les points `(position type valeur)`, sans la première ni la
   dernière valeur.
-
-Une autre sortie est une erreur.
+- Une autre valeur de `:out` donne une erreur.
 
 ```lisp
 (exsample '(0 2 4 3 1 2 6 5 0) :minmax 0)                   ;=> (0 4 1 6 0)
@@ -725,7 +725,7 @@ Une autre sortie est une erreur.
 ;=> ((1 1 6) (2 -1 3) (7 1 6))
 ```
 
-Références (telles que données dans le tutoriel PWGL) :
+Références :
 
 - Deleuze & Guattari, *Mille plateaux*, 1980 (p. 390, la *ritournelle*).
 - Derrida, *La différance – de la philosophie*, 1972 ; *L'animal que donc je
