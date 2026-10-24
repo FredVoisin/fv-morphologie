@@ -1,5 +1,9 @@
 # fv-morphologie
 
+> **⚠️ This repository is no longer maintained.** Development continues in
+> [refrains](https://github.com/FredVoisin/refrains). fv-morphologie 1.4.0 is
+> the last release.
+
 Experimental tools to analyse musical and syntagmatic sequences as symbolic expressions, in Common Lisp
 
 Analysis-oriented branch of the legacy library [Morphologie](https://github.com/openmusic-project/Morphologie) for OpenMusic (Ircam)

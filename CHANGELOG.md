@@ -4,6 +4,11 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+- fv-morphologie is no longer maintained. Development continues in
+  [refrains](https://github.com/FredVoisin/refrains).
+
 ## [1.4.0] - 2026-10-24
 
 ### Added

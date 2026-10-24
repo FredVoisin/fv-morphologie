@@ -1,5 +1,9 @@
 # fv-morphologie
 
+> **⚠️ Ce dépôt n'est plus maintenu.** La suite du développement se fait dans
+> [refrains](https://github.com/FredVoisin/refrains). fv-morphologie 1.4.0 est
+> la dernière version.
+
 **Outils pour la description et l'étude morphologique de transcriptions musicales.**
 Version Common Lisp.
 
