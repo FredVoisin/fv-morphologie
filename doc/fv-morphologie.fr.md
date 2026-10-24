@@ -653,8 +653,12 @@ Modes :
     `:absolute` (|y₂ − y₁|), `:relative` (2|y₂ − y₁| / (|y₁| + |y₂|), le
     pourcentage de Perng et al.) ou une fonction `(a b)`.
 
-  La suppression de paires peut supprimer un pic et conserver un pic voisin,
-  légèrement plus bas.
+  D est un nombre de positions, non négatif. La paire de plus petite
+  différence est supprimée la première (la plus à gauche à différences
+  égales) ; après une suppression, les landmarks d'avant et d'après la paire
+  deviennent consécutifs et peuvent former une nouvelle paire.
+  `(0 6 4 5 0)` avec `thres` 3 donne `((1 1 6))` : la paire 4, 5
+  (différence 1) est supprimée, et non 6, 4 (différence 2).
 
 Avec toutes les méthodes, un extremum plat (un plateau qui est un minimum ou
 un maximum) est donné une seule fois, à sa première position ; avec
@@ -694,7 +698,7 @@ atteint `thres` n'est pas un seul plateau. Une montée régulière de moins de
 (int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6)
 ;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
 (int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 '(nil :relative))
-;=> ((2 1 3) (5 -1 1) (9 1 7.5) (11 -1 2) (12 1 5))
+;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
 ```
 
 Références (telles que données dans le tutoriel PWGL) :

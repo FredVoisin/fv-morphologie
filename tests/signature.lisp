@@ -77,13 +77,13 @@
   ;; Perng, Parker & Leung landmarks with MDPP smoothing (the name used to give :minflexmax)
   (let ((r '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0))
         (absolute '((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5)))
-        (relative '((2 1 3) (5 -1 1) (9 1 7.5) (11 -1 2) (12 1 5))))
+        (relative '((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))))
     ;; thres 0: the first-order landmarks, i.e. the local extrema
     (is (equal (int-signature r :minmax 0) (int-signature r :landmarks 0)))
     ;; absolute difference (default): the pairs (2 2.5) and (7 7.5) are removed
     (is (equal absolute (int-signature r :landmarks 0.6)))
     (is (equal absolute (int-signature r :landmarks 0.6 '(nil :absolute))))
-    ;; the relative difference of Perng et al.: the pairs (2 2.5) and (8 7) are removed
+    ;; the relative difference of Perng et al.: the pairs (2 2.5) and (7 7.5) are removed (smallest first)
     (is (equal relative (int-signature r :landmarks 0.3 '(nil :relative))))
     ;; a difference function, alone or with D
     (is (equal absolute (int-signature r :landmarks 0.6 #'(lambda (a b) (abs (- a b))))))
@@ -97,6 +97,19 @@
     (is (null (int-signature '(1 2 3 4) :landmarks 0)))
     (is (null (int-signature '() :landmarks 0)))
     (is (= 15 (length (exsample r :landmarks :resampled 0.6))))))
+
+(test landmarks-order-and-distance
+  ;; the pair of smallest difference first: 4, 5 goes before 6, 4
+  (is (equal '((1 1 6)) (int-signature '(0 6 4 5 0) :landmarks 3)))
+  ;; the left-most of equal differences, then the landmarks before and after the pair are consecutive
+  (is (equal '((5 1 6)) (int-signature '(0 4 3 5 4 6 0) :landmarks 2)))
+  (is (equal '((1 1 9) (6 -1 0)) (int-signature '(5 9 5 6 5 6 0 4) :landmarks 2)))
+  ;; D is nil or a non-negative number
+  (signals error (int-signature '(0 3 1 2 0) :landmarks 1 -2))
+  (signals error (int-signature '(0 3 1 2 0) :landmarks 1 '(:foo)))
+  ;; a long sequence (removing the pairs was quadratic)
+  (let ((s (loop for i below 100000 collect (if (evenp i) 0 1))))
+    (is (null (int-signature s :landmarks 2)))))
 
 (test signature-flat-extrema
   ;; a flat extremum is given once, at its first position, by all the methods

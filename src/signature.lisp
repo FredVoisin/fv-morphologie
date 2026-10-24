@@ -98,7 +98,9 @@ type -1 for a minimum, 1 for a maximum. A flat extremum is given at its first po
 (defun landmarks (seq thres &optional option)
   "Landmarks of seq (Perng, Parker & Leung, 1999): the first-order landmarks (local extrema), smoothed
 by MDPP: a pair of consecutive landmarks (x1 y1) (x2 y2) is removed while x2 - x1 < D and their
-difference is below thres. option is nil (no D, difference |y2 - y1|), a number (D), a function (a b)
+difference is below thres, the pair of smallest difference first (the left-most of equal differences;
+after a removal, the landmarks before and after the pair become consecutive). D is nil or a non-negative
+number of positions. option is nil (no D, difference |y2 - y1|), a number (D), a function (a b)
 giving the difference, or a list (D criterion), criterion being :absolute (|y2 - y1|), :relative
 (2 |y2 - y1| / (|y1| + |y2|), as in Perng et al.) or a function.
 Returns (position type value), type -1 for a minimum and 1 for a maximum."
@@ -108,6 +110,8 @@ Returns (position type value), type -1 for a minimum and 1 for a maximum."
             ((functionp option) (values nil option))
             ((listp option) (values (first option) (or (second option) :absolute)))
             (t (error "landmarks: option must be nil, a distance, a function or a list (distance criterion), not ~S." option)))
+    (unless (or (null d) (and (realp d) (>= d 0)))
+      (error "landmarks: the distance D must be nil or a non-negative number, not ~S." d))
     (let ((diff (cond ((eq criterion :absolute) #'(lambda (a b) (abs (- b a))))
                       ((eq criterion :relative)
                        #'(lambda (a b)
@@ -115,16 +119,60 @@ Returns (position type value), type -1 for a minimum and 1 for a maximum."
                              (if (zerop m) 0 (/ (* 2 (abs (- b a))) m)))))
                       ((functionp criterion) criterion)
                       (t (error "landmarks: criterion must be :absolute, :relative or a function, not ~S." criterion))))
-          (lm (local-extrema seq)))
-      (flet ((removable (a b)
-               (and (or (null d) (< (- (first b) (first a)) d))
-                    (< (funcall diff (third a) (third b)) thres))))
-        (loop for k = (loop for (a b) on lm
-                            for i from 0
-                            when (and b (removable a b)) return i)
-              while k
-              do (setf lm (append (subseq lm 0 k) (nthcdr (+ k 2) lm))))
-        lm))))
+          (lm (coerce (local-extrema seq) 'vector)))
+      (let* ((n (length lm))
+             (prev (make-array n))
+             (next (make-array n))
+             (alive (make-array n :initial-element t))
+             (heap (make-array 16 :adjustable t :fill-pointer 0)))
+        (dotimes (i n)
+          (setf (aref prev i) (if (> i 0) (1- i) nil)
+                (aref next i) (if (< i (1- n)) (1+ i) nil)))
+        ;; heap of the removable pairs (difference i j), j following i when the pair was made;
+        ;; the smallest difference first, then the left-most pair
+        (labels ((before-p (e f)
+                   (or (< (first e) (first f))
+                       (and (= (first e) (first f)) (< (second e) (second f)))))
+                 (heap-push (e)
+                   (vector-push-extend e heap)
+                   (loop with k = (1- (fill-pointer heap))
+                         while (> k 0)
+                         do (let ((up (floor (1- k) 2)))
+                              (if (before-p (aref heap k) (aref heap up))
+                                  (progn (rotatef (aref heap k) (aref heap up)) (setf k up))
+                                  (return)))))
+                 (heap-pop ()
+                   (let ((top (aref heap 0))
+                         (last (vector-pop heap)))
+                     (when (plusp (fill-pointer heap))
+                       (setf (aref heap 0) last)
+                       (loop with k = 0
+                             with m = (fill-pointer heap)
+                             do (let* ((l (1+ (* 2 k))) (r (1+ l)) (best k))
+                                  (when (and (< l m) (before-p (aref heap l) (aref heap best))) (setf best l))
+                                  (when (and (< r m) (before-p (aref heap r) (aref heap best))) (setf best r))
+                                  (if (= best k)
+                                      (return)
+                                      (progn (rotatef (aref heap k) (aref heap best)) (setf k best))))))
+                     top))
+                 (consider (i j)
+                   (when (and i j)
+                     (let ((a (aref lm i)) (b (aref lm j)))
+                       (when (or (null d) (< (- (first b) (first a)) d))
+                         (let ((dv (funcall diff (third a) (third b))))
+                           (when (< dv thres) (heap-push (list dv i j)))))))))
+          (dotimes (i (1- n)) (consider i (1+ i)))
+          (loop while (plusp (fill-pointer heap))
+                do (destructuring-bind (dv i j) (heap-pop)
+                     (declare (ignore dv))
+                     ;; a pair is still there when both landmarks are, and still consecutive
+                     (when (and (aref alive i) (aref alive j) (eql (aref next i) j))
+                       (let ((p (aref prev i)) (q (aref next j)))
+                         (setf (aref alive i) nil (aref alive j) nil)
+                         (when p (setf (aref next p) q))
+                         (when q (setf (aref prev q) p))
+                         (consider p q)))))
+          (loop for i below n when (aref alive i) collect (aref lm i)))))))
 
 (defun plateaus (seq thres duration)
   "The plateaus of seq: the stretches of at least duration positions where seq varies by less than thres

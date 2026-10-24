@@ -630,8 +630,11 @@ Modes:
     `:absolute` (|y₂ − y₁|), `:relative` (2|y₂ − y₁| / (|y₁| + |y₂|), the
     percentage of Perng et al.) or a function `(a b)`.
 
-  Removing pairs may remove a peak and keep a neighbouring, slightly lower
-  one.
+  D is a number of positions, not negative. The pair of smallest difference
+  is removed first (the left-most of equal differences); after a removal, the
+  landmarks before and after the pair become consecutive and may form a new
+  pair. `(0 6 4 5 0)` with `thres` 3 gives `((1 1 6))`: the pair 4, 5
+  (difference 1) is removed, not 6, 4 (difference 2).
 
 With all the methods, a flat extremum (a plateau which is a minimum or a
 maximum) is given once, at its first position; with `:minflexmax`, a plateau
@@ -671,7 +674,7 @@ variation reaches `thres` is not one plateau. A regular rise of less than
 (int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.6)
 ;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
 (int-signature '(0 1 3 2 2.5 1 4 8 7 7.5 3 2 5 1 0) :landmarks 0.3 '(nil :relative))
-;=> ((2 1 3) (5 -1 1) (9 1 7.5) (11 -1 2) (12 1 5))
+;=> ((2 1 3) (5 -1 1) (7 1 8) (11 -1 2) (12 1 5))
 ```
 
 References (as given in the PWGL tutorial):

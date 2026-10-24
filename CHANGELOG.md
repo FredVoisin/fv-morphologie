@@ -4,6 +4,22 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- `int-signature :landmarks` removed the pairs of landmarks in quadratic
+  time (1.8 s for 200,000 values; 0.18 s now). A negative distance D, or one
+  which is not a number, is an error.
+
+### Changed
+
+- `int-signature :landmarks` removes the pair of smallest difference first
+  (the left-most of equal differences), instead of the left-most pair: a peak
+  is no longer removed for a smaller variation next to it. `(0 6 4 5 0)` with
+  `thres` 3 gives `((1 1 6))`, not `((3 1 5))`. The documentation gives this
+  order.
+
 ## [1.1.1] - 2026-10-24
 
 ### Fixed
