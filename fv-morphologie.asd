@@ -33,7 +33,7 @@
                        (uiop:subpathname *load-pathname* "README.md"))
   :author "Frederic Voisin"
   :license "GPL-3.0-only"
-  :version "1.3.0"
+  :version "1.4.0"
   :homepage "https://github.com/FredVoisin/fv-morphologie"
   :bug-tracker "https://github.com/FredVoisin/fv-morphologie/issues"
   :source-control (:git "https://github.com/FredVoisin/fv-morphologie.git")
