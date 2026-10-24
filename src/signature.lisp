@@ -89,10 +89,10 @@ type -1 for a minimum, 1 for a maximum. A flat extremum is given at its first po
     (loop for i from 1 below l
           do (let ((d (signum (- (aref v i) (aref v (1- i))))))
                (unless (zerop d)
-                 (when (and (/= dir 0) (/= d dir) (> start 0))
+                 (when (= d (- dir))
                    (push (list start (if (> dir 0) 1 -1) (aref v start)) out))
-                 (setf dir d))
-               (when (/= (aref v i) (aref v (1- i))) (setf start i))))
+                 (setf dir d
+                       start i))))
     (nreverse out)))
 
 (defun landmarks (seq thres &optional option)

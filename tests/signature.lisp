@@ -186,3 +186,15 @@
   (signals error (exsample '(1 2 3 1) :minflexmax :values -1))
   ;; nor a distance which is not 0 between equal values
   (is (listp (int-signature '(1 2 3 1) :major-extrema 0.5 #'(lambda (a b) (declare (ignore a b)) 1)))))
+
+(test local-extrema
+  ;; the inner local extrema, a flat extremum at its first position, integers or floats
+  (is (equal '((1 -1 0) (3 1 1)) (fv-morphologie::local-extrema '(1 0 0 1 1 0))))
+  (is (equal '((1 1 1)) (fv-morphologie::local-extrema '(0 1 1.0 0))))
+  (is (equal '((1 1 2.5)) (fv-morphologie::local-extrema #(0.0 2.5 1.0))))
+  (is (null (fv-morphologie::local-extrema '(3 3 3))))
+  (is (null (fv-morphologie::local-extrema '())))
+  ;; the important extrema with no threshold
+  (dotimes (k 200)
+    (let ((s (loop repeat (random 30) collect (random 4))))
+      (is (equal (fv-morphologie::major-extrema s 0) (fv-morphologie::local-extrema s))))))
