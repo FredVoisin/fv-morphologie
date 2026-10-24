@@ -597,7 +597,8 @@ In fv-morphologie, each salient point (fold) is a list of:
 - for convenience, the value of the sequence at that position.
 
 `thres` is an absolute amplitude, in the unit of the values of `seq`:
-variations smaller than `thres` are ignored (`nil` or 0: no threshold).
+variations smaller than `thres` are ignored (`nil` or 0: no threshold; a
+negative `thres` is an error).
 Modes:
 
 - `:minflexmax`: the minima and maxima of `:minmax`, and inflexions where a
@@ -610,7 +611,14 @@ Modes:
   dist(`a_m`, `a_i`) ≥ `thres` and dist(`a_m`, `a_j`) ≥ `thres`; important
   maxima are the same upside down. With `thres` 0, every strict local
   extremum is important. `option` may be a distance function `(a b)`
-  (|a − b| by default). Fink & Gandhi's linear algorithm is used.
+  (|a − b| by default; the distance between two equal values must be 0).
+  Fink & Gandhi's linear algorithm is used, which relaxes the definition at
+  the ends of the sequence: an extremum between an end and a variation of at
+  least `thres` needs no variation of `thres` on the side of that end
+  (`(0 8 1 0 2)` with `thres` 5 gives the maximum 8 and the minimum 0). Of
+  equal important extrema with no extremum of the other kind between them,
+  the first is given, and an extremum equal to the first value of the
+  sequence is that value (it is not given).
 - `:landmarks`: the *landmarks* of Perng, Parker & Leung. The first-order
   landmarks are the local extrema; they are then smoothed by MDPP: a pair of
   consecutive landmarks (x₁, y₁), (x₂, y₂) is removed while x₂ − x₁ < D and

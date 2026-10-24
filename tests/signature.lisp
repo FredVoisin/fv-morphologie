@@ -158,3 +158,18 @@
   ;; option is a number of positions
   (signals error (int-signature '(0 1 0) :minflexmax 1 0.5))
   (signals error (int-signature '(0 1 0) :minflexmax 1 -1)))
+
+(test major-extrema-ends-ties-and-termination
+  ;; Fink & Gandhi relax the definition at the ends: the minimum 0 needs no rise of 5 towards the end
+  (is (equal '((1 1 8) (3 -1 0)) (int-signature '(0 8 1 0 2) :major-extrema 5)))
+  ;; but some variation of at least thres is needed
+  (is (null (int-signature '(8 4 5) :major-extrema 5)))
+  ;; of equal extrema, the first; an extremum equal to the first value is that value
+  (is (equal '((2 -1 1) (3 1 8) (9 -1 1) (13 1 8)) (int-signature '(5 2 1 8 5 6 6 8 6 1 2 5 1 8 7 2) :major-extrema 6)))
+  (is (equal '((3 1 8) (4 -1 1)) (int-signature '(2 4 2 8 1 4) :major-extrema 4)))
+  ;; a negative threshold never ended (and :landmarks took it as 0)
+  (dolist (m '(:minmax :minflexmax :major-extrema :landmarks))
+    (signals error (int-signature '(1 2 3 1) m -1)))
+  (signals error (exsample '(1 2 3 1) :minflexmax :values -1))
+  ;; nor a distance which is not 0 between equal values
+  (is (listp (int-signature '(1 2 3 1) :major-extrema 0.5 #'(lambda (a b) (declare (ignore a b)) 1)))))

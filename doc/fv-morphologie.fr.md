@@ -618,7 +618,8 @@ Dans fv-morphologie, chaque point saillant (pli) est une liste formée de :
 - par commodité, la valeur de la séquence à cette position.
 
 `thres` est une amplitude absolue, dans l'unité des valeurs de `seq` : les
-variations inférieures à `thres` sont ignorées (`nil` ou 0 : pas de seuil).
+variations inférieures à `thres` sont ignorées (`nil` ou 0 : pas de seuil ;
+un `thres` négatif est une erreur).
 Modes :
 
 - `:minflexmax` : les minima et maxima de `:minmax`, et des inflexions là où
@@ -631,8 +632,15 @@ Modes :
   d'autre : dist(`a_m`, `a_i`) ≥ `thres` et dist(`a_m`, `a_j`) ≥ `thres` ;
   les maxima importants sont définis de même, à l'envers. Avec `thres` 0, tout
   extremum local strict est important. `option` peut être une fonction de
-  distance `(a b)` (|a − b| par défaut). L'algorithme linéaire de Fink &
-  Gandhi est utilisé.
+  distance `(a b)` (|a − b| par défaut ; la distance entre deux valeurs
+  égales doit être 0). L'algorithme linéaire de Fink & Gandhi est utilisé ;
+  il assouplit la définition aux extrémités de la séquence : un extremum
+  situé entre une extrémité et une variation d'au moins `thres` n'a pas
+  besoin d'une variation de `thres` du côté de cette extrémité
+  (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et le minimum 0). D'extrema
+  importants égaux, sans extremum de l'autre sorte entre eux, le premier est
+  donné, et un extremum égal à la première valeur de la séquence est cette
+  valeur (il n'est pas donné).
 - `:landmarks` : les *landmarks* de Perng, Parker & Leung. Les landmarks du
   premier ordre sont les extrema locaux ; ils sont ensuite lissés par MDPP :
   une paire de landmarks consécutifs (x₁, y₁), (x₂, y₂) est supprimée tant que

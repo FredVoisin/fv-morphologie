@@ -32,35 +32,41 @@
 (defun major-extrema (seq r &optional (dist #'(lambda (a b) (abs (- a b)))))
   "Important extrema of seq (Fink & Gandhi, 2007): a_m is an important minimum if there are i < m < j
 such that a_m is the minimum of a_i..a_j, dist(a_m, a_i) >= r and dist(a_m, a_j) >= r (and so for maxima).
-With r = 0, every strict local extremum. Linear algorithm of Fink & Gandhi; returns the inner extrema
-as (position type value), type -1 for a minimum and 1 for a maximum (the endpoints are not returned)."
+With r = 0, every strict local extremum. Linear algorithm of Fink & Gandhi, which relaxes the definition
+at the ends: an extremum between an end and a variation of at least r needs no variation of r on the side
+of that end. Of equal extrema, the first is given (an extremum equal to an end is that end). Returns the
+inner extrema as (position type value), type -1 for a minimum and 1 for a maximum (the endpoints are not
+returned). r is a non-negative number, dist a distance: dist(a, a) is 0."
+  (unless (and (realp r) (>= r 0))
+    (error "major-extrema: the threshold must be a non-negative number, not ~S." r))
   (let* ((v (coerce seq 'vector))
          (last (1- (length v)))
          (out nil))
+    ;; each search moves forward at least one position, so that it ends whatever dist
     (labels ((near (a b) (let ((d (funcall dist a b))) (if (zerop r) (<= d 0) (< d r))))
              (emit (i type) (when (< 0 i last) (push (list i type (aref v i)) out)))
              (find-first ()
                (let ((i 0) (imin 0) (imax 0))
-                 (loop while (and (< i last)
-                                  (near (aref v i) (aref v imax))
-                                  (near (aref v i) (aref v imin)))
-                       do (incf i)
+                 (loop do (incf i)
                           (when (< (aref v i) (aref v imin)) (setf imin i))
-                          (when (> (aref v i) (aref v imax)) (setf imax i)))
+                          (when (> (aref v i) (aref v imax)) (setf imax i))
+                       while (and (< i last)
+                                  (near (aref v i) (aref v imax))
+                                  (near (aref v i) (aref v imin))))
                  (if (< imin imax) (emit imin -1) (emit imax 1))
                  i))
              (find-minimum (i)
                (let ((imin i))
-                 (loop while (and (< i last) (near (aref v i) (aref v imin)))
-                       do (incf i)
-                          (when (< (aref v i) (aref v imin)) (setf imin i)))
+                 (loop do (incf i)
+                          (when (< (aref v i) (aref v imin)) (setf imin i))
+                       while (and (< i last) (near (aref v i) (aref v imin))))
                  (when (or (< i last) (< (aref v imin) (aref v i))) (emit imin -1))
                  i))
              (find-maximum (i)
                (let ((imax i))
-                 (loop while (and (< i last) (near (aref v imax) (aref v i)))
-                       do (incf i)
-                          (when (> (aref v i) (aref v imax)) (setf imax i)))
+                 (loop do (incf i)
+                          (when (> (aref v i) (aref v imax)) (setf imax i))
+                       while (and (< i last) (near (aref v imax) (aref v i))))
                  (when (or (< i last) (> (aref v imax) (aref v i))) (emit imax 1))
                  i)))
       (when (> last 0)
@@ -164,7 +170,7 @@ extremum is a flat extremum and gives no inflexion. Returns (position type value
 (defgeneric signature (seq mode thres &optional option)
   (:documentation
 "Signature of a sequence with some threshold <thres> for variation in intensity.
-The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
+The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>, not negative): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
 :minflexmax, returns minima, maxima and inflexions: the minima and maxima of :minmax, and an inflexion where a plateau
  which is not an extremum begins and where it ends (a plateau is a stretch where the sequence varies by less than thres);
@@ -188,6 +194,8 @@ difference between two values (|a - b| by default), or a list (D criterion), cri
   nil)
 
 (defmethod signature ((seq list) (mode t) (thres number) &optional (option nil))
+  (when (minusp thres)
+    (error "signature: the threshold must not be negative, not ~S." thres))
   (case mode
     (:minmax (major-extrema seq thres))
     (:minflexmax (minflexmax seq thres option))

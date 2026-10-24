@@ -53,7 +53,7 @@ A list is split at the elements of the list <marks> (compared with equalp), at a
 
 (defgeneric int-signature (seq mode thres &optional option)
   (:documentation "INT-SIGNATURE: signature of a sequence with some threshold <thres> for variation in intensity.
-The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>): variations smaller than <thres> are ignored.
+The argument <thres> may be nil or 0 (no threshold for variations in intensity), or an absolute amplitude (in the unit of the values of <seq>, not negative): variations smaller than <thres> are ignored.
  Argument <mode> define the algorithm to compute signature which may require the optional argument <option> :
 :minflexmax, returns minima, maxima and inflexions: the minima and maxima of :minmax, and an inflexion where a plateau
  which is not an extremum begins and where it ends (a plateau is a stretch where the sequence varies by less than thres);

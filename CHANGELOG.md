@@ -4,6 +4,20 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-10-24
+
+### Fixed
+
+- `int-signature` and `exsample` with a negative threshold never ended
+  (`:minmax`, `:minflexmax`, `:major-extrema`), or took it as 0
+  (`:landmarks`): a negative threshold is an error. `:major-extrema` with a
+  distance function which is not 0 between equal values never ended either.
+
+### Changed
+
+- The documentation of `:major-extrema` gives how Fink & Gandhi's algorithm
+  treats the ends of the sequence and equal extrema.
+
 ## [1.1.0] - 2026-10-23
 
 ### Changed
@@ -143,6 +157,7 @@ These changes alter results which were documented or relied upon:
 
 The PWGL / OpenMusic library adapted to Common Lisp, before this changelog.
 
+[1.1.1]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v1.1.1
 [1.1.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v1.1.0
 [1.0.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v1.0.0
 [0.2.0]: https://github.com/FredVoisin/fv-morphologie/releases/tag/v0.2.0
