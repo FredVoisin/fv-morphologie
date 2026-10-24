@@ -27,7 +27,7 @@
   (:import-from :fv-morphologie
                 ;; encodage
                 #:transcode #:alpha>num #:num>alpha #:num>base #:concaten #:list>sym
-                #:str->symb #:split #:split-string
+                #:str->symb #:separate #:split-string
                 #:filt-median #:filt-local-rep #:filt-lowpass #:filt-mean #:filt-fct #:filt-noise #:exsample
                 ;; distances
                 #:dist-euclid #:dist-euclidian #:dist-citybloc #:dist-hamming

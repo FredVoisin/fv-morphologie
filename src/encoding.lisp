@@ -222,17 +222,23 @@ Different modes can be selected with the optional argument mode."))
 
 ;;; SOME CONVERSIONS (lists, strings, char...)
 
-(defun split-string (string marks)
+(defun split-string (string marks &optional keep)
   "The list of the words of string, split at the characters of the string marks (nil: none)
 and at blanks (spaces, tabulations, newlines and other characters of code up to 32).
+The blanks are removed; the marks too, or with keep, each one begins the word that follows it.
 Empty words are removed: an empty or blank string gives nil."
   (let ((words nil)
         (start nil))
-    (flet ((sep-p (c) (or (<= (char-code c) 32) (and marks (find c marks)))))
+    (flet ((blank-p (c) (<= (char-code c) 32))
+           (mark-p (c) (and marks (find c marks))))
       (dotimes (i (length string))
-        (if (sep-p (char string i))
-            (when start (push (subseq string start i) words) (setf start nil))
-            (unless start (setf start i))))
+        (let ((c (char string i)))
+          (cond ((blank-p c)
+                 (when start (push (subseq string start i) words) (setf start nil)))
+                ((mark-p c)
+                 (when start (push (subseq string start i) words))
+                 (setf start (if keep i nil)))
+                (t (unless start (setf start i))))))
       (when start (push (subseq string start) words))
       (nreverse words))))
 

@@ -21,15 +21,15 @@
 (in-package :fv-morphologie/tests)
 
 (def-suite signature :in fv-morphologie
-  :description "2. Classification: signatures, sampling and split.")
+  :description "2. Classification: signatures, sampling and separation.")
 (in-suite signature)
 
-(test split
-  (is (equal '("hello" "big" "world") (split "hello big world")))
-  (is (equal '((a b) (c d) (e)) (split '(a b x c d x e) '(x)))))
+(test separate
+  (is (equal '("hello" "big" "world") (separate "hello big world")))
+  (is (equal '((a b) (c d) (e)) (separate '(a b x c d x e) :marks '(x)))))
 
-(test split-list-uses-marks
-  (is (equal '((a b) (c)) (split '(a b x c) '(x)))))
+(test separate-list-uses-marks
+  (is (equal '((a b) (c)) (separate '(a b x c) :marks '(x)))))
 
 (test exsample-fixes
   (let ((s '(0 2 4 3 1 2 6 5 0)))
@@ -152,23 +152,35 @@
       (is (equal (exsample s m 0 :out :signature) (exsample s m nil :out :signature))))
     (is (equal (exsample s :minmax 0 :out :values) (exsample s :minmax nil :out :values)))))
 
-(test split-fixes
+(test separate-fixes
   ;; lists: marks used to be compared with eql (string or list marks never matched)
-  (is (equal '(("a") ("b")) (split '("a" "," "b") '(","))))
-  (is (equal '(((a) (b)) ((c))) (split '((a) (b) (0) (c)) '((0)))))
+  (is (equal '(("a") ("b")) (separate '("a" "," "b") :marks '(","))))
+  (is (equal '(((a) (b)) ((c))) (separate '((a) (b) (0) (c)) :marks '((0)))))
   ;; a single mark used to return the list unsplit
-  (is (equal '((a) (b)) (split '(a x b) 'x)))
-  (is (equal '((a b) (c)) (split '(a b x x c x) '(x))))
-  (is (equal '((2 3 4) (2)) (split '(1 2 3 4 1 2) (lambda (x) (< x 2)))))
-  (is (equal '((a b c)) (split '(a b c))))
-  (is (null (split '(x x) '(x))))
+  (is (equal '((a) (b)) (separate '(a x b) :marks 'x)))
+  (is (equal '((a b) (c)) (separate '(a b x x c x) :marks '(x))))
+  (is (equal '((2 3 4) (2)) (separate '(1 2 3 4 1 2) :marks (lambda (x) (< x 2)))))
+  (is (equal '((a b c)) (separate '(a b c))))
+  (is (null (separate '(x x) :marks '(x))))
   ;; strings: the result is always a list ("hello" gave "hello", "" gave "")
-  (is (equal '("hello") (split "hello")))
-  (is (null (split "")))
-  (is (null (split "   ")))
-  (is (equal '("a" "b") (split "a b" nil)))
-  (is (equal '("a" "b" "c") (split "a,b;c" ",;")))
-  (is (equal '("été" "à") (split "été,à" ","))))
+  (is (equal '("hello") (separate "hello")))
+  (is (null (separate "")))
+  (is (null (separate "   ")))
+  (is (equal '("a" "b") (separate "a b" :marks nil)))
+  (is (equal '("a" "b" "c") (separate "a,b;c" :marks ",;")))
+  (is (equal '("été" "à") (separate "été,à" :marks ","))))
+
+(test separate-keep
+  ;; :keep t: each mark begins the segment that follows it
+  (is (equal '((a b) (x c d) (x e)) (separate '(a b x c d x e) :marks '(x) :keep t)))
+  (is (equal '((x a) (x) (x b)) (separate '(x a x x b) :marks 'x :keep t)))
+  (is (equal '((1 3) (0 2 4) (-1 5)) (separate '(1 3 0 2 4 -1 5) :marks (lambda (x) (< x 1)) :keep t)))
+  (is (equal (separate '(a b x c) :marks '(x)) (separate '(a b x c) :marks '(x) :keep nil)))
+  ;; strings: the marks are kept, the blanks are always removed
+  (is (equal '("a" ",b" ";c") (separate "a,b;c" :marks ",;" :keep t)))
+  (is (equal '("a" ",b" "c") (separate "a ,b c" :marks ", " :keep t)))
+  (is (equal '("hello" "big") (separate "hello big" :keep t)))
+  (is (equal '("a" "," ",b") (separate "a,,b" :marks "," :keep t))))
 
 (test signature-minflexmax-plateaus
   ;; a plateau is a stretch of at least option positions (2 by default) where the sequence varies by

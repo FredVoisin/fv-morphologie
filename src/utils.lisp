@@ -232,9 +232,10 @@ which lengths are successive values of the list <segmentation>.
       (when (member (nth i seq) item :test test)
         (push i pos)))))
 
-(defun split-list-using-marks (liste marks)
-  "Splits liste at its marks, which are not kept: marks is a list of marks (compared with equalp),
-a predicate, or a single mark. Empty segments are removed."
+(defun split-list-using-marks (liste marks &optional keep)
+  "Splits liste at its marks: marks is a list of marks (compared with equalp), a predicate, or a single
+mark. The marks are removed, or with keep, each one begins the segment that follows it.
+Empty segments are removed."
   (let ((markp (cond ((functionp marks) marks)
                      ((listp marks) #'(lambda (e) (member e marks :test #'equalp)))
                      (t #'(lambda (e) (equalp e marks)))))
@@ -242,7 +243,8 @@ a predicate, or a single mark. Empty segments are removed."
         (segment nil))
     (dolist (e liste)
       (if (funcall markp e)
-          (when segment (push (nreverse segment) r) (setf segment nil))
+          (progn (when segment (push (nreverse segment) r))
+                 (setf segment (if keep (list e) nil)))
           (push e segment)))
     (when segment (push (nreverse segment) r))
     (nreverse r)))

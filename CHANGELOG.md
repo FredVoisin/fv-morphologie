@@ -4,6 +4,25 @@ All notable changes to fv-morphologie are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `separate` takes `:keep`: with `t`, the marks are kept, each one
+  beginning the segment that follows it, as in `mark-structure`
+  (`(separate '(a b x c d x e) :marks '(x) :keep t)` gives
+  `((A B) (X C D) (X E))`); the blanks of a string are always removed.
+  `split-string` takes it as an optional argument.
+
+### Changed
+
+- `split` is renamed `separate`, and its optional `marks` becomes the
+  key `:marks`: `(split seq marks)` is `(separate seq :marks marks)`.
+
+### Removed
+
+- `split`: use `separate`.
+
 ## [1.3.0] - 2026-10-24
 
 ### Changed

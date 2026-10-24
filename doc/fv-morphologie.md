@@ -208,7 +208,7 @@ Common Lisp version does not.
        graph-span, graph-path, graph>dot
 ;;; 2. CLASSIFICATION
 ;;  2.1 SEGMENT : cut, split
-       exsample, split, graph-part
+       exsample, separate, graph-part
 ;;  2.2 CONCATENATE : group, assemble
        motif-group, list>sym
 ;;  2.3 DIFFERENTIATE : classify, identify
@@ -714,21 +714,25 @@ References (as given in the PWGL tutorial):
 - Perng, Parker & Leung, "Representing time series by landmarks",
   *Conference on Information and Knowledge Management*, 1999.
 
-#### `split (seq &optional marks)`
+#### `separate (seq &key marks keep)`
 
-*PWGL box: `mark-cut`.* Cuts a string at any of the characters in `marks`
-(and at blanks), or a list at its marks: the elements of the list `marks`
-(compared with `equalp`, so strings or lists can be marks), a single mark, or
-the elements for which the predicate `marks` is true. The marks are not
-kept, and empty segments are removed. The result is always a list of
-segments (`nil` for an empty string).
+*PWGL box: `mark-cut`.* Separates a string at any of the characters in
+`:marks` (and at blanks), or a list at its marks: the elements of the list
+`:marks` (compared with `equalp`, so strings or lists can be marks), a single
+mark, or the elements for which the predicate `:marks` is true. With `:keep`
+`nil` (default), the marks are removed; with `:keep` `t`, each mark begins
+the segment that follows it, as in `mark-structure` (the blanks of a string
+are always removed). Empty segments are removed. The result is always a list
+of segments (`nil` for an empty string).
 
 ```lisp
-(split "hello big world")            ;=> ("hello" "big" "world")
-(split "a,b;c" ",;")                 ;=> ("a" "b" "c")
-(split '(a b x c d x e) '(x))        ;=> ((A B) (C D) (E))
-(split '(1 2 3 4 1 2) (lambda (x) (< x 2)))  ;=> ((2 3 4) (2))
-(split "hello")                      ;=> ("hello")
+(separate "hello big world")                     ;=> ("hello" "big" "world")
+(separate "a,b;c" :marks ",;")                   ;=> ("a" "b" "c")
+(separate "a,b;c" :marks ",;" :keep t)           ;=> ("a" ",b" ";c")
+(separate '(a b x c d x e) :marks '(x))          ;=> ((A B) (C D) (E))
+(separate '(a b x c d x e) :marks '(x) :keep t)  ;=> ((A B) (X C D) (X E))
+(separate '(1 2 3 4 1 2) :marks (lambda (x) (< x 2)))  ;=> ((2 3 4) (2))
+(separate "hello")                               ;=> ("hello")
 ```
 
 #### `graph-part (graph &optional mode n)`
