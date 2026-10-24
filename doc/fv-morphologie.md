@@ -6,15 +6,13 @@ Common Lisp version.
 Frédéric Voisin, 1994–2013 (PWGL tutorial version 20131111), Common Lisp
 version 2026.
 
-> This document is based on the PWGL tutorial kept in
-> [`pwgl-legacy/tutorial/`](../pwgl-legacy/tutorial/) (its presentation, its
-> menu and the documentation of each patch), translated from French and
-> adapted to Common Lisp. All examples have been run with SBCL. Points still
-> to be updated are listed at the end, in
+> The reference version of this documentation is the French one,
+> [fv-morphologie.fr.md](fv-morphologie.fr.md), adapted to Common Lisp; this
+> English version is translated from it. All examples have been run with SBCL.
+> Points still to be updated are listed at the end, in
 > [Notes for the update](#notes-for-the-update).
-> The reference version of this documentation is the French one:
-> [fv-morphologie.fr.md](fv-morphologie.fr.md); this English version is
-> translated from it.
+> It takes up and develops the initial PWGL tutorial kept in
+> [`pwgl-legacy/tutorial/`](../pwgl-legacy/tutorial/).
 
 ## Contents
 
@@ -576,12 +574,17 @@ sequence according to various criteria or processes:
 
 #### `exsample (seq method thres &key diff duration out)`
 
-*Exsample*: a variant of the etymological root of "example", French
-"échantillonner" and English "sample". It summarizes a variation of intensity
-by its most significant values, i.e. the points of its signature (plus the
-first and last values). The resulting compression rate cannot be predicted:
-it depends both on the overall shape of the variation and on the method used
-to extract its signature.
+*Exsample*: a variant of the etymological roots of "example", French
+"échantillon" and English "sample" and "example". It describes a more or less
+continuous variation of intensity by its most significant values. The
+resulting compression rate cannot be predicted: it depends both on the
+overall shape of the variation and on the method used to define what a
+significant variation is.
+
+The scientific literature on time series uses the terms "signature" (Hetland),
+"landmarks" (Perng, Parker & Leung) or "important extrema" (Fink & Gandhi).
+They cover the same meaning but use different methods: one variation of
+intensity does not necessarily have a single signature.
 
 The *signature* of a variation of intensity is the set of its most
 characteristic variations — minima, maxima and possibly inflexions — in other
@@ -592,32 +595,26 @@ components of milieus that it expresses, makes territory, self-posited
 intensity, mark, signature" (*Mille plateaux*, p. 390). It can also be seen
 as a trace, and so result from processes of erasure (cf. Derrida).
 
-The scientific literature on time series uses the terms "signature" (Hetland),
-"landmarks" (Perng, Parker & Leung) or "important extrema" (Fink & Gandhi).
-They cover the same meaning but use different methods: one variation of
-intensity does not necessarily have a single signature.
-
-In fv-morphologie, each salient point (fold) is a list of:
+In fv-morphologie, each salient point (fold) is described by a list of:
 
 - its position in the original sequence;
-- its type: minimum (`-1`), maximum (`1`) or inflexion (`0`);
-- for convenience, the value of the sequence at that position.
+- its type: minimum (`-1`), maximum (`1`) or inflexion — or plateau — (`0`);
+- the value of the sequence at that position.
 
 `thres` is an absolute amplitude, in the unit of the values of `seq`:
 variations smaller than `thres` are ignored (`nil` or 0: no threshold; a
 negative `thres` is an error).
 Methods:
 
-- `:minflexmax` (default, or `nil`): the minima and maxima of `:minmax`, and
-  inflexions where a plateau begins and where it ends (`:duration`: see
-  below);
+- `:minflexmax` (default, or `nil`): the minima, maxima and inflexions
+  (where a plateau begins and where it ends; see `:duration` below);
 - `:minmax`: minima and maxima only, the important extrema of
   `:major-extrema` (with |a − b|);
 - `:major-extrema`: the *important extrema* of Fink & Gandhi. A minimum
   `a_m` is important if, on some interval `a_i … a_j` around it, it is the
   lowest value and the sequence rises by at least `thres` on both sides:
   diff(`a_m`, `a_i`) ≥ `thres` and diff(`a_m`, `a_j`) ≥ `thres`; important
-  maxima are the same upside down. With `thres` 0, every strict local
+  maxima are the same, conversely. With `thres` 0, every strict local
   extremum is important. `:diff` gives the difference (see below; the
   difference between two equal values must be 0).
   Fink & Gandhi's linear algorithm is used, which relaxes the definition at
@@ -642,7 +639,7 @@ two values a and b:
 
 - `:absolute` (default, or `nil`): |a − b|;
 - `:relative`: 2|a − b| / (|a| + |b|), the percentage of Perng et al.;
-- a function `(a b)`.
+- a lambda function of `(a b)`.
 
 A key that the method does not use (`:diff` with `:minmax` or `:minflexmax`,
 `:duration` with `:minmax` or `:major-extrema`) is an error, as is another
@@ -659,12 +656,12 @@ positions (`nil`, 0, 1 and 2 mean 2) where the sequence varies by less than
 left to right, each as long as possible. A plateau which contains a minimum or
 a maximum is a flat extremum, given once; any other plateau gives two
 inflexions (type 0), at its first and last positions, with the values of the
-sequence there. A plateau is defined by its whole range: a slow drift whose
+sequence there. A plateau is defined by its whole range: thus a slow drift whose
 variation reaches `thres` is not one plateau. A regular rise of less than
-`thres` over `:duration` positions is cut into a staircase of plateaus; a
-longer `:duration` avoids it.
+`thres` over `:duration` positions is cut into a staircase of plateaus
+(discretization); a longer `:duration` avoids it.
 
-`:out` gives the result:
+`:out` defines the form of the result:
 
 - `:values` (default, or `nil`): the values of the points, with the first and
   last values of `seq`;
@@ -672,11 +669,13 @@ longer `:duration` avoids it.
 - `:all`: `(position value)` pairs;
 - `:resampled`: the time proportions between the points are kept, with a
   linear interpolation between them; the result has the same number of values
-  as the original sequence;
+  as the original sequence. It is a resampling of the sequence based on its
+  extreme values and plateaus (its characteristics) or, in other words, its
+  caricature;
 - `:signature`: the points `(position type value)`, without the first and
   last values.
 
-Another output is an error.
+Another value of `:out` is an error.
 
 ```lisp
 (exsample '(0 2 4 3 1 2 6 5 0) :minmax 0)                   ;=> (0 4 1 6 0)
@@ -701,7 +700,7 @@ Another output is an error.
 ;=> ((1 1 6) (2 -1 3) (7 1 6))
 ```
 
-References (as given in the PWGL tutorial):
+References:
 
 - Deleuze & Guattari, *Mille plateaux*, 1980 (p. 390, the *ritournelle*).
 - Derrida, *La différance – de la philosophie*, 1972; *L'animal que donc je
@@ -716,14 +715,14 @@ References (as given in the PWGL tutorial):
 
 #### `separate (seq &key marks keep)`
 
-*PWGL box: `mark-cut`.* Separates a string at any of the characters in
-`:marks` (and at blanks), or a list at its marks: the elements of the list
-`:marks` (compared with `equalp`, so strings or lists can be marks), a single
-mark, or the elements for which the predicate `:marks` is true. With `:keep`
-`nil` (default), the marks are removed; with `:keep` `t`, each mark begins
-the segment that follows it, as in `mark-structure` (the blanks of a string
-are always removed). Empty segments are removed. The result is always a list
-of segments (`nil` for an empty string).
+Separates a string at any of the characters in `:marks` (and at blanks), or
+a list at its marks: in this case, the elements of the list `:marks`
+(compared with `equalp`, so strings or lists can be marks), a single mark, or
+the elements for which the predicate `:marks` is true. With `:keep` `nil`
+(default), the marks are removed; with `:keep` `t`, each mark begins the
+segment that follows it, as in `mark-structure` (the blanks of a string being
+always removed). Empty segments are removed. The result is a list of segments
+(`nil` for an empty string).
 
 ```lisp
 (separate "hello big world")                     ;=> ("hello" "big" "world")

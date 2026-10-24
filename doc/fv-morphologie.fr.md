@@ -6,11 +6,12 @@ Version Common Lisp.
 Frédéric Voisin, 1994–2013 (tutoriel PWGL, version 20131111), version Common
 Lisp 2026.
 
-> Ce document est la version de référence de la documentation. , adapté à Common Lisp. Tous les
-> exemples ont été exécutés avec SBCL. Les points restant à mettre à jour sont
-> listés à la fin, dans les [Notes pour la mise à jour](#notes-pour-la-mise-à-jour).
-> Il reprend et développe le tutoriel intial de PWGL conservé dans
-> [`pwgl-legacy/tutorial/`](../pwgl-legacy/tutorial/). 
+> Ce document est la version de référence de la documentation, adaptée à
+> Common Lisp. Tous les exemples ont été exécutés avec SBCL. Les points restant
+> à mettre à jour sont listés à la fin, dans les
+> [Notes pour la mise à jour](#notes-pour-la-mise-à-jour).
+> Il reprend et développe le tutoriel initial de PWGL conservé dans
+> [`pwgl-legacy/tutorial/`](../pwgl-legacy/tutorial/).
 > Une version anglaise est disponible : [fv-morphologie.md](fv-morphologie.md).
 
 ## Sommaire
@@ -621,7 +622,7 @@ Dans fv-morphologie, chaque point saillant (pli) est décrit par une liste
 formée de :
 
 - sa position dans la séquence d'origine ;
-- son type : minimum (`-1`), maximum (`1`) ou inflexion - ou plateau (`0`) ;
+- son type : minimum (`-1`), maximum (`1`) ou inflexion — ou plateau — (`0`) ;
 - la valeur de la séquence à cette position.
 
 `thres` est une amplitude absolue, dans l'unité des valeurs de `seq` : les
@@ -630,22 +631,22 @@ un `thres` négatif est une erreur).
 Méthodes :
 
 - `:minflexmax` (par défaut, ou `nil`) : les minima, maxima et inflexions (là
-  où un plateau commence et là où il finit (cf. `:duration` infra) ;
+  où un plateau commence et là où il finit ; cf. `:duration` infra) ;
 - `:minmax` : minima et maxima seulement, les extrema importants de
   `:major-extrema` (avec |a − b|) ;
 - `:major-extrema` : les *important extrema* de Fink & Gandhi. Un minimum
   `a_m` est important si, sur un intervalle `a_i … a_j` qui l'entoure, il est
   la valeur la plus basse et la séquence remonte d'au moins `thres` de part et
   d'autre : diff(`a_m`, `a_i`) ≥ `thres` et diff(`a_m`, `a_j`) ≥ `thres` ;
-  De même les maxima importants, inversement. Avec `thres` 0, tout
-  extremum local strict est important. `:diff` donne la différence (cf. infra) ;
+  de même les maxima importants, inversement. Avec `thres` 0, tout
+  extremum local strict est important. `:diff` donne la différence (cf. infra ;
   la différence entre deux valeurs égales doit être 0). L'algorithme linéaire 
   de Fink & Gandhi est utilisé ; il assouplit la définition aux extrémités de la
   séquence : un extremum situé entre une extrémité et une variation d'au moins
   `thres` n'a pas besoin d'une variation de `thres` du côté de cette extrémité
-  (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et  le minimum 0).
+  (`(0 8 1 0 2)` avec `thres` 5 donne le maximum 8 et le minimum 0).
   D'extrema importants égaux, sans extremum de l'autre sorte entre eux, le premier
-  est donné, et un extremum égal à la première valeur  de la séquence est cette
+  est donné, et un extremum égal à la première valeur de la séquence est cette
   valeur (il n'est pas donné).
 - `:landmarks` : les *landmarks* de Perng, Parker & Leung. Les landmarks du
   premier ordre sont les extrema locaux ; ils sont ensuite lissés par MDPP :
@@ -681,12 +682,12 @@ cherchés de gauche à droite, chacun aussi long que possible. Un plateau qui
 contient un minimum ou un maximum est un extremum plat, donné une seule fois ;
 tout autre plateau donne deux inflexions (type 0), à sa première et à sa
 dernière position, avec les valeurs de la séquence à ces positions. Un
-plateau est défini par toute son étendue : ainnsi une dérive lente dont la variation
+plateau est défini par toute son étendue : ainsi une dérive lente dont la variation
 atteint `thres` n'est pas un seul plateau. Une montée régulière de moins de
 `thres` sur `:duration` positions est découpée en escalier de plateaux 
 (discrétisation) ; une `:duration` plus longue l'évite.
 
-`:out` forme du résultat :
+`:out` définit la forme du résultat :
 
 - `:values` (par défaut, ou `nil`) : les valeurs des points, avec la première
   et la dernière valeur de `seq` ;
@@ -694,12 +695,13 @@ atteint `thres` n'est pas un seul plateau. Une montée régulière de moins de
 - `:all` : les paires `(position valeur)` ;
 - `:resampled` : les proportions temporelles entre les points sont
   conservées, avec une interpolation linéaire entre eux ; le résultat a le
-  même nombre de valeurs que la séquence d'origine. Il s'agit d'un ré-échantillonage
-  de la séquence fondé sur ses valeurs extrèmes et plateaux (ses caractéristiques) ou,
-  autrement dir, sa caricature.
+  même nombre de valeurs que la séquence d'origine. Il s'agit d'un rééchantillonnage
+  de la séquence fondé sur ses valeurs extrêmes et plateaux (ses caractéristiques) ou,
+  autrement dit, sa caricature ;
 - `:signature` : les points `(position type valeur)`, sans la première ni la
   dernière valeur.
-- Une autre valeur de `:out` donne une erreur.
+
+Une autre valeur de `:out` donne une erreur.
 
 ```lisp
 (exsample '(0 2 4 3 1 2 6 5 0) :minmax 0)                   ;=> (0 4 1 6 0)
